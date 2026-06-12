@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { useI18n } from '@/lib/i18n'
 
 interface LicenseStatus {
   valid: boolean
@@ -72,11 +73,13 @@ export default function PremiumPage() {
     onSuccess: invalidate,
   })
 
+  const { t } = useI18n()
+
   if (isLoading || !data) {
     return (
       <div>
-        <PageHeader title="Premium" description="The live model catalog, on every device." />
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <PageHeader title={t('premium.title')} description={t('premium.description')} />
+        <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
       </div>
     )
   }
@@ -86,12 +89,12 @@ export default function PremiumPage() {
   return (
     <div>
       <PageHeader
-        title="Premium"
-        description="The live model catalog, on every device."
+        title={t('premium.title')}
+        description={t('premium.description')}
         actions={
           <Button variant="outline" size="sm" onClick={() => syncNow.mutate()} disabled={syncNow.isPending}>
             <RefreshCw className={syncNow.isPending ? 'animate-spin' : ''} />
-            {syncNow.isPending ? 'Syncing…' : 'Check for updates'}
+            {syncNow.isPending ? t('premium.syncing') : t('premium.checkForUpdates')}
           </Button>
         }
       />
@@ -99,30 +102,30 @@ export default function PremiumPage() {
       <div className="space-y-8">
         {/* Catalog feed state — always live */}
         <section>
-          <h2 className="text-sm font-medium mb-3">Catalog feed</h2>
+          <h2 className="text-sm font-medium mb-3">{t('premium.catalogFeed')}</h2>
           <div className="rounded-3xl border bg-card p-5">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
               <div className="flex items-center gap-2">
                 <span className="inline-block size-2 rounded-full bg-emerald-500" />
-                <span className="text-sm font-medium">Live feed</span>
+                <span className="text-sm font-medium">{t('premium.liveFeed')}</span>
                 <Badge variant="outline" className="font-mono text-[11px]">
-                  {catalog.appliedVersion ?? 'bundled'}
+                  {catalog.appliedVersion ?? t('premium.bundled')}
                 </Badge>
               </div>
-              <span className="text-xs text-muted-foreground">Last checked: {fmtWhen(catalog.lastSyncMs)}</span>
+              <span className="text-xs text-muted-foreground">{t('premium.lastChecked')}: {fmtWhen(catalog.lastSyncMs)}</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-3">
-              New free models, quota changes, and quirk fixes land here within hours of being shipped. The app checks automatically twice a day; nothing to do.
+              <p className="text-xs text-muted-foreground mt-3">
+              {t('premium.catalogDescription')}
             </p>
             {catalog.lastError && (
-              <p className="text-destructive text-xs mt-2">Last sync problem: {catalog.lastError}</p>
+              <p className="text-destructive text-xs mt-2">{t('premium.syncProblem')}: {catalog.lastError}</p>
             )}
           </div>
         </section>
 
         {/* License key management */}
         <section>
-          <h2 className="text-sm font-medium mb-3">License</h2>
+          <h2 className="text-sm font-medium mb-3">{t('premium.license')}</h2>
           {hasKey ? (
             <div className="rounded-3xl border bg-card p-5 space-y-4">
               <div className="flex flex-wrap items-center gap-3">
@@ -133,7 +136,7 @@ export default function PremiumPage() {
               </div>
 
               <p className="text-xs text-muted-foreground">
-                License key is active. The catalog is always served as the live tier.
+                {t('premium.licenseActive')}
               </p>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -144,11 +147,11 @@ export default function PremiumPage() {
                   disabled={removeKey.isPending}
                   className="text-muted-foreground"
                 >
-                  Remove key from this device
+                  {t('premium.removeKey')}
                 </Button>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Removing the key only deactivates this device; your purchase is untouched.
+                {t('premium.removeKeyDescription')}
               </p>
             </div>
           ) : (
@@ -162,23 +165,23 @@ export default function PremiumPage() {
               >
                 <div className="space-y-1.5 flex-1 min-w-[260px]">
                   <Label className="text-xs">License key</Label>
-                  <Input
-                    value={keyInput}
-                    onChange={(e) => setKeyInput(e.target.value)}
-                    placeholder="fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+                <Input
+                  value={keyInput}
+                  onChange={(e) => setKeyInput(e.target.value)}
+                  placeholder={t('premium.licenseKeyPlaceholder')}
                     className="font-mono text-xs"
                     autoComplete="off"
                   />
                 </div>
                 <Button type="submit" size="sm" disabled={!keyInput.trim() || activate.isPending}>
-                  {activate.isPending ? 'Activating…' : 'Activate'}
+                  {activate.isPending ? t('premium.activating') : t('premium.activate')}
                 </Button>
               </form>
               {activate.isError && (
                 <p className="text-destructive text-xs">{(activate.error as Error).message}</p>
               )}
               <p className="text-xs text-muted-foreground">
-                Enter your license key to activate. The catalog is always served as the live tier.
+                {t('premium.enterLicenseKey')}
               </p>
             </div>
           )}

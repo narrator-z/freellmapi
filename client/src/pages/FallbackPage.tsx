@@ -26,6 +26,7 @@ import { PageHeader } from '@/components/page-header'
 import { FloatingBar } from '@/components/floating-bar'
 import { ModelsTabs } from '@/components/models-tabs'
 import { Tooltip } from '@/components/tooltip'
+import { useI18n } from '@/lib/i18n'
 
 interface FallbackEntry {
   modelDbId: number
@@ -73,13 +74,14 @@ interface RoutingData {
 // A merged row: fallback-chain metadata + live bandit scores.
 type Row = FallbackEntry & Partial<RoutingScore>
 
-const STRATEGIES: { key: RoutingStrategy; label: string; blurb: string }[] = [
-  { key: 'priority', label: 'Manual', blurb: 'Route in the exact order you set below. Drag the handles to reorder. No scoring; the chain is followed top-to-bottom.' },
-  { key: 'balanced', label: 'Balanced', blurb: 'Reliability leads (50%), with speed and intelligence weighted equally (25% each). A sensible all-round default.' },
-  { key: 'smartest', label: 'Smartest', blurb: 'Prefer the most capable model that still works. Intelligence 55%, reliability 35%, speed 10%.' },
-  { key: 'fastest', label: 'Fastest', blurb: 'Prefer the fastest model that still works. Speed 55%, reliability 35%, intelligence 10%.' },
-  { key: 'reliable', label: 'Most reliable', blurb: 'Maximize success rate above all. Reliability 70%, speed and intelligence 15% each.' },
-  { key: 'custom', label: 'Custom', blurb: 'Set your own balance of reliability, speed and intelligence with sliders. Same engine as the presets, just your weights.' },
+// Note: strategy labels/blurbs are translated at render time using t()
+const STRATEGY_KEYS: { key: RoutingStrategy; labelKey: string; blurbKey: string }[] = [
+  { key: 'priority', labelKey: 'strategy.manual', blurbKey: 'strategy.manualBlurb' },
+  { key: 'balanced', labelKey: 'strategy.balanced', blurbKey: 'strategy.balancedBlurb' },
+  { key: 'smartest', labelKey: 'strategy.smartest', blurbKey: 'strategy.smartestBlurb' },
+  { key: 'fastest', labelKey: 'strategy.fastest', blurbKey: 'strategy.fastestBlurb' },
+  { key: 'reliable', labelKey: 'strategy.mostReliable', blurbKey: 'strategy.mostReliableBlurb' },
+  { key: 'custom', labelKey: 'strategy.custom', blurbKey: 'strategy.customBlurb' },
 ]
 
 // Slider axes share the colors used by the score table columns below.
@@ -532,11 +534,14 @@ export default function FallbackPage() {
     </thead>
   )
 
+  const { t } = useI18n()
+  const strategies = STRATEGY_KEYS.map(s => ({ ...s, label: t(s.labelKey), blurb: t(s.blurbKey) }))
+
   return (
     <div>
       <PageHeader
-        title="Models"
-        description="Pick a routing strategy. In Manual mode you drag to set the order; the other strategies route by live score across reliability, speed and intelligence."
+        title={t('models.title')}
+        description={t('models.description')}
         divider={false}
         actions={<ModelsTabs />}
       />
@@ -548,7 +553,7 @@ export default function FallbackPage() {
         {/* Strategy selector */}
         <section className="rounded-3xl border bg-card p-5">
           <div className="flex items-baseline justify-between mb-3">
-            <h2 className="text-sm font-medium">Routing strategy</h2>
+            <h2 className="text-sm font-medium">{t('models.routingStrategy')}</h2>
             {routing?.weights && (
               <span className="text-xs text-muted-foreground tabular-nums">
                 reliability {Math.round(routing.weights.reliability * 100)}% ·
@@ -559,7 +564,7 @@ export default function FallbackPage() {
           </div>
 
           <div className="inline-flex flex-wrap items-center gap-1 rounded-xl border p-1">
-            {STRATEGIES.map(s => (
+            {strategies.map(s => (
               <Tooltip key={s.key} text={s.blurb}>
                 <button
                   disabled={strategyMutation.isPending}
@@ -584,9 +589,7 @@ export default function FallbackPage() {
           </div>
 
           <p className="mt-2 text-xs text-muted-foreground">
-            {isManual
-              ? 'Manual mode: requests follow the order below, top-to-bottom. Drag to reorder.'
-              : 'Scores update from live traffic. The order below is how requests are routed right now.'}
+            {isManual ? t('models.manualMode') : t('models.autoMode')}
           </p>
         </section>
 
@@ -595,9 +598,7 @@ export default function FallbackPage() {
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : ordered.length === 0 ? (
           <div className="rounded-3xl border border-dashed p-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              No models available. Add API keys on the <a href="/keys" className="underline text-foreground">Keys page</a> first.
-            </p>
+            <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: t('models.noModelsAvailable') }} />
           </div>
         ) : (
           <>
@@ -635,17 +636,17 @@ export default function FallbackPage() {
 
             {/* Floating action bar — fixed to the viewport so it's always visible,
                 sliding up when there are unsaved changes and back down on save/discard. */}
-            <FloatingBar show={hasChanges}>
-              <span className="text-xs text-muted-foreground">Unsaved changes</span>
-              <Button variant="outline" size="sm" onClick={() => setLocalEntries(null)}>Discard</Button>
-              <Button size="sm" onClick={handleSave} disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? 'Saving…' : 'Save changes'}
-              </Button>
-            </FloatingBar>
+              <FloatingBar show={hasChanges}>
+                <span className="text-xs text-muted-foreground">{t('common.unsavedChanges')}</span>
+                <Button variant="outline" size="sm" onClick={() => setLocalEntries(null)}>{t('common.discard')}</Button>
+                <Button size="sm" onClick={handleSave} disabled={saveMutation.isPending}>
+                  {saveMutation.isPending ? t('common.saving') : t('common.saveChanges')}
+                </Button>
+              </FloatingBar>
 
-            {unconfiguredPlatforms.length > 0 && (
-              <p className="text-xs text-muted-foreground">Hidden (no keys): {unconfiguredPlatforms.join(', ')}</p>
-            )}
+              {unconfiguredPlatforms.length > 0 && (
+                <p className="text-xs text-muted-foreground">{t('models.hiddenNoKeys')}: {unconfiguredPlatforms.join(', ')}</p>
+              )}
           </>
         )}
       </div>

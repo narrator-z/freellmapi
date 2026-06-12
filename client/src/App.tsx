@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, NavLink, Link, useLocation, useNavigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Menu, Moon, Sun } from 'lucide-react'
+import { Menu, Moon, Sun, Globe } from 'lucide-react'
 import { Button, buttonVariants } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { AuthGate } from '@/components/auth-gate'
 import { logout } from '@/lib/api'
+import { I18nProvider, useI18n } from '@/lib/i18n'
 import KeysPage from '@/pages/KeysPage'
 import PlaygroundPage from '@/pages/PlaygroundPage'
 import FallbackPage from '@/pages/FallbackPage'
@@ -21,14 +22,6 @@ import AnalyticsPage from '@/pages/AnalyticsPage'
 import PremiumPage from '@/pages/PremiumPage'
 
 const queryClient = new QueryClient()
-
-const navItems = [
-  { to: '/models', label: 'Models' },
-  { to: '/playground', label: 'Playground' },
-  { to: '/keys', label: 'Keys' },
-  { to: '/analytics', label: 'Analytics' },
-  { to: '/premium', label: 'Premium' },
-]
 
 function getPreferredDarkMode() {
   if (typeof window === 'undefined') {
@@ -101,10 +94,6 @@ function Brand() {
 // padded for the macOS traffic lights, and without the web-only Sign out.
 const isDesktopApp = typeof window !== 'undefined' && (window as any).__FREEAPI_DESKTOP__ === true
 
-// The preload's own early classList.add can be lost (it may run before this
-// document exists), so the client claims the class itself at module load —
-// before the first React paint — keeping html.desktop CSS (transparent body,
-// glass backdrop) reliable.
 if (isDesktopApp) {
   document.documentElement.classList.add('desktop')
 }
@@ -113,6 +102,15 @@ function Navbar() {
   const { dark, toggle } = useDarkMode()
   const location = useLocation()
   const navigate = useNavigate()
+  const { t, locale, setLocale } = useI18n()
+
+  const navItems = [
+    { to: '/models', label: t('nav.models') },
+    { to: '/playground', label: t('nav.playground') },
+    { to: '/keys', label: t('nav.keys') },
+    { to: '/analytics', label: t('nav.analytics') },
+    { to: '/premium', label: t('nav.premium') },
+  ]
 
   function isActiveRoute(to: string) {
     return location.pathname === to
@@ -120,8 +118,6 @@ function Navbar() {
 
   return (
     <header
-      // In the desktop shell the body backdrop is already translucent glass;
-      // a lighter wash keeps the title bar from looking more solid than the page.
       className={`sticky top-0 z-40 border-b backdrop-blur ${isDesktopApp ? 'bg-background/45' : 'bg-background/80'}`}
       style={isDesktopApp ? ({ WebkitAppRegion: 'drag' } as React.CSSProperties) : undefined}
     >
@@ -144,10 +140,14 @@ function Navbar() {
           className="ml-auto hidden items-center gap-1 md:flex"
           style={isDesktopApp ? ({ WebkitAppRegion: 'no-drag' } as React.CSSProperties) : undefined}
         >
+          <Button variant="ghost" size="sm" onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')} className="text-xs flex items-center gap-1">
+            <Globe className="size-3.5" />
+            {locale === 'zh' ? 'EN' : '中文'}
+          </Button>
           <DarkModeToggle dark={dark} onToggle={toggle} />
           {!isDesktopApp && (
             <Button variant="ghost" size="sm" onClick={() => logout()}>
-              Sign out
+              {t('nav.signOut')}
             </Button>
           )}
         </div>
@@ -174,11 +174,15 @@ function Navbar() {
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuItem onClick={toggle} className="justify-between">
-                  <span>Theme</span>
+                  <span>{t('nav.theme')}</span>
                   {dark ? <Sun /> : <Moon />}
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')} className="justify-between">
+                  <span>{locale === 'zh' ? 'English' : '中文'}</span>
+                  <Globe className="size-4" />
+                </DropdownMenuItem>
                 {!isDesktopApp && (
-                  <DropdownMenuItem onClick={() => logout()}>Sign out</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => logout()}>{t('nav.signOut')}</DropdownMenuItem>
                 )}
               </DropdownMenuGroup>
             </DropdownMenuContent>
@@ -192,28 +196,30 @@ function Navbar() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter basename={import.meta.env.BASE_URL}>
-        <AuthGate>
-          <div className={`min-h-screen ${isDesktopApp ? 'desktop-backdrop' : 'bg-background'}`}>
-            <Navbar />
-            <main className="max-w-6xl mx-auto px-6 py-8">
-              <Routes>
-                <Route path="/" element={<Navigate to="/models/chat" replace />} />
-                <Route path="/models" element={<Navigate to="/models/chat" replace />} />
-                <Route path="/models/chat" element={<FallbackPage />} />
-                <Route path="/models/embeddings" element={<EmbeddingsPage />} />
-                <Route path="/playground" element={<PlaygroundPage />} />
-                <Route path="/keys" element={<KeysPage />} />
-                <Route path="/fallback" element={<Navigate to="/models/chat" replace />} />
-                <Route path="/analytics" element={<AnalyticsPage />} />
-                <Route path="/premium" element={<PremiumPage />} />
-                <Route path="/test" element={<Navigate to="/playground" replace />} />
-                <Route path="/health" element={<Navigate to="/keys" replace />} />
-              </Routes>
-            </main>
-          </div>
-        </AuthGate>
-      </BrowserRouter>
+      <I18nProvider>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
+          <AuthGate>
+            <div className={`min-h-screen ${isDesktopApp ? 'desktop-backdrop' : 'bg-background'}`}>
+              <Navbar />
+              <main className="max-w-6xl mx-auto px-6 py-8">
+                <Routes>
+                  <Route path="/" element={<Navigate to="/models/chat" replace />} />
+                  <Route path="/models" element={<Navigate to="/models/chat" replace />} />
+                  <Route path="/models/chat" element={<FallbackPage />} />
+                  <Route path="/models/embeddings" element={<EmbeddingsPage />} />
+                  <Route path="/playground" element={<PlaygroundPage />} />
+                  <Route path="/keys" element={<KeysPage />} />
+                  <Route path="/fallback" element={<Navigate to="/models/chat" replace />} />
+                  <Route path="/analytics" element={<AnalyticsPage />} />
+                  <Route path="/premium" element={<PremiumPage />} />
+                  <Route path="/test" element={<Navigate to="/playground" replace />} />
+                  <Route path="/health" element={<Navigate to="/keys" replace />} />
+                </Routes>
+              </main>
+            </div>
+          </AuthGate>
+        </BrowserRouter>
+      </I18nProvider>
     </QueryClientProvider>
   )
 }

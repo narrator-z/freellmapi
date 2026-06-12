@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowDown, ArrowUp } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
+import { useI18n } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { PageHeader } from '@/components/page-header'
@@ -43,6 +44,7 @@ function formatTokens(n: number): string {
 }
 
 export default function EmbeddingsPage() {
+  const { t } = useI18n()
   const queryClient = useQueryClient()
   // Local unsaved edits, same pattern as the chat fallback page.
   const [localFamilies, setLocalFamilies] = useState<Family[] | null>(null)
@@ -110,21 +112,17 @@ export default function EmbeddingsPage() {
   return (
     <div>
       <PageHeader
-        title="Models"
-        description="Embeddings fail over within a family only: the same model served by another provider. Vectors from different models are incompatible, so the router never swaps models on you."
+        title={t('embeddings.title')}
+        description={t('embeddings.description')}
         divider={false}
         actions={<ModelsTabs />}
       />
 
       <div className="space-y-6">
-        <p className="text-xs text-muted-foreground">
-          <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono">model: "auto"</code> on{' '}
-          <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono">POST /v1/embeddings</code> routes to the
-          default family. Naming a family (or a provider model id) pins that family; providers inside it are tried in order.
-        </p>
+        <p className="text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: t('embeddings.modelAutoDescription') }} />
 
         {isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
         ) : (
           families.map(f => {
             const u = usageByFamily.get(f.family)
@@ -135,28 +133,28 @@ export default function EmbeddingsPage() {
                   <div className="flex items-baseline gap-2.5 min-w-0">
                     <h2 className="text-sm font-medium font-mono truncate">{f.family}</h2>
                     <span className="text-[10px] rounded-full px-1.5 py-0.5 bg-muted text-muted-foreground tabular-nums">
-                      {f.dimensions}d
+                      {f.dimensions}{t('embeddings.dimensions')}
                     </span>
                     {f.maxInputTokens && (
                       <span className="text-[11px] text-muted-foreground/70 tabular-nums">
-                        {formatTokens(f.maxInputTokens)} tok max
+                        {formatTokens(f.maxInputTokens)} {t('embeddings.tokMax')}
                       </span>
                     )}
                     {f.family === defaultFamily ? (
                       <span className="text-[10px] rounded-full px-1.5 py-0.5 bg-foreground text-background font-medium">
-                        Default · auto
+                        {t('embeddings.defaultAuto')}
                       </span>
                     ) : (
                       <button
                         onClick={() => setLocalDefault(f.family)}
                         className="text-[11px] text-muted-foreground hover:text-foreground underline decoration-dotted underline-offset-2 transition-colors"
                       >
-                        Make default
+                        {t('embeddings.makeDefault')}
                       </button>
                     )}
                   </div>
                   <span className="text-xs text-muted-foreground tabular-nums">
-                    {u ? <>{u.requestsToday} req today · {formatTokens(u.tokensMonth)} tok this month</> : '—'}
+                    {u ? <>{u.requestsToday} {t('embeddings.reqToday')} · {formatTokens(u.tokensMonth)} {t('embeddings.tokThisMonth')}</> : '—'}
                   </span>
                 </div>
 
@@ -170,7 +168,7 @@ export default function EmbeddingsPage() {
                           <span className="truncate font-mono text-[11px] text-muted-foreground">{p.modelId}</span>
                           {p.keyCount === 0 && (
                             <span className="text-[10px] rounded-full px-1.5 py-0.5 bg-amber-600/15 text-amber-700 dark:bg-amber-400/15 dark:text-amber-400">
-                              no key
+                              {t('embeddings.noKey')}
                             </span>
                           )}
                         </div>
@@ -209,10 +207,10 @@ export default function EmbeddingsPage() {
         )}
 
         <FloatingBar show={hasChanges}>
-          <span className="text-xs text-muted-foreground">Unsaved changes</span>
-          <Button variant="outline" size="sm" onClick={discard}>Discard</Button>
+          <span className="text-xs text-muted-foreground">{t('common.unsavedChanges')}</span>
+          <Button variant="outline" size="sm" onClick={discard}>{t('common.discard')}</Button>
           <Button size="sm" onClick={handleSave} disabled={saveMutation.isPending}>
-            {saveMutation.isPending ? 'Saving…' : 'Save changes'}
+            {saveMutation.isPending ? t('common.saving') : t('common.saveChanges')}
           </Button>
         </FloatingBar>
       </div>
