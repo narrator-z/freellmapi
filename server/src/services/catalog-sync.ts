@@ -334,7 +334,7 @@ async function fetchRankingEnrichment(): Promise<{
  * Title Case strings (e.g. "Llama 3.3 70B Versatile").  We normalize
  * both sides to a common slug for comparison.
  */
-function mergeRankings(yangmaoModels: CatalogModel[], rankings: Map<string, RankingValue>): CatalogModel[] {
+export function mergeRankings(yangmaoModels: CatalogModel[], rankings: Map<string, RankingValue>): CatalogModel[] {
   // Build a secondary lookup keyed by normalized (slug) model IDs so we
   // can match yangmao's Title Case identifiers against the ranking
   // catalog's kebab-case URL-style identifiers.
@@ -376,13 +376,15 @@ function mergeRankings(yangmaoModels: CatalogModel[], rankings: Map<string, Rank
  *   "Llama 3.3 70B Versatile"  →  "llama-3.3-70b-versatile"
  *   "Qwen2.5-Coder-32B-Instruct" → "qwen2.5-coder-32b-instruct"
  */
-function toSlug(s: string): string {
+export function toSlug(s: string): string {
   return s
     .toLowerCase()
     .replace(/[()]/g, '')              // strip parentheses
-    .replace(/[^a-z0-9._\s-]/g, '')   // keep dots for version numbers
+    .replace(/[@]/g, '')               // strip @ signs
+    .replace(/[^a-z0-9._\s/:-]/g, '') // keep dot/underscore/slash/colon/hyphen
     .trim()
-    .replace(/\s+/g, '-')              // spaces → hyphens
+    .replace(/[\s_]+/g, '-')           // spaces & underscores → hyphens
+    .replace(/[:/]/g, '-')             // colon & slash → hyphen
     .replace(/[^a-z0-9.-]/g, '')      // keep only alnum, dot, hyphen
     .replace(/-+/g, '-')               // collapse repeated hyphens
     .replace(/^-|-$/g, '')             // trim leading/trailing hyphens

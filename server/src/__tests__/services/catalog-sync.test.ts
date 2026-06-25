@@ -1,7 +1,145 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { initDb, getDb, setSetting, getSetting } from '../../db/index.js';
-import { applyCatalog, reapplyCachedCatalog } from '../../services/catalog-sync.js';
+import {
+  applyCatalog,
+  reapplyCachedCatalog,
+  toSlug,
+  mergeRankings,
+} from '../../services/catalog-sync.js';
 import { migrateDbSchema } from '../../db/migrations.js';
+
+// ---- toSlug normalization tests ----
+
+describe('toSlug', () => {
+  it('converts Title Case with spaces to kebab-case', () => {
+    expect(toSlug('Llama 3.3 70B Versatile')).toBe('llama-3.3-70b-versatile');
+  });
+
+  it('preserves dots for version numbers', () => {
+    expect(toSlug('Qwen2.5-Coder-32B-Instruct')).toBe('qwen2.5-coder-32b-instruct');
+  });
+
+  it('handles model IDs with @ prefix and slashes', () => {
+    expect(toSlug('@cf/meta/llama-3.1-8b-instruct')).toBe('cf-meta-llama-3.1-8b-instruct');
+  });
+
+  it('handles colons in version suffixes', () => {
+    expect(toSlug('qwen3-coder:480b')).toBe('qwen3-coder-480b');
+  });
+
+  it('handles underscores', () => {
+    expect(toSlug('Meta_Llama_3.1')).toBe('meta-llama-3.1');
+  });
+
+  it('collapses repeated hyphens', () => {
+    expect(toSlug('A  B')).toBe('a-b');
+  });
+
+  it('trims leading/trailing hyphens', () => {
+    expect(toSlug('---Hello---')).toBe('hello');
+  });
+});
+
+// ---- mergeRankings matching tests ----
+
+describe('mergeRankings', () => {
+  it('matches by exact platform/modelId key', () => {
+    const models = [{
+      platform: 'groq', modelId: 'llama-3.3-70b-versatile',
+      displayName: 'Llama 3.3 70B Versatile', intelligenceRank: 0, speedRank: 0,
+      sizeLabel: '', limits: { rpm: null, rpd: null, tpm: null, tpd: null },
+      monthlyTokenBudget: '', contextWindow: null, enabled: true,
+      supportsVision: false, supportsTools: false,
+    }];
+    const rankings = new Map();
+    rankings.set('groq/llama-3.3-70b-versatile', {
+      intelligenceRank: 17, speedRank: 10, sizeLabel: 'Medium',
+      limits: { rpm: 30, rpd: 1000, tpm: 6000, tpd: null },
+      monthlyTokenBudget: '~1M', contextWindow: 131072,
+      supportsVision: false, supportsTools: true,
+    });
+    const result = mergeRankings(models, rankings);
+    expect(result[0].intelligenceRank).toBe(17);
+    expect(result[0].speedRank).toBe(10);
+  });
+
+  it('matches by slug when yangmao modelId is Title Case', () => {
+    const models = [{
+      platform: 'groq', modelId: 'Llama 3.3 70B Versatile',
+      displayName: 'Llama 3.3 70B Versatile', intelligenceRank: 0, speedRank: 0,
+      sizeLabel: '', limits: { rpm: null, rpd: null, tpm: null, tpd: null },
+      monthlyTokenBudget: '', contextWindow: null, enabled: true,
+      supportsVision: false, supportsTools: false,
+    }];
+    const rankings = new Map();
+    rankings.set('groq/llama-3.3-70b-versatile', {
+      intelligenceRank: 17, speedRank: 10, sizeLabel: 'Medium',
+      limits: { rpm: 30, rpd: 1000, tpm: 6000, tpd: null },
+      monthlyTokenBudget: '~1M', contextWindow: 131072,
+      supportsVision: false, supportsTools: true,
+    });
+    const result = mergeRankings(models, rankings);
+    expect(result[0].intelligenceRank).toBe(17);
+  });
+
+  it('matches via platform alias (nvidia-build → nvidia)', () => {
+    const models = [{
+      platform: 'nvidia-build', modelId: 'DeepSeek-V4-Pro',
+      displayName: 'DeepSeek-V4-Pro', intelligenceRank: 0, speedRank: 0,
+      sizeLabel: '', limits: { rpm: null, rpd: null, tpm: null, tpd: null },
+      monthlyTokenBudget: '', contextWindow: null, enabled: true,
+      supportsVision: false, supportsTools: false,
+    }];
+    const rankings = new Map();
+    rankings.set('nvidia/deepseek-ai/deepseek-v4-pro', {
+      intelligenceRank: 3, speedRank: 9, sizeLabel: 'Large',
+      limits: { rpm: 100, rpd: null, tpm: null, tpd: null },
+      monthlyTokenBudget: '', contextWindow: 65536,
+      supportsVision: false, supportsTools: true,
+    });
+    const result = mergeRankings(models, rankings);
+    expect(result[0].intelligenceRank).toBe(3);
+    expect(result[0].speedRank).toBe(9);
+  });
+
+  it('leaves unmatched models unchanged', () => {
+    const models = [{
+      platform: 'some-platform', modelId: 'Some Model',
+      displayName: 'Some Model', intelligenceRank: 0, speedRank: 0,
+      sizeLabel: '', limits: { rpm: null, rpd: null, tpm: null, tpd: null },
+      monthlyTokenBudget: '', contextWindow: null, enabled: true,
+      supportsVision: false, supportsTools: false,
+    }];
+    const rankings = new Map();
+    rankings.set('groq/llama-3.3-70b-versatile', {
+      intelligenceRank: 17, speedRank: 10, sizeLabel: 'Medium',
+      limits: { rpm: 30, rpd: 1000, tpm: 6000, tpd: null },
+      monthlyTokenBudget: '~1M', contextWindow: 131072,
+      supportsVision: false, supportsTools: true,
+    });
+    const result = mergeRankings(models, rankings);
+    expect(result[0].intelligenceRank).toBe(0); // unchanged
+  });
+
+  it('matches by slug with platform alias (minimax → nvidia)', () => {
+    const models = [{
+      platform: 'minimax', modelId: 'MiniMax-M2.7',
+      displayName: 'MiniMax-M2.7', intelligenceRank: 0, speedRank: 0,
+      sizeLabel: '', limits: { rpm: null, rpd: null, tpm: null, tpd: null },
+      monthlyTokenBudget: '', contextWindow: null, enabled: true,
+      supportsVision: false, supportsTools: false,
+    }];
+    const rankings = new Map();
+    rankings.set('nvidia/minimaxai/minimax-m2.7', {
+      intelligenceRank: 3, speedRank: 9, sizeLabel: 'Large',
+      limits: { rpm: 100, rpd: null, tpm: null, tpd: null },
+      monthlyTokenBudget: '', contextWindow: 65536,
+      supportsVision: false, supportsTools: true,
+    });
+    const result = mergeRankings(models, rankings);
+    expect(result[0].intelligenceRank).toBe(3);
+  });
+});
 
 // applyCatalog is the write path between the published catalog and the live
 // router DB. These tests lock its contract: catalog metadata always wins, the
