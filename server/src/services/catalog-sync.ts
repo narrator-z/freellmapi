@@ -133,6 +133,19 @@ interface YangmaoResponse {
   providers: YangmaoProvider[];
 }
 
+// Platform ID mappings between yangmao and ranking catalog.
+// Some providers use different IDs in the two data sources.
+const PLATFORM_ALIASES: Record<string, string> = {
+  'nebius-ai-studio': 'nebius',
+  'nvidia-build': 'nvidia',
+};
+
+// Reverse lookup: ranking-catalog ID → yangmao ID.
+const REVERSE_ALIASES: Record<string, string> = {};
+for (const [k, v] of Object.entries(PLATFORM_ALIASES)) {
+  REVERSE_ALIASES[v] = k;
+}
+
 // ---- Helpers ----
 
 /** Minimal structural check for the ranking catalog. */
@@ -216,21 +229,13 @@ async function fetchYangmaoData(): Promise<{ models: CatalogModel[]; version: st
 
   const version = body.generated_at;
 
-  // Determine which mapping we use for known platform -> yangmao provider id
-  // Mapping from yangmao provider id to our Platform:
-  // Most yangmao ids already match our Platform enum directly.
-  // Some need special handling.
-  const platformAliases: Record<string, string> = {
-    // yangmao uses shorter ids in some cases
-  };
-
   const models: CatalogModel[] = [];
   for (const p of body.providers) {
     // Only include providers that are OpenAI-compatible AND have a free API tier
     if (!p.openai_compatible || !p.has_free_api) continue;
     if (!p.models || p.models.length === 0) continue;
 
-    const platform = platformAliases[p.id] ?? p.id;
+    const platform = PLATFORM_ALIASES[p.id] ?? p.id;
 
     for (const m of p.models) {
       const limits = parseRateLimit(m.rate_limit);
@@ -341,10 +346,14 @@ function mergeRankings(yangmaoModels: CatalogModel[], rankings: Map<string, Rank
 
   return yangmaoModels.map((m) => {
     const slug = toSlug(m.modelId);
-    // Try exact match first (some IDs already align), then fall back to
-    // the normalized slug lookup.
+    // Ranking catalog may use a different platform ID for the same provider
+    // (e.g. yangmao "minimax" → ranking "nvidia-build").  Try the direct
+    // key first, then the alias-mapped variants.
+    const altPlatform = REVERSE_ALIASES[m.platform];
     const r = rankings.get(`${m.platform}/${m.modelId}`)
+      ?? (altPlatform ? rankings.get(`${altPlatform}/${m.modelId}`) : undefined)
       ?? rankingBySlug.get(`${m.platform}/${slug}`)
+      ?? (altPlatform ? rankingBySlug.get(`${altPlatform}/${slug}`) : undefined)
       ?? rankingBySlug.get(slug);
     if (!r) return m;
     return {
@@ -573,10 +582,11 @@ export async function syncCatalog(): Promise<SyncResult> {
     const mergedModels = mergeRankings(yangmaoModels, rankings);
 
     // 4. Build the catalog object for applyCatalog
-    const catalog: Catalog = {
+    const catalog: Catalog & { schemaVersion: number } = {
       version,
       generatedAt: new Date().toISOString(),
       tier: 'live',
+      schemaVersion: CATALOG_SCHEMA_VERSION,
       models: mergedModels,
       quirks,
     };
@@ -619,6 +629,8 @@ export function getSyncState(): CatalogSyncState {
   };
 }
 
+const CATALOG_SCHEMA_VERSION = 2; // bump when cache format changes
+
 /**
  * Re-apply the cached (already applied) merged catalog after boot.
  *
@@ -626,6 +638,10 @@ export function getSyncState(): CatalogSyncState {
  * IGNORE), which would re-add the yangmao-deleted models and drift the DB
  * away from the last sync. Re-applying from the local cache is synchronous,
  * needs no network, and keeps the catalog authoritative even offline.
+ *
+ * Caches from before the schemaVersion field (v1) are silently discarded —
+ * they lack ranking enrichment data and would overwrite freshly-synced
+ * rankings with all-zero scores.
  */
 export function reapplyCachedCatalog(): { reapplied: boolean; version?: string } {
   try {
@@ -633,9 +649,15 @@ export function reapplyCachedCatalog(): { reapplied: boolean; version?: string }
     if (!raw) return { reapplied: false };
     const parsed: unknown = JSON.parse(raw);
     if (!isCatalog(parsed)) return { reapplied: false };
-    applyCatalog(getDb(), parsed);
-    console.log(`[catalog-sync] re-applied cached yangmao v${parsed.version} after boot`);
-    return { reapplied: true, version: parsed.version };
+    // Backfill schemaVersion for caches that predate this field.
+    const record = parsed as Record<string, unknown>;
+    if (!record.schemaVersion) {
+      record.schemaVersion = 1;
+      setSetting(SETTING_APPLIED_JSON, JSON.stringify(record));
+    }
+    applyCatalog(getDb(), parsed as Catalog);
+    console.log(`[catalog-sync] re-applied cached yangmao v${(parsed as Catalog).version} after boot`);
+    return { reapplied: true, version: (parsed as Catalog).version };
   } catch (err) {
     console.warn(`[catalog-sync] cached catalog re-apply failed: ${err instanceof Error ? err.message : err}`);
     return { reapplied: false };
