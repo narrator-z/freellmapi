@@ -42,6 +42,35 @@ export type Platform =
   // models (FLUX.1-schnell image, CosyVoice2 TTS) routed via services/media.ts;
   // chat is supported too. Key from siliconflow.com (no card).
   | 'siliconflow'
+  // Additional free OpenAI-compatible providers from yangmao.ai
+  | 'aimlapi'
+  | 'ai21-labs'
+  | 'anyscale'
+  | 'awanllm'
+  | 'baichuan'
+  | 'cerebras-cloud'
+  | 'clawbrain'
+  | 'cloudflare-workers-ai'
+  | 'deepinfra'
+  | 'deepseek'
+  | 'doubao'
+  | 'ernie'
+  | 'fireworks'
+  | 'fireworks-ai'
+  | 'grok'
+  | 'kimi'
+  | 'lepton'
+  | 'llama-cpp'
+  | 'lmstudio'
+  | 'localai'
+  | 'minimax'
+  | 'monsterapi'
+  | 'novita'
+  | 'nvidia-build'
+  | 'octoai'
+  | 'openpipe'
+  | 'parasail'
+  | 'portkey-ai'
   // User-configured OpenAI-compatible endpoint (llama.cpp, LM Studio, vLLM,
   // Ollama, any base_url). The endpoint URL lives on the api_keys row; see #117.
   | 'custom';
@@ -108,8 +137,8 @@ export interface ApiKey {
 
 export interface ApiKeyCreate {
   platform: Platform;
+  label: string;
   key: string;
-  label?: string;
 }
 
 // ---- Fallback Config ----
@@ -183,16 +212,16 @@ export type ChatToolChoice =
   | 'auto'
   | 'required'
   | {
-    type: 'function';
-    function: {
-      name: string;
+      type: 'function';
+      function: {
+        name: string;
+      };
     };
-  };
 
 // OpenAI's multimodal envelope: clients like opencode / continue.dev send
 // content as an array of typed blocks even for text-only messages, and
 // Gemini-lineage agents (Qwen Code, AionUI) send part-style `{ text }` blocks
-// with no `type` — plus bare strings inside arrays. We accept all of it on
+// with no `type` — plus bare strings inside arrays. We accept all of them on
 // the wire and flatten to string for providers that don't support arrays
 // (Cohere, Cloudflare). See server/src/lib/content.ts. (#200)
 export type ChatContentBlock = string | { type?: string; text?: string; [key: string]: unknown };

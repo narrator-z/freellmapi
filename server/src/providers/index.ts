@@ -200,11 +200,6 @@ register(new OpenAICompatProvider({
   baseUrl: 'https://apihub.agnes-ai.com/v1',
 }));
 
-// Chutes was evaluated for V11 and dropped: probe with a free-tier key
-// returned 402 on every model — "Quota exceeded and account balance is
-// $0.0, please pay with fiat or send tao". The "free" tier requires a
-// non-zero balance, which conflicts with the project's no-card criterion.
-
 // Reka — OpenAI-compatible (api.reka.ai/v1). Live-probed 2026-06-17: free via a
 // recurring monthly credit grant (no card; key from platform.reka.ai), billed
 // calls succeed with no 402. The OpenAI-compatible /v1/models lists two models:
@@ -227,6 +222,175 @@ register(new OpenAICompatProvider({
   platform: 'siliconflow',
   name: 'SiliconFlow',
   baseUrl: 'https://api.siliconflow.com/v1',
+}));
+
+// Additional free OpenAI-compatible providers from yangmao.ai
+register(new OpenAICompatProvider({
+  platform: 'aimlapi',
+  name: 'AI/ML API',
+  baseUrl: 'https://api.aimlapi.com/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'ai21-labs',
+  name: 'AI21 Labs',
+  baseUrl: 'https://api.ai21.com/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'anyscale',
+  name: 'Anyscale',
+  baseUrl: 'https://api.anyscale.com/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'awanllm',
+  name: 'AwanLLM',
+  baseUrl: 'https://api.awanllm.com/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'baichuan',
+  name: 'Baichuan AI',
+  baseUrl: 'https://api.baichuan-ai.com/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'cerebras-cloud',
+  name: 'Cerebras Cloud',
+  baseUrl: 'https://api.cerebras.ai/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'clawbrain',
+  name: 'ClawBrain',
+  baseUrl: 'https://api.clawbrain.com/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'cloudflare-workers-ai',
+  name: 'Cloudflare Workers AI',
+  baseUrl: 'https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'deepinfra',
+  name: 'DeepInfra',
+  baseUrl: 'https://api.deepinfra.com/v1/openai',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'deepseek',
+  name: 'DeepSeek',
+  baseUrl: 'https://api.deepseek.com/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'doubao',
+  name: 'Doubao (ByteDance)',
+  baseUrl: 'https://api.doubao.com/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'ernie',
+  name: 'ERNIE Bot (Baidu)',
+  baseUrl: 'https://qianfan.baidubce.com/v2',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'fireworks',
+  name: 'Fireworks AI',
+  baseUrl: 'https://api.fireworks.ai/inference/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'fireworks-ai',
+  name: 'Fireworks AI',
+  baseUrl: 'https://api.fireworks.ai/inference/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'grok',
+  name: 'Grok (xAI)',
+  baseUrl: 'https://api.x.ai/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'kimi',
+  name: 'Kimi (Moonshot AI)',
+  baseUrl: 'https://api.moonshot.cn/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'lepton',
+  name: 'DGX Cloud Lepton',
+  baseUrl: 'https://api.lepton.run/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'llama-cpp',
+  name: 'llama.cpp',
+  baseUrl: 'http://localhost:8080',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'lmstudio',
+  name: 'LM Studio',
+  baseUrl: 'http://localhost:1234',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'localai',
+  name: 'LocalAI',
+  baseUrl: 'http://localhost:8080',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'minimax',
+  name: 'MiniMax (稀宇科技)',
+  baseUrl: 'https://api.minimax.io/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'monsterapi',
+  name: 'MonsterAPI',
+  baseUrl: 'https://api.monsterapi.ai/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'novita',
+  name: 'Novita AI',
+  baseUrl: 'https://api.novita.ai/v3/openai',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'nvidia-build',
+  name: 'NVIDIA Build (NIM API)',
+  baseUrl: 'https://integrate.api.nvidia.com/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'octoai',
+  name: 'OctoAI',
+  baseUrl: 'https://api.octoai.ai/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'openpipe',
+  name: 'OpenPipe',
+  baseUrl: 'https://api.openpipe.ai/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'parasail',
+  name: 'Parasail',
+  baseUrl: 'https://api.parasail.ai/v1',
+}));
+
+register(new OpenAICompatProvider({
+  platform: 'portkey-ai',
+  name: 'Portkey AI',
+  baseUrl: 'https://api.portkey.ai/v1',
 }));
 
 // Placeholder so getProvider('custom')/hasProvider('custom')/getAllProviders()
