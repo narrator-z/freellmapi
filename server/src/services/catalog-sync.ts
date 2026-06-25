@@ -326,7 +326,9 @@ async function fetchRankingEnrichment(): Promise<{
  */
 function mergeRankings(yangmaoModels: CatalogModel[], rankings: Map<string, RankingValue>): CatalogModel[] {
   return yangmaoModels.map((m) => {
-    const key = `${m.platform}:${m.modelId}`;
+    // Ranking catalog keys use the format "platform/modelId" (slash-separated),
+    // matching the URL-style identifiers used by the original catalog.
+    const key = `${m.platform}/${m.modelId}`;
     const r = rankings.get(key);
     if (!r) return m;
     return {
