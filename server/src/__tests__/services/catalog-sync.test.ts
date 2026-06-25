@@ -63,9 +63,11 @@ describe('mergeRankings', () => {
     expect(result[0].speedRank).toBe(10);
   });
 
-  it('matches by slug when yangmao modelId is Title Case', () => {
+  it('yangmao slugified modelId matches ranking catalog by exact key', () => {
+    // After the toSlug normalization in fetchYangmaoData, yangmao modelIds
+    // are already in kebab-case, so mergeRankings finds the match directly.
     const models = [{
-      platform: 'groq', modelId: 'Llama 3.3 70B Versatile',
+      platform: 'groq', modelId: 'llama-3.3-70b-versatile',
       displayName: 'Llama 3.3 70B Versatile', intelligenceRank: 0, speedRank: 0,
       sizeLabel: '', limits: { rpm: null, rpd: null, tpm: null, tpd: null },
       monthlyTokenBudget: '', contextWindow: null, enabled: true,
@@ -80,6 +82,7 @@ describe('mergeRankings', () => {
     });
     const result = mergeRankings(models, rankings);
     expect(result[0].intelligenceRank).toBe(17);
+    expect(result[0].speedRank).toBe(10);
   });
 
   it('matches via platform alias (nvidia-build → nvidia)', () => {
@@ -121,9 +124,13 @@ describe('mergeRankings', () => {
     expect(result[0].intelligenceRank).toBe(0); // unchanged
   });
 
-  it('matches by slug with platform alias (minimax → nvidia)', () => {
+  it('matches by slug fallback when exact and alias keys miss', () => {
+    // Yangmao modelId is already slugified, but the ranking catalog may use
+    // a different platform ID (e.g. yangmao "nvidia-build" → ranking "nvidia")
+    // with a nested path like "nvidia/minimaxai/minimax-m2.7". The slug
+    // fallback extracts the last path segment to find the match.
     const models = [{
-      platform: 'minimax', modelId: 'MiniMax-M2.7',
+      platform: 'nvidia-build', modelId: 'minimax-m2.7',
       displayName: 'MiniMax-M2.7', intelligenceRank: 0, speedRank: 0,
       sizeLabel: '', limits: { rpm: null, rpd: null, tpm: null, tpd: null },
       monthlyTokenBudget: '', contextWindow: null, enabled: true,
@@ -329,6 +336,7 @@ describe('reapplyCachedCatalog', () => {
     setSetting('catalog_applied_version', catalog.version);
     setSetting('catalog_applied_tier', catalog.tier);
     setSetting('catalog_applied_json', JSON.stringify(catalog));
+    setSetting('catalog_yangma_version', catalog.version);
   }
 
   it('restores catalog state over a re-run of the baseline migrations', () => {
@@ -365,5 +373,32 @@ describe('reapplyCachedCatalog', () => {
   it('is a no-op without throwing on a corrupt cache', () => {
     setSetting('catalog_applied_json', 'not json at all {');
     expect(reapplyCachedCatalog().reapplied).toBe(false);
+  });
+
+  it('discards stale cache when yangmao version has changed', () => {
+    const models = existingAsCatalogModels();
+    const oldCatalog = catalogOf(models);
+    cacheCatalog(oldCatalog);
+    // Simulate a newer yangmao version stored in settings
+    setSetting('catalog_yangma_version', '2099.06.01');
+    const result = reapplyCachedCatalog();
+    expect(result.reapplied).toBe(false);
+    // Cache should be cleared
+    expect(getSetting('catalog_applied_version')).toBeUndefined();
+    expect(getSetting('catalog_applied_json')).toBeUndefined();
+  });
+
+  it('re-applies when cached version matches yangmao version', () => {
+    const models = existingAsCatalogModels();
+    // Pick any existing model as the removal target
+    const victim = models[0];
+    const catalog = catalogOf(models.filter((m) => m !== victim));
+    applyCatalog(getDb(), catalog);
+    cacheCatalog(catalog);
+    setSetting('catalog_yangma_version', catalog.version);
+    migrateDbSchema(getDb()); // re-insert baseline model
+    const result = reapplyCachedCatalog();
+    expect(result.reapplied).toBe(true);
+    expect(result.version).toBe(catalog.version);
   });
 });

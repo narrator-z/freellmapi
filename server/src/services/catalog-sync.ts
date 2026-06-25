@@ -48,6 +48,7 @@ const SETTING_APPLIED_VERSION = 'catalog_applied_version';
 const SETTING_APPLIED_JSON = 'catalog_applied_json';
 const SETTING_LAST_SYNC_MS = 'catalog_last_sync_ms';
 const SETTING_LAST_ERROR = 'catalog_last_error';
+const SETTING_YANGMA_VERSION = 'catalog_yangma_version';
 
 export function catalogBaseUrl(): string {
   return (process.env.CATALOG_BASE_URL ?? DEFAULT_BASE_URL).replace(/\/$/, '');
@@ -70,7 +71,7 @@ interface CatalogQuirk {
   targets: { platform: string | null; modelGlob: string | null }[];
 }
 
-interface CatalogModel {
+export interface CatalogModel {
   platform: string;
   modelId: string;
   displayName: string;
@@ -217,7 +218,7 @@ interface RankingValue {
   supportsTools: boolean;
 }
 
-async function fetchYangmaoData(): Promise<{ models: CatalogModel[]; version: string }> {
+export async function fetchYangmaoData(): Promise<{ models: CatalogModel[]; version: string }> {
   const res = await fetch(YANGMAO_URL, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
   if (!res.ok) throw new Error(`yangmao fetch failed: HTTP ${res.status}`);
 
@@ -238,6 +239,11 @@ async function fetchYangmaoData(): Promise<{ models: CatalogModel[]; version: st
     const platform = PLATFORM_ALIASES[p.id] ?? p.id;
 
     for (const m of p.models) {
+      // Skip entries that look like category descriptions rather than model names.
+      // Yangmao occasionally puts provider-level descriptions in the models array.
+      const lowerName = m.name.trim().toLowerCase();
+      if (/\b(routes?|compute|quota|fine-tuned|logging proxy|open-weight|and open)\b/.test(lowerName)) continue;
+      if (!m.name.includes(' ') && !m.name.includes('-') && !m.name.includes('.') && m.name.length > 20) continue;
       const limits = parseRateLimit(m.rate_limit);
       const contextWindow = parseContext(m.context);
 
@@ -246,9 +252,15 @@ async function fetchYangmaoData(): Promise<{ models: CatalogModel[]; version: st
       if (/^(dall-e|stable-diffusion|flux|imagen|midjourney)/i.test(m.name)) modality = 'image';
       else if (/^(tts|whisper|hifi-gan)/i.test(m.name)) modality = 'audio';
 
+      // Yangmao stores human-readable names; normalize to the kebab-case
+      // API identifier format so the modelId is directly usable by providers.
+      // Skip entries whose slugified ID is empty (e.g. non-Latin category
+      // descriptions, placeholder text).
+      const slugifiedId = toSlug(m.name);
+      if (!slugifiedId) continue;
       models.push({
         platform,
-        modelId: m.name,
+        modelId: slugifiedId,
         displayName: m.name,
         intelligenceRank: 0,
         speedRank: 0,
@@ -601,6 +613,7 @@ export async function syncCatalog(): Promise<SyncResult> {
     const counts = applyCatalog(db, catalog);
     setSetting(SETTING_APPLIED_VERSION, version);
     setSetting(SETTING_APPLIED_JSON, JSON.stringify(catalog));
+    setSetting(SETTING_YANGMA_VERSION, version); // remember yangma version for staleness check
 
     console.log(
       `[catalog-sync] applied yangmao v${version}: ` +
@@ -651,6 +664,16 @@ export function reapplyCachedCatalog(): { reapplied: boolean; version?: string }
     if (!raw) return { reapplied: false };
     const parsed: unknown = JSON.parse(raw);
     if (!isCatalog(parsed)) return { reapplied: false };
+    // Get current yangma version to detect cache staleness.
+    const yangmaVersion = getSetting(SETTING_YANGMA_VERSION);
+    // Old caches (before this field existed) have no stored yangma version;
+    // they are still valid for re-application (metadata merge only).
+    if (yangmaVersion && yangmaVersion !== (parsed as Catalog).version) {
+      console.log(`[catalog-sync] cache stale (v${(parsed as Catalog).version} != v${yangmaVersion}), discarding and re-syncing`);
+      getDb().prepare('DELETE FROM settings WHERE key = ? OR key = ?').run('catalog_applied_version', 'catalog_applied_json');
+      return { reapplied: false };
+    }
+
     // Backfill schemaVersion for caches that predate this field.
     const record = parsed as unknown as Record<string, unknown>;
     if (!record.schemaVersion) {
