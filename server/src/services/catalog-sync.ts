@@ -544,12 +544,9 @@ export async function syncCatalog(): Promise<SyncResult> {
       quirks,
     };
 
-    // 5. Check if same version already applied
-    if (applied === version) {
-      setSetting(SETTING_LAST_SYNC_MS, String(Date.now()));
-      setSetting(SETTING_LAST_ERROR, '');
-      return { ok: true, action: 'up_to_date', version };
-    }
+    // 5. Always apply — applyCatalog is idempotent (INSERT OR UPDATE), so
+    // re-running is harmless and is the mechanism that refreshes ranking
+    // scores and quirks when the yangmao version hasn't changed.
 
     // 6. Apply
     const counts = applyCatalog(db, catalog);
