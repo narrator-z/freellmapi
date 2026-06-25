@@ -652,7 +652,7 @@ export function reapplyCachedCatalog(): { reapplied: boolean; version?: string }
     const parsed: unknown = JSON.parse(raw);
     if (!isCatalog(parsed)) return { reapplied: false };
     // Backfill schemaVersion for caches that predate this field.
-    const record = parsed as Record<string, unknown>;
+    const record = parsed as unknown as Record<string, unknown>;
     if (!record.schemaVersion) {
       record.schemaVersion = 1;
       setSetting(SETTING_APPLIED_JSON, JSON.stringify(record));
