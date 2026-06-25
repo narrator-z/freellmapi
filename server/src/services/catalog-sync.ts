@@ -273,9 +273,10 @@ async function fetchRankingEnrichment(): Promise<{
   const quirks: CatalogQuirk[] = [];
 
   try {
-    const applied = getSetting(SETTING_APPLIED_VERSION);
+    // Always fetch the full ranking catalog; yangmao's version is an ISO
+    // timestamp and is not comparable to the original catalog's date format,
+    // so using it as a `since` parameter would short-circuit enrichment.
     const url = new URL(`${catalogBaseUrl()}/v1/latest`);
-    if (applied) url.searchParams.set('since', applied);
 
     const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
 
