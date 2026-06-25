@@ -1,54 +1,50 @@
 import crypto from 'crypto';
 import type DatabaseType from 'better-sqlite3';
-import { getDb, getSetting, setSetting } from '../db/index.js';
+import { getDb, setSetting, getSetting } from '../db/index.js';
 import { hasProvider } from '../providers/index.js';
 import { MEDIA_PLATFORMS } from './media.js';
 import type { Platform } from '@freellmapi/shared/types.js';
 
-// Generative-media modalities are routed into the separate media_models table
-// (see services/media.ts), never into the chat `models` table.
-const MEDIA_MODALITIES = new Set(['image', 'audio']);
+// ========================================================================
+// catalog-sync — keeps the local model catalog in step with published data.
+//
+// Data sources (two-tier merge):
+//   1. PRIMARY: yangmao.ai/data/exports/ai-free-tiers.json — the
+//      authoritative list of free/live API models. Always the latest export.
+//   2. SECONDARY: api.freellmapi.co/v1/latest — intelligence/speed
+//      rankings, quirks, and metadata enrichment. Ed25519‑signed.
+//
+// The secondary source provides ranking metadata that yangmao doesn't have.
+// If the ranking fetch fails (network, bad signature) the yangmao models are
+// still applied, just without ranking data — the sync is never blocked by it.
+//
+// There is no Premium/free tier distinction. Every install gets the same
+// catalog, refreshed every 12 hours.
+// ========================================================================
 
-/**
- * catalog-sync — keeps the local model catalog in step with the published one.
- *
- * Twice a day (and on demand) the server pulls the signed catalog from the
- * catalog service. A valid Premium license key (Bearer) gets the live tier,
- * refreshed every 2-3 days; everyone else gets the monthly snapshot — so free
- * installs still self-heal, just on a slower cadence. The response is verified
- * against a pinned Ed25519 public key over the exact bytes received; anything
- * unsigned or tampered with is discarded, which means a compromised CDN or
- * MITM cannot inject models or quirks into the router.
- *
- * The bundled migrations remain the baseline: a fetched catalog is applied
- * only when it is NEWER than what the binary shipped with (MIN_CATALOG_VERSION
- * below), so a stale monthly snapshot can never roll back models that a newer
- * app version added via migrations.
- */
-
+const YANGMAO_URL = 'https://yangmao.ai/data/exports/ai-free-tiers.json';
 const DEFAULT_BASE_URL = 'https://api.freellmapi.co';
 
-// The Ed25519 public key the production catalog is signed with. The private
-// half was generated on the catalog host and has never left it. Self-hosters
-// running their own catalog server can override both via env.
+// Ed25519 public key for the original catalog (ranking enrichment only).
 const PINNED_CATALOG_PUBKEY = `-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEAq9yv4+3EeyMHKsfVYBhkcz1lYgIXSUeHNnN6tNgYX3k=
 -----END PUBLIC KEY-----
 `;
 
-// Catalogs older than this are ignored. Bump to today's date whenever a model
-// migration lands, so the bundled DB is always the floor.
-export const MIN_CATALOG_VERSION = '2026.06.07';
+// Floor for the ranking catalog. Yangmao data is always current, so this
+// only applies to the optional ranking overlay.
+const MIN_RANKING_VERSION = '2026.01.01';
 
 const SYNC_INTERVAL_MS = 12 * 60 * 60 * 1000; // twice daily
-const BOOT_DELAY_MS = 10 * 1000; // let the server settle before first sync
+const BOOT_DELAY_MS = 10 * 1000;
 const FETCH_TIMEOUT_MS = 20 * 1000;
 
+// Generative-media modalities are routed into the separate media_models table
+// (see services/media.ts), never into the chat `models` table.
+const MEDIA_MODALITIES = new Set(['image', 'audio']);
+
 // settings table keys
-export const SETTING_LICENSE_KEY = 'premium_license_key';
-export const SETTING_LICENSE_STATUS = 'premium_license_status'; // JSON LicenseStatus
 const SETTING_APPLIED_VERSION = 'catalog_applied_version';
-const SETTING_APPLIED_TIER = 'catalog_applied_tier';
 const SETTING_APPLIED_JSON = 'catalog_applied_json';
 const SETTING_LAST_SYNC_MS = 'catalog_last_sync_ms';
 const SETTING_LAST_ERROR = 'catalog_last_error';
@@ -58,19 +54,13 @@ export function catalogBaseUrl(): string {
 }
 
 function catalogPublicKey(): crypto.KeyObject {
-  const pem = process.env.CATALOG_PUBKEY ? process.env.CATALOG_PUBKEY.replace(/\\n/g, '\n') : PINNED_CATALOG_PUBKEY;
+  const pem = process.env.CATALOG_PUBKEY
+    ? process.env.CATALOG_PUBKEY.replace(/\\n/g, '\n')
+    : PINNED_CATALOG_PUBKEY;
   return crypto.createPublicKey({ key: pem, format: 'pem' });
 }
 
-export interface LicenseStatus {
-  valid: boolean;
-  plan: 'annual' | 'lifetime' | null;
-  status: string | null;
-  expiresAt: string | null;
-  cancelAtPeriodEnd?: boolean;
-  reason?: string;
-  checkedAtMs: number;
-}
+// ---- Catalog data types (wire format of the ranking source) ----
 
 interface CatalogQuirk {
   slug: string;
@@ -93,10 +83,7 @@ interface CatalogModel {
   enabled: boolean;
   supportsVision: boolean;
   supportsTools: boolean;
-  /** 'text' (default/absent) routes to the chat `models` table; 'image'/'audio'
-   *  route to the separate `media_models` table. */
   modality?: string;
-  /** Short display note for media models (e.g. "Keyless - up to 1024x1024"). */
   mediaNote?: string;
 }
 
@@ -110,14 +97,45 @@ interface Catalog {
 
 export interface SyncResult {
   ok: boolean;
-  action: 'applied' | 'up_to_date' | 'skipped_older' | 'error';
+  action: 'applied' | 'up_to_date' | 'error';
   version?: string;
-  tier?: string;
   detail?: string;
   counts?: { updated: number; inserted: number; removed: number; skippedUnknownPlatform: number; quirks: number };
 }
 
-/** Minimal structural check — enough to fail loudly on a wrong/garbled body. */
+export interface CatalogSyncState {
+  baseUrl: string;
+  appliedVersion: string | null;
+  lastSyncMs: number | null;
+  lastError: string | null;
+}
+
+// ---- yangmao.ai types ----
+
+interface YangmaoModel {
+  name: string;
+  context: string;
+  rate_limit: string;
+  notes: string;
+}
+
+interface YangmaoProvider {
+  id: string;
+  name: string;
+  openai_compatible: boolean;
+  has_free_api: boolean;
+  models: YangmaoModel[];
+}
+
+interface YangmaoResponse {
+  schema_version: string;
+  generated_at: string;
+  providers: YangmaoProvider[];
+}
+
+// ---- Helpers ----
+
+/** Minimal structural check for the ranking catalog. */
 function isCatalog(value: unknown): value is Catalog {
   const c = value as Catalog;
   return (
@@ -138,6 +156,193 @@ function isCatalog(value: unknown): value is Catalog {
     c.quirks.every((q) => typeof q?.slug === 'string' && Array.isArray(q?.targets))
   );
 }
+
+function parseContext(s: string): number | null {
+  if (!s) return null;
+  const t = s.trim().toLowerCase();
+  if (t === 'n/a' || t === 'varies' || t === '' || t === 'model dependent') return null;
+  const m = t.match(/^(\d+)\s*(k|m)?$/);
+  if (!m) return null;
+  const n = parseInt(m[1], 10);
+  if (isNaN(n)) return null;
+  if (m[2] === 'k') return n * 1024;
+  if (m[2] === 'm') return n * 1024 * 1024;
+  return n;
+}
+
+function parseRateLimit(s: string): { rpm: number | null; rpd: number | null; tpm: number | null; tpd: number | null } {
+  const result = { rpm: null as number | null, rpd: null as number | null, tpm: null as number | null, tpd: null as number | null };
+  if (!s) return result;
+
+  // Try patterns like "30 RPM", "50 RPD", "30 RPM / 60K TPM", "1000 RPD / 350K TPD"
+  const parts = s.split(/[/,，、]/);
+  for (const part of parts) {
+    const p = part.trim().toLowerCase();
+    const m = p.match(/^(\d+(?:\.\d+)?)\s*(rpm|rpd|tpm|tpd)$/);
+    if (m) {
+      const val = parseInt(m[1], 10);
+      if (m[2] === 'rpm') result.rpm = val;
+      else if (m[2] === 'rpd') result.rpd = val;
+      else if (m[2] === 'tpm') result.tpm = val;
+      else if (m[2] === 'tpd') result.tpd = val;
+    }
+  }
+  return result;
+}
+
+// ---- Yangmao fetch & parse ----
+
+/** Single model's ranking data extracted from the original catalog. */
+interface RankingValue {
+  intelligenceRank: number;
+  speedRank: number;
+  sizeLabel: string;
+  limits: { rpm: number | null; rpd: number | null; tpm: number | null; tpd: number | null };
+  monthlyTokenBudget: string | null;
+  contextWindow: number | null;
+  supportsVision: boolean;
+  supportsTools: boolean;
+}
+
+async function fetchYangmaoData(): Promise<{ models: CatalogModel[]; version: string }> {
+  const res = await fetch(YANGMAO_URL, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+  if (!res.ok) throw new Error(`yangmao fetch failed: HTTP ${res.status}`);
+
+  const raw: unknown = await res.json();
+  const body = raw as YangmaoResponse;
+  if (!body || !body.providers || !body.generated_at) {
+    throw new Error('yangmao payload has unexpected shape');
+  }
+
+  const version = body.generated_at;
+
+  // Determine which mapping we use for known platform -> yangmao provider id
+  // Mapping from yangmao provider id to our Platform:
+  // Most yangmao ids already match our Platform enum directly.
+  // Some need special handling.
+  const platformAliases: Record<string, string> = {
+    // yangmao uses shorter ids in some cases
+  };
+
+  const models: CatalogModel[] = [];
+  for (const p of body.providers) {
+    // Only include providers that are OpenAI-compatible AND have a free API tier
+    if (!p.openai_compatible || !p.has_free_api) continue;
+    if (!p.models || p.models.length === 0) continue;
+
+    const platform = platformAliases[p.id] ?? p.id;
+
+    for (const m of p.models) {
+      const limits = parseRateLimit(m.rate_limit);
+      const contextWindow = parseContext(m.context);
+
+      // Heuristic: detect modality from model name keywords
+      let modality: string | undefined;
+      if (/^(dall-e|stable-diffusion|flux|imagen|midjourney)/i.test(m.name)) modality = 'image';
+      else if (/^(tts|whisper|hifi-gan)/i.test(m.name)) modality = 'audio';
+
+      models.push({
+        platform,
+        modelId: m.name,
+        displayName: m.name,
+        intelligenceRank: 0,
+        speedRank: 0,
+        sizeLabel: '',
+        limits,
+        monthlyTokenBudget: null,
+        contextWindow,
+        enabled: true,
+        supportsVision: false,
+        supportsTools: false,
+        modality,
+        mediaNote: m.notes || undefined,
+      });
+    }
+  }
+
+  return { models, version };
+}
+
+// ---- Ranking enrichment from the original catalog ----
+
+async function fetchRankingEnrichment(): Promise<{
+  rankings: Map<string, RankingValue>;
+  quirks: CatalogQuirk[];
+}> {
+  const rankings = new Map<string, RankingValue>();
+  const quirks: CatalogQuirk[] = [];
+
+  try {
+    const applied = getSetting(SETTING_APPLIED_VERSION);
+    const url = new URL(`${catalogBaseUrl()}/v1/latest`);
+    if (applied) url.searchParams.set('since', applied);
+
+    const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+
+    if (res.status === 304) return { rankings, quirks };
+    if (!res.ok) throw new Error(`ranking catalog fetch failed: HTTP ${res.status}`);
+
+    const signature = res.headers.get('x-catalog-signature');
+    if (!signature) throw new Error('ranking catalog response missing signature');
+    const bytes = Buffer.from(await res.arrayBuffer());
+    const verified = crypto.verify(null, bytes, catalogPublicKey(), Buffer.from(signature, 'base64'));
+    if (!verified) throw new Error('ranking catalog signature verification FAILED');
+
+    const parsed: unknown = JSON.parse(bytes.toString('utf8'));
+    if (!isCatalog(parsed)) throw new Error('ranking catalog payload has unexpected shape');
+    const catalog = parsed;
+
+    if (catalog.version < MIN_RANKING_VERSION) {
+      return { rankings, quirks }; // Too old, skip enrichment
+    }
+
+    for (const m of catalog.models) {
+      const key = `${m.platform}:${m.modelId}`;
+      rankings.set(key, {
+        intelligenceRank: m.intelligenceRank,
+        speedRank: m.speedRank,
+        sizeLabel: m.sizeLabel,
+        limits: m.limits,
+        monthlyTokenBudget: m.monthlyTokenBudget,
+        contextWindow: m.contextWindow,
+        supportsVision: m.supportsVision,
+        supportsTools: m.supportsTools,
+      });
+    }
+
+    quirks.push(...catalog.quirks);
+  } catch (err) {
+    // Non-fatal — ranking is just enrichment
+    console.warn(`[catalog-sync] ranking enrichment unavailable: ${err instanceof Error ? err.message : err}`);
+  }
+
+  return { rankings, quirks };
+}
+
+/**
+ * Merge ranking data into the yangmao-derived model list.
+ * Fields from the original catalog override yangmao defaults.
+ */
+function mergeRankings(yangmaoModels: CatalogModel[], rankings: Map<string, RankingValue>): CatalogModel[] {
+  return yangmaoModels.map((m) => {
+    const key = `${m.platform}:${m.modelId}`;
+    const r = rankings.get(key);
+    if (!r) return m;
+    return {
+      ...m,
+      intelligenceRank: r.intelligenceRank,
+      speedRank: r.speedRank,
+      sizeLabel: r.sizeLabel,
+      limits: r.limits,
+      monthlyTokenBudget: r.monthlyTokenBudget,
+      contextWindow: r.contextWindow ?? m.contextWindow,
+      supportsVision: r.supportsVision,
+      supportsTools: r.supportsTools,
+    };
+  });
+}
+
+// ---- applyCatalog (unchanged write path) ----
 
 /**
  * Apply a verified catalog to the local DB inside one transaction.
@@ -192,8 +397,6 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
     const inMediaCatalog = new Set<string>();
 
     for (const m of catalog.models) {
-      // Media modalities are gated on MEDIA_PLATFORMS (decoupled from the chat
-      // provider registry) and routed to media_models, then skip the chat path.
       const modality = m.modality ?? 'text';
       if (MEDIA_MODALITIES.has(modality)) {
         if (!MEDIA_PLATFORMS.has(m.platform)) {
@@ -209,7 +412,7 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
           quotaLabel: m.mediaNote ?? '',
         };
         if (mrow) {
-          const enabled = m.enabled ? mrow.enabled : 0; // catalog disable wins; local disable wins
+          const enabled = m.enabled ? mrow.enabled : 0;
           updateMedia.run({ ...mfields, id: mrow.id, enabled });
           counts.updated++;
         } else {
@@ -220,8 +423,6 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
       }
 
       if (m.platform === 'custom' || !hasProvider(m.platform as Platform)) {
-        // An older binary may receive models for providers it cannot route yet;
-        // skip them — they will appear after the user updates the app.
         counts.skippedUnknownPlatform++;
         continue;
       }
@@ -243,7 +444,6 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
         supportsTools: m.supportsTools ? 1 : 0,
       };
       if (row) {
-        // Catalog disable wins (dead upstream); local disable also wins.
         const enabled = m.enabled ? row.enabled : 0;
         updateModel.run({ ...fields, id: row.id, enabled });
         counts.updated++;
@@ -253,7 +453,7 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
       }
     }
 
-    // Ensure every model has a fallback_config row (same invariant migrations keep).
+    // Ensure every model has a fallback_config row
     const missingFb = db
       .prepare(
         `SELECT m.id FROM models m LEFT JOIN fallback_config f ON m.id = f.model_db_id WHERE f.id IS NULL`,
@@ -265,14 +465,14 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
       missingFb.forEach((r, i) => addFb.run(r.id, maxPriority + 1 + i));
     }
 
-    // Remove catalog-managed models that the catalog no longer lists.
+    // Remove catalog-managed models that the catalog no longer lists
     const candidates = db
       .prepare(`SELECT id, platform, model_id FROM models WHERE platform != 'custom' AND key_id IS NULL`)
       .all() as { id: number; platform: string; model_id: string }[];
     const deleteFb = db.prepare('DELETE FROM fallback_config WHERE model_db_id = ?');
     const deleteModel = db.prepare('DELETE FROM models WHERE id = ?');
     for (const c of candidates) {
-      if (!hasProvider(c.platform as Platform)) continue; // not catalog-managed by this binary
+      if (!hasProvider(c.platform as Platform)) continue;
       if (!inCatalog.has(`${c.platform}:${c.model_id}`)) {
         deleteFb.run(c.id);
         deleteModel.run(c.id);
@@ -280,13 +480,13 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
       }
     }
 
-    // Remove media models the catalog no longer lists (own table, no fallback_config).
+    // Remove media models the catalog no longer lists
     const mediaCandidates = db
       .prepare('SELECT id, platform, model_id FROM media_models')
       .all() as { id: number; platform: string; model_id: string }[];
     const deleteMedia = db.prepare('DELETE FROM media_models WHERE id = ?');
     for (const c of mediaCandidates) {
-      if (!MEDIA_PLATFORMS.has(c.platform)) continue; // not media-managed by this binary
+      if (!MEDIA_PLATFORMS.has(c.platform)) continue;
       if (!inMediaCatalog.has(`${c.platform}:${c.model_id}`)) {
         deleteMedia.run(c.id);
         counts.removed++;
@@ -314,73 +514,57 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
   return counts;
 }
 
+// ---- Sync orchestration ----
+
 /**
- * Fetch the catalog, verify its signature, and apply it if it moves us forward.
- * `force` skips the `since` short-circuit — used right after a license key is
- * added or removed, where the tier can change without the version changing.
+ * Main sync: fetch yangmao data (primary), enrich with rankings from the
+ * original catalog (secondary, non-fatal), then apply the merged result.
  */
-export async function syncCatalog(force = false): Promise<SyncResult> {
+export async function syncCatalog(): Promise<SyncResult> {
   const db = getDb();
-  const key = getSetting(SETTING_LICENSE_KEY);
-  const applied = getSetting(SETTING_APPLIED_VERSION);
 
   try {
-    const headers: Record<string, string> = {};
-    if (key) headers.Authorization = `Bearer ${key}`;
-    const url = new URL(`${catalogBaseUrl()}/v1/latest`);
-    if (applied && !force) url.searchParams.set('since', applied);
+    // 1. Fetch yangmao data (primary)
+    const { models: yangmaoModels, version } = await fetchYangmaoData();
+    const applied = getSetting(SETTING_APPLIED_VERSION);
 
-    const res = await fetch(url, { headers, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+    // 2. Fetch ranking enrichment (secondary, non-fatal)
+    const { rankings, quirks } = await fetchRankingEnrichment();
 
-    if (res.status === 304) {
+    // 3. Merge rankings onto yangmao models
+    const mergedModels = mergeRankings(yangmaoModels, rankings);
+
+    // 4. Build the catalog object for applyCatalog
+    const catalog: Catalog = {
+      version,
+      generatedAt: new Date().toISOString(),
+      tier: 'live',
+      models: mergedModels,
+      quirks,
+    };
+
+    // 5. Check if same version already applied
+    if (applied === version) {
       setSetting(SETTING_LAST_SYNC_MS, String(Date.now()));
       setSetting(SETTING_LAST_ERROR, '');
-      return { ok: true, action: 'up_to_date', version: applied };
-    }
-    if (!res.ok) throw new Error(`catalog fetch failed: HTTP ${res.status}`);
-
-    const signature = res.headers.get('x-catalog-signature');
-    if (!signature) throw new Error('catalog response missing signature');
-    const bytes = Buffer.from(await res.arrayBuffer());
-    const verified = crypto.verify(null, bytes, catalogPublicKey(), Buffer.from(signature, 'base64'));
-    if (!verified) throw new Error('catalog signature verification FAILED — discarding response');
-
-    const parsed: unknown = JSON.parse(bytes.toString('utf8'));
-    if (!isCatalog(parsed)) throw new Error('catalog payload has unexpected shape');
-    const catalog = parsed;
-
-    if (catalog.version < MIN_CATALOG_VERSION) {
-      // Older than the bundled baseline (e.g. monthly snapshot lagging a fresh
-      // app release) — applying it would roll back migrations. Wait it out.
-      setSetting(SETTING_LAST_SYNC_MS, String(Date.now()));
-      setSetting(SETTING_LAST_ERROR, '');
-      return { ok: true, action: 'skipped_older', version: catalog.version, tier: catalog.tier };
+      return { ok: true, action: 'up_to_date', version };
     }
 
-    const sameAsApplied = applied === catalog.version && getSetting(SETTING_APPLIED_TIER) === catalog.tier;
-    if (!sameAsApplied) {
-      const counts = applyCatalog(db, catalog);
-      setSetting(SETTING_APPLIED_VERSION, catalog.version);
-      setSetting(SETTING_APPLIED_TIER, catalog.tier);
-      // Cache the verified document so boots can re-apply it offline (see
-      // reapplyCachedCatalog). Stored post-verification: anything that could
-      // tamper this row could tamper the models table directly, so the cache
-      // adds no new trust surface.
-      setSetting(SETTING_APPLIED_JSON, bytes.toString('utf8'));
-      console.log(
-        `[catalog-sync] applied ${catalog.tier} v${catalog.version}: ` +
-          `${counts.updated} updated, ${counts.inserted} new, ${counts.removed} removed, ` +
-          `${counts.quirks} quirks` +
-          (counts.skippedUnknownPlatform ? `, ${counts.skippedUnknownPlatform} skipped (unknown platform)` : ''),
-      );
-      setSetting(SETTING_LAST_SYNC_MS, String(Date.now()));
-      setSetting(SETTING_LAST_ERROR, '');
-      return { ok: true, action: 'applied', version: catalog.version, tier: catalog.tier, counts };
-    }
+    // 6. Apply
+    const counts = applyCatalog(db, catalog);
+    setSetting(SETTING_APPLIED_VERSION, version);
+    setSetting(SETTING_APPLIED_JSON, JSON.stringify(catalog));
+
+    console.log(
+      `[catalog-sync] applied yangmao v${version}: ` +
+        `${counts.updated} updated, ${counts.inserted} new, ${counts.removed} removed, ` +
+        `${counts.quirks} quirks in catalog` +
+        (counts.skippedUnknownPlatform ? `, ${counts.skippedUnknownPlatform} skipped (unknown platform)` : ''),
+    );
 
     setSetting(SETTING_LAST_SYNC_MS, String(Date.now()));
     setSetting(SETTING_LAST_ERROR, '');
-    return { ok: true, action: 'up_to_date', version: catalog.version, tier: catalog.tier };
+    return { ok: true, action: 'applied', version, counts };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.warn(`[catalog-sync] ${message}`);
@@ -389,85 +573,33 @@ export async function syncCatalog(force = false): Promise<SyncResult> {
   }
 }
 
-/** Revalidate the stored license against the catalog service and cache the result. */
-export async function refreshLicenseStatus(): Promise<LicenseStatus | null> {
-  const key = getSetting(SETTING_LICENSE_KEY);
-  if (!key) return null;
-  try {
-    const res = await fetch(`${catalogBaseUrl()}/v1/license/check`, {
-      headers: { Authorization: `Bearer ${key}` },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
-    if (!res.ok && res.status !== 401) throw new Error(`HTTP ${res.status}`);
-    const body = (await res.json()) as Omit<LicenseStatus, 'checkedAtMs'>;
-    const status: LicenseStatus = { ...body, checkedAtMs: Date.now() };
-    setSetting(SETTING_LICENSE_STATUS, JSON.stringify(status));
-    return status;
-  } catch (err) {
-    // Offline or service down: keep the cached status. Entitlement is enforced
-    // server-side at /v1/latest anyway — this cache is informational UI state.
-    console.warn(`[catalog-sync] license check unreachable: ${err instanceof Error ? err.message : err}`);
-    return getCachedLicenseStatus();
-  }
-}
-
-export function getCachedLicenseStatus(): LicenseStatus | null {
-  const raw = getSetting(SETTING_LICENSE_STATUS);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as LicenseStatus;
-  } catch {
-    return null;
-  }
-}
-
-export interface CatalogSyncState {
-  baseUrl: string;
-  appliedVersion: string | null;
-  appliedTier: string | null;
-  lastSyncMs: number | null;
-  lastError: string | null;
-}
+// ---- Cache & lifecycle ----
 
 export function getSyncState(): CatalogSyncState {
   return {
-    baseUrl: catalogBaseUrl(),
+    baseUrl: YANGMAO_URL,
     appliedVersion: getSetting(SETTING_APPLIED_VERSION) ?? null,
-    appliedTier: getSetting(SETTING_APPLIED_TIER) ?? null,
     lastSyncMs: Number(getSetting(SETTING_LAST_SYNC_MS)) || null,
     lastError: getSetting(SETTING_LAST_ERROR) || null,
   };
 }
 
 /**
- * Re-apply the cached (already signature-verified) catalog after boot.
+ * Re-apply the cached (already applied) merged catalog after boot.
  *
- * Migrations run on every boot and re-assert the bundled baseline — they
- * INSERT OR IGNORE baseline models the catalog may have deleted and re-run
- * the family-rule resets — while the boot-time network sync 304s on an
- * unchanged version and so would NOT re-apply. Without this step every
- * restart drifts the DB back toward the baseline until the next catalog
- * version bump. Re-applying from the local cache is synchronous, needs no
- * network, and keeps the catalog authoritative even offline.
- *
- * Legacy upgrade path: installs that applied a catalog before the cache
- * existed have an applied-version setting but no cached document. Clearing
- * the applied version makes the next poll fetch the full catalog (no `since`
- * short-circuit), which re-applies it and populates the cache.
+ * On every boot the migrations re-assert the bundled baseline (INSERT OR
+ * IGNORE), which would re-add the yangmao-deleted models and drift the DB
+ * away from the last sync. Re-applying from the local cache is synchronous,
+ * needs no network, and keeps the catalog authoritative even offline.
  */
 export function reapplyCachedCatalog(): { reapplied: boolean; version?: string } {
   try {
     const raw = getSetting(SETTING_APPLIED_JSON);
-    if (!raw) {
-      if (getSetting(SETTING_APPLIED_VERSION)) {
-        getDb().prepare('DELETE FROM settings WHERE key = ?').run(SETTING_APPLIED_VERSION);
-      }
-      return { reapplied: false };
-    }
+    if (!raw) return { reapplied: false };
     const parsed: unknown = JSON.parse(raw);
-    if (!isCatalog(parsed) || parsed.version < MIN_CATALOG_VERSION) return { reapplied: false };
+    if (!isCatalog(parsed)) return { reapplied: false };
     applyCatalog(getDb(), parsed);
-    console.log(`[catalog-sync] re-applied cached ${parsed.tier} v${parsed.version} after boot`);
+    console.log(`[catalog-sync] re-applied cached yangmao v${parsed.version} after boot`);
     return { reapplied: true, version: parsed.version };
   } catch (err) {
     console.warn(`[catalog-sync] cached catalog re-apply failed: ${err instanceof Error ? err.message : err}`);
@@ -486,12 +618,11 @@ export function startCatalogSync(): void {
   }
   reapplyCachedCatalog();
   const run = () => {
-    void refreshLicenseStatus();
     void syncCatalog();
   };
   bootTimer = setTimeout(run, BOOT_DELAY_MS);
   intervalId = setInterval(run, SYNC_INTERVAL_MS);
-  console.log(`[catalog-sync] polling ${catalogBaseUrl()} every ${SYNC_INTERVAL_MS / 3600000}h`);
+  console.log(`[catalog-sync] polling ${YANGMAO_URL} every ${SYNC_INTERVAL_MS / 3600000}h`);
 }
 
 export function stopCatalogSync(): void {

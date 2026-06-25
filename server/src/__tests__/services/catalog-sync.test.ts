@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { initDb, getDb, setSetting, getSetting } from '../../db/index.js';
-import { applyCatalog, reapplyCachedCatalog, MIN_CATALOG_VERSION } from '../../services/catalog-sync.js';
+import { applyCatalog, reapplyCachedCatalog } from '../../services/catalog-sync.js';
 import { migrateDbSchema } from '../../db/migrations.js';
 
 // applyCatalog is the write path between the published catalog and the live
@@ -224,24 +224,8 @@ describe('reapplyCachedCatalog', () => {
     ).toBeUndefined();
   });
 
-  it('clears the applied version when an older install has no cached document', () => {
-    getDb().prepare("DELETE FROM settings WHERE key = 'catalog_applied_json'").run();
-    setSetting('catalog_applied_version', '2099.01.01');
-    const result = reapplyCachedCatalog();
-    expect(result.reapplied).toBe(false);
-    expect(getSetting('catalog_applied_version')).toBeUndefined();
-  });
-
   it('is a no-op without throwing on a corrupt cache', () => {
     setSetting('catalog_applied_json', 'not json at all {');
-    expect(reapplyCachedCatalog().reapplied).toBe(false);
-  });
-
-  it('refuses a cached catalog older than the bundled baseline', () => {
-    const catalog = catalogOf(existingAsCatalogModels());
-    catalog.version = '2000.01.01';
-    expect(catalog.version < MIN_CATALOG_VERSION).toBe(true);
-    setSetting('catalog_applied_json', JSON.stringify(catalog));
     expect(reapplyCachedCatalog().reapplied).toBe(false);
   });
 });
