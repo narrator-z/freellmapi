@@ -323,13 +323,29 @@ async function fetchRankingEnrichment(): Promise<{
 /**
  * Merge ranking data into the yangmao-derived model list.
  * Fields from the original catalog override yangmao defaults.
+ *
+ * Ranking catalog model IDs are kebab-case URL slugs (e.g.
+ * "llama-3.3-70b-versatile") while yangmao model IDs are human-readable
+ * Title Case strings (e.g. "Llama 3.3 70B Versatile").  We normalize
+ * both sides to a common slug for comparison.
  */
 function mergeRankings(yangmaoModels: CatalogModel[], rankings: Map<string, RankingValue>): CatalogModel[] {
+  // Build a secondary lookup keyed by normalized (slug) model IDs so we
+  // can match yangmao's Title Case identifiers against the ranking
+  // catalog's kebab-case URL-style identifiers.
+  const rankingBySlug = new Map<string, RankingValue>();
+  for (const [key, value] of rankings) {
+    const slug = key.split('/').pop() ?? key;
+    rankingBySlug.set(slug, value);
+  }
+
   return yangmaoModels.map((m) => {
-    // Ranking catalog keys use the format "platform/modelId" (slash-separated),
-    // matching the URL-style identifiers used by the original catalog.
-    const key = `${m.platform}/${m.modelId}`;
-    const r = rankings.get(key);
+    const slug = toSlug(m.modelId);
+    // Try exact match first (some IDs already align), then fall back to
+    // the normalized slug lookup.
+    const r = rankings.get(`${m.platform}/${m.modelId}`)
+      ?? rankingBySlug.get(`${m.platform}/${slug}`)
+      ?? rankingBySlug.get(slug);
     if (!r) return m;
     return {
       ...m,
@@ -343,6 +359,23 @@ function mergeRankings(yangmaoModels: CatalogModel[], rankings: Map<string, Rank
       supportsTools: r.supportsTools,
     };
   });
+}
+
+/**
+ * Convert a human-readable model name to a kebab-case URL slug, matching
+ * the identifier format used by the ranking catalog.
+ *   "Llama 3.3 70B Versatile"  →  "llama-3.3-70b-versatile"
+ *   "Qwen2.5-Coder-32B-Instruct" → "qwen2.5-coder-32b-instruct"
+ */
+function toSlug(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[()]/g, '')        // strip parentheses
+    .replace(/[:/]/g, '-')       // colon / slash → hyphen
+    .replace(/\s+/g, '-')        // spaces → hyphens
+    .replace(/[^a-z0-9._-]/g, '') // remove remaining special chars
+    .replace(/-+/g, '-')         // collapse repeated hyphens
+    .replace(/^-|-$/g, '');      // trim leading/trailing hyphens
 }
 
 // ---- applyCatalog (unchanged write path) ----
