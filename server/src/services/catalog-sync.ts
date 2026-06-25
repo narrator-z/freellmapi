@@ -370,12 +370,14 @@ function mergeRankings(yangmaoModels: CatalogModel[], rankings: Map<string, Rank
 function toSlug(s: string): string {
   return s
     .toLowerCase()
-    .replace(/[()]/g, '')        // strip parentheses
-    .replace(/[:/]/g, '-')       // colon / slash → hyphen
-    .replace(/\s+/g, '-')        // spaces → hyphens
-    .replace(/[^a-z0-9._-]/g, '') // remove remaining special chars
-    .replace(/-+/g, '-')         // collapse repeated hyphens
-    .replace(/^-|-$/g, '');      // trim leading/trailing hyphens
+    .replace(/[()]/g, '')              // strip parentheses
+    .replace(/[^a-z0-9._\s-]/g, '')   // keep dots for version numbers
+    .trim()
+    .replace(/\s+/g, '-')              // spaces → hyphens
+    .replace(/[^a-z0-9.-]/g, '')      // keep only alnum, dot, hyphen
+    .replace(/-+/g, '-')               // collapse repeated hyphens
+    .replace(/^-|-$/g, '')             // trim leading/trailing hyphens
+    .replace(/\.\.+/g, '.');           // collapse repeated dots
 }
 
 // ---- applyCatalog (unchanged write path) ----
