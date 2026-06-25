@@ -12,14 +12,6 @@ npm run build            # Compile server (tsc) + client (tsc -b && vite build)
 npm run build:server     # Compile server only
 npm test                 # Run server tests (vitest --pool=forks --fileParallelism=false)
 npm run lint -w client   # ESLint on the client workspace
-
-# Production start (after build)
-node server/dist/index.js
-
-# Desktop app
-npm run desktop:dev      # Build client, then Electron dev mode
-npm run desktop:dist     # macOS .dmg
-npm run desktop:dist:win # Windows installer
 ```
 
 ### Running a single test
@@ -36,6 +28,16 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
 The server only falls back to a dev key when `DEV_MODE=true` AND `NODE_ENV` is not `production`.
+
+### Production start (after build)
+
+node server/dist/index.js
+
+### Desktop app
+
+npm run desktop:dev      # Build client, then Electron dev mode
+npm run desktop:dist     # macOS .dmg
+npm run desktop:dist:win # Windows installer
 
 ## Architecture
 
@@ -65,7 +67,7 @@ The server is a single-process Express 5 app that serves both the `/v1` OpenAI-c
 - `routes/` — Express route handlers for both the proxy (`proxy.ts`, `responses.ts`, `embeddings.ts`) and admin API (`keys.ts`, `models.ts`, `fallback.ts`, `analytics.ts`, `auth.ts`, `settings.ts`, `premium.ts`, `health.ts`)
 - `middleware/` — `requireAuth.ts` (session-token auth for `/api/*`), `rateLimit.ts` (per-IP proxy rate limiter), `errorHandler.ts`
 - `db/index.ts` — Drizzle ORM + better-sqlite3 schema, migrations, and seed data (model catalog rows)
-- `lib/` — Utilities: `crypto.ts` (AES-256-GCM encrypt/decrypt for API keys), `proxy.ts` (SOCKS proxy support via undici), `content.ts` (multimodal content flattening), `tool-args.ts`, `tool-call-rescue.ts`, `password.ts` (scrypt hashing), `budget.ts`, `error-redaction.ts`
+- `lib/` — Utilities: `crypto.ts` (AES-256-GCM encrypt/decrypt for API keys), `proxy.ts` (SOCKS proxy support via undici), `content.ts` (multimodal content flattening), `tool-args.ts`, `tool-call-rescue.ts`, `password.ts` (scrypt hashing), `budget.ts`, `error-redaction.txt`
 
 ### Auth model
 
@@ -80,7 +82,7 @@ All providers extend `BaseProvider` and implement three methods:
 - `streamChatCompletion()` — returns `AsyncGenerator<ChatCompletionChunk>`
 - `validateKey()` — health-check probe
 
-To add a new OpenAI-compatible provider, register it in `providers/index.ts` with a `baseUrl` and seed its models in `db/index.ts` migrations. Non-OpenAI-wire formats (like Google Gemini) need a full custom adapter.
+To add a new OpenAI-compatible provider, register it in `providers/index.ts` with a `baseUrl` and seed its models in `db/index.ts` migrations. Non-OpenAI-wire forms (like Google Gemini) need a full custom adapter.
 
 ### Database
 

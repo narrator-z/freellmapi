@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { RefreshCw } from 'lucide-react'
+import { ExternalLink, RefreshCw, Sparkles } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
 import { PageHeader } from '@/components/page-header'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { useI18n } from '@/lib/i18n'
+import { useI18n } from '@/i18n'
 
 interface LicenseStatus {
   valid: boolean
@@ -35,12 +35,18 @@ interface PremiumStatus {
   siteUrl: string
 }
 
-function fmtWhen(ms: number | null): string {
-  if (!ms) return 'never'
+function fmtWhen(ms: number | null): string | null {
+  if (!ms) return null
   return new Date(ms).toLocaleString()
 }
 
+function fmtDate(iso: string | null): string {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
 export default function PremiumPage() {
+  const { t } = useI18n()
   const queryClient = useQueryClient()
   const [keyInput, setKeyInput] = useState('')
 
@@ -51,6 +57,7 @@ export default function PremiumPage() {
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ['premium'] })
+    // A sync may have changed the model list and quirks.
     queryClient.invalidateQueries({ queryKey: ['models'] })
   }
 
@@ -73,18 +80,25 @@ export default function PremiumPage() {
     onSuccess: invalidate,
   })
 
-  const { t } = useI18n()
+  const openPortal = useMutation({
+    mutationFn: () => apiFetch<{ url: string }>('/api/premium/portal', { method: 'POST' }),
+    onSuccess: ({ url }) => {
+      window.open(url, '_blank', 'noopener')
+    },
+  })
 
   if (isLoading || !data) {
     return (
       <div>
         <PageHeader title={t('premium.title')} description={t('premium.description')} />
-        <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+        <p className="text-sm text-muted-foreground">{t('premium.loading')}</p>
       </div>
     )
   }
 
-  const { hasKey, maskedKey, catalog } = data
+  const { hasKey, maskedKey, license, catalog, siteUrl } = data
+  const live = catalog.appliedTier === 'live'
+  const licensed = hasKey && license?.valid
 
   return (
     <div>
@@ -100,46 +114,68 @@ export default function PremiumPage() {
       />
 
       <div className="space-y-8">
-        {/* Catalog feed state — always live */}
+        {/* Catalog feed state */}
         <section>
           <h2 className="text-sm font-medium mb-3">{t('premium.catalogFeed')}</h2>
           <div className="rounded-3xl border bg-card p-5">
             <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
               <div className="flex items-center gap-2">
-                <span className="inline-block size-2 rounded-full bg-emerald-500" />
-                <span className="text-sm font-medium">{t('premium.liveFeed')}</span>
+                <span className={`inline-block size-2 rounded-full ${live ? 'bg-emerald-500' : 'bg-muted-foreground/40'}`} />
+                <span className="text-sm font-medium">{live ? t('premium.liveFeed') : t('premium.monthlySnapshot')}</span>
                 <Badge variant="outline" className="font-mono text-[11px]">
                   {catalog.appliedVersion ?? t('premium.bundled')}
                 </Badge>
               </div>
-              <span className="text-xs text-muted-foreground">{t('premium.lastChecked')}: {fmtWhen(catalog.lastSyncMs)}</span>
+              <span className="text-xs text-muted-foreground">{t('premium.lastChecked', { when: fmtWhen(catalog.lastSyncMs) ?? t('common.never') })}</span>
             </div>
-              <p className="text-xs text-muted-foreground mt-3">
-              {t('premium.catalogDescription')}
+            <p className="text-xs text-muted-foreground mt-3">
+              {live
+                ? t('premium.liveDescription')
+                : t('premium.snapshotDescription')}
             </p>
             {catalog.lastError && (
-              <p className="text-destructive text-xs mt-2">{t('premium.syncProblem')}: {catalog.lastError}</p>
+              <p className="text-destructive text-xs mt-2">{t('premium.lastSyncProblem', { error: catalog.lastError })}</p>
             )}
           </div>
         </section>
 
-        {/* License key management */}
+        {/* License */}
         <section>
           <h2 className="text-sm font-medium mb-3">{t('premium.license')}</h2>
           {hasKey ? (
             <div className="rounded-3xl border bg-card p-5 space-y-4">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="font-mono text-sm">{maskedKey}</span>
-                <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-transparent">
-                  Active
-                </Badge>
+                {licensed ? (
+                  <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-transparent">
+                    {license?.plan === 'annual'
+                      ? t('premium.planAnnual')
+                      : license?.plan === 'lifetime'
+                        ? t('premium.planLifetime')
+                        : t('premium.planGeneric')}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-destructive border-destructive/40">
+                    {license?.reason === 'expired' ? t('premium.expired') : t('premium.inactive')}
+                  </Badge>
+                )}
               </div>
 
               <p className="text-xs text-muted-foreground">
-                {t('premium.licenseActive')}
+                {licensed && license?.plan === 'lifetime' && t('premium.lifetimeNote')}
+                {licensed && license?.plan === 'annual' && !license.cancelAtPeriodEnd && license.expiresAt &&
+                  t('premium.renewsOn', { date: fmtDate(license.expiresAt) })}
+                {licensed && license?.plan === 'annual' && license.cancelAtPeriodEnd && license.expiresAt &&
+                  t('premium.willNotRenew', { date: fmtDate(license.expiresAt) })}
+                {!licensed &&
+                  t('premium.keyInactive')}
               </p>
 
               <div className="flex flex-wrap items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => openPortal.mutate()} disabled={openPortal.isPending}>
+                  <ExternalLink />
+                  {openPortal.isPending ? t('premium.openingPortal') : t('premium.manageSubscription')}
+                </Button>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -151,8 +187,11 @@ export default function PremiumPage() {
                 </Button>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                {t('premium.removeKeyDescription')}
+                {t('premium.manageHint')}
               </p>
+              {openPortal.isError && (
+                <p className="text-destructive text-xs">{(openPortal.error as Error).message}</p>
+              )}
             </div>
           ) : (
             <div className="rounded-3xl border bg-card p-5 space-y-4">
@@ -164,11 +203,11 @@ export default function PremiumPage() {
                 }}
               >
                 <div className="space-y-1.5 flex-1 min-w-[260px]">
-                  <Label className="text-xs">License key</Label>
-                <Input
-                  value={keyInput}
-                  onChange={(e) => setKeyInput(e.target.value)}
-                  placeholder={t('premium.licenseKeyPlaceholder')}
+                  <Label className="text-xs">{t('premium.licenseKey')}</Label>
+                  <Input
+                    value={keyInput}
+                    onChange={(e) => setKeyInput(e.target.value)}
+                    placeholder="fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
                     className="font-mono text-xs"
                     autoComplete="off"
                   />
@@ -181,11 +220,43 @@ export default function PremiumPage() {
                 <p className="text-destructive text-xs">{(activate.error as Error).message}</p>
               )}
               <p className="text-xs text-muted-foreground">
-                {t('premium.enterLicenseKey')}
+                {t('premium.keyHint')}{' '}
+                <a className="underline hover:text-foreground" href={`${siteUrl}/manage.html`} target="_blank" rel="noopener noreferrer">
+                  {t('premium.recoverKey')}
+                </a>
+                .
               </p>
             </div>
           )}
         </section>
+
+        {/* Upsell, only when not licensed */}
+        {!licensed && (
+          <section>
+            <div className="rounded-3xl border bg-card p-5 flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <Sparkles className="size-4 mt-0.5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">{t('premium.upsellTitle')}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t('premium.upsellDescription')}
+                  </p>
+                </div>
+              </div>
+              <a
+                href={`${siteUrl}/#pricing`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0"
+              >
+                <Button size="sm">
+                  {t('premium.goPremium')}
+                  <ExternalLink />
+                </Button>
+              </a>
+            </div>
+          </section>
+        )}
       </div>
     </div>
   )

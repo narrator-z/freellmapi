@@ -1,13 +1,14 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ArrowDown, ArrowUp } from 'lucide-react'
 import { apiFetch } from '@/lib/api'
-import { useI18n } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { PageHeader } from '@/components/page-header'
 import { FloatingBar } from '@/components/floating-bar'
 import { ModelsTabs } from '@/components/models-tabs'
+import { useI18n } from '@/i18n'
 
 interface ProviderEntry {
   id: number
@@ -119,7 +120,9 @@ export default function EmbeddingsPage() {
       />
 
       <div className="space-y-6">
-        <p className="text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: t('embeddings.modelAutoDescription') }} />
+        <p className="text-xs text-muted-foreground">
+          {t('embeddings.autoDescription')}
+        </p>
 
         {isLoading ? (
           <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
@@ -131,18 +134,18 @@ export default function EmbeddingsPage() {
               <section key={f.family} className={`rounded-3xl border bg-card p-5 ${noKeys ? 'opacity-60' : ''}`}>
                 <div className="flex items-baseline justify-between gap-4 mb-3 flex-wrap">
                   <div className="flex items-baseline gap-2.5 min-w-0">
-                    <h2 className="text-sm font-medium font-mono truncate">{f.family}</h2>
+                    <Link to={`/models/embeddings/${encodeURIComponent(f.family)}`} className="text-sm font-medium font-mono truncate hover:underline">{f.family}</Link>
                     <span className="text-[10px] rounded-full px-1.5 py-0.5 bg-muted text-muted-foreground tabular-nums">
-                      {f.dimensions}{t('embeddings.dimensions')}
+                      {f.dimensions}d
                     </span>
                     {f.maxInputTokens && (
                       <span className="text-[11px] text-muted-foreground/70 tabular-nums">
-                        {formatTokens(f.maxInputTokens)} {t('embeddings.tokMax')}
+                        {t('embeddings.tokMax', { tokens: formatTokens(f.maxInputTokens) })}
                       </span>
                     )}
                     {f.family === defaultFamily ? (
                       <span className="text-[10px] rounded-full px-1.5 py-0.5 bg-foreground text-background font-medium">
-                        {t('embeddings.defaultAuto')}
+                        {t('embeddings.defaultBadge')}
                       </span>
                     ) : (
                       <button
@@ -154,7 +157,7 @@ export default function EmbeddingsPage() {
                     )}
                   </div>
                   <span className="text-xs text-muted-foreground tabular-nums">
-                    {u ? <>{u.requestsToday} {t('embeddings.reqToday')} · {formatTokens(u.tokensMonth)} {t('embeddings.tokThisMonth')}</> : '—'}
+                    {u ? <>{t('embeddings.usageToday', { count: u.requestsToday })} · {t('embeddings.usageMonth', { count: formatTokens(u.tokensMonth) })}</> : '—'}
                   </span>
                 </div>
 
@@ -168,7 +171,7 @@ export default function EmbeddingsPage() {
                           <span className="truncate font-mono text-[11px] text-muted-foreground">{p.modelId}</span>
                           {p.keyCount === 0 && (
                             <span className="text-[10px] rounded-full px-1.5 py-0.5 bg-amber-600/15 text-amber-700 dark:bg-amber-400/15 dark:text-amber-400">
-                              {t('embeddings.noKey')}
+                              {t('models.noKey')}
                             </span>
                           )}
                         </div>
@@ -179,7 +182,7 @@ export default function EmbeddingsPage() {
                           <button
                             onClick={() => moveProvider(f.family, i, -1)}
                             disabled={i === 0}
-                            aria-label="Move up"
+                            aria-label={t('embeddings.moveUp')}
                             className="rounded-md p-1 text-muted-foreground/60 hover:text-foreground disabled:opacity-25 transition-colors"
                           >
                             <ArrowUp className="size-3.5" />
@@ -187,7 +190,7 @@ export default function EmbeddingsPage() {
                           <button
                             onClick={() => moveProvider(f.family, i, 1)}
                             disabled={i === f.providers.length - 1}
-                            aria-label="Move down"
+                            aria-label={t('embeddings.moveDown')}
                             className="rounded-md p-1 text-muted-foreground/60 hover:text-foreground disabled:opacity-25 transition-colors"
                           >
                             <ArrowDown className="size-3.5" />
@@ -207,10 +210,10 @@ export default function EmbeddingsPage() {
         )}
 
         <FloatingBar show={hasChanges}>
-          <span className="text-xs text-muted-foreground">{t('common.unsavedChanges')}</span>
+          <span className="text-xs text-muted-foreground">{t('embeddings.unsavedChanges')}</span>
           <Button variant="outline" size="sm" onClick={discard}>{t('common.discard')}</Button>
           <Button size="sm" onClick={handleSave} disabled={saveMutation.isPending}>
-            {saveMutation.isPending ? t('common.saving') : t('common.saveChanges')}
+            {saveMutation.isPending ? t('embeddings.savingChanges') : t('embeddings.saveChanges')}
           </Button>
         </FloatingBar>
       </div>

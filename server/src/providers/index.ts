@@ -184,10 +184,50 @@ register(new OpenAICompatProvider({
   keyless: true,
 }));
 
+// Agnes AI (Sapiens AI) — OpenAI-compatible, backed by LiteLLM + vLLM. Its
+// proprietary Agnes models are currently served at $0/token: live-probed
+// 2026-06-15, the LiteLLM cost headers (x-litellm-response-cost-original) come
+// back 0.0 with no credit drain, so usage is genuinely free rather than a
+// one-time signup-credit grant. The $0 is promotional ("previously $X" /
+// "during this period"), and there is a paid Token/Unlimited subscription
+// underneath, so watch for reversion to paid. ~30 concurrent requests succeed
+// before 429s (no documented RPM/RPD). Free key from platform.agnes-ai.com,
+// no card. Catalog rows live in the catalog (premium → age into free); not
+// shipped as freeapi model migrations.
+register(new OpenAICompatProvider({
+  platform: 'agnes',
+  name: 'Agnes AI',
+  baseUrl: 'https://apihub.agnes-ai.com/v1',
+}));
+
 // Chutes was evaluated for V11 and dropped: probe with a free-tier key
 // returned 402 on every model — "Quota exceeded and account balance is
 // $0.0, please pay with fiat or send tao". The "free" tier requires a
 // non-zero balance, which conflicts with the project's no-card criterion.
+
+// Reka — OpenAI-compatible (api.reka.ai/v1). Live-probed 2026-06-17: free via a
+// recurring monthly credit grant (no card; key from platform.reka.ai), billed
+// calls succeed with no 402. The OpenAI-compatible /v1/models lists two models:
+// reka-flash-3 (text reasoning) and reka-edge-2603 (natively multimodal —
+// accepts image/video input). Balance is dashboard-only (no credits API).
+// Catalog rows live in the catalog (premium → age into free); they are NOT
+// shipped as freeapi model migrations.
+register(new OpenAICompatProvider({
+  platform: 'reka',
+  name: 'Reka',
+  baseUrl: 'https://api.reka.ai/v1',
+}));
+
+// SiliconFlow — OpenAI-compatible (api.siliconflow.com/v1). Registered mainly
+// for its FREE generative-media models (FLUX.1-schnell image, CosyVoice2 TTS),
+// which route via services/media.ts; OpenAI-compatible chat is supported too.
+// Key from siliconflow.com, no card; validateKey uses GET /v1/models (200 with
+// a valid key). Catalog rows live in the catalog (premium → age into free).
+register(new OpenAICompatProvider({
+  platform: 'siliconflow',
+  name: 'SiliconFlow',
+  baseUrl: 'https://api.siliconflow.com/v1',
+}));
 
 // Placeholder so getProvider('custom')/hasProvider('custom')/getAllProviders()
 // behave — but the real instance is built per-key by resolveProvider(), since

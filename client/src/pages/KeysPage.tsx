@@ -3,16 +3,32 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { PageHeader } from '@/components/page-header'
-import type { ApiKey, Platform } from '../../../shared/types'
+import type { ApiKey, Platform, ProviderQuotaState } from '../../../shared/types'
 import { Pencil, ExternalLink, Globe } from 'lucide-react'
 import { formatSqliteUtcToLocalTime } from '@/lib/utils'
-import { useI18n } from '@/lib/i18n'
+import { useI18n } from '@/i18n'
 
-function GetKeyLink({ url, label }: { url: string; label: string }) {
+// Claude (Anthropic) model families the mapping editor exposes. Anthropic
+// clients send these names; each maps to "auto" (router picks a free model) or
+// a pinned catalog model. Mirrors services/anthropic-map.ts on the server.
+type ClaudeFamily = 'default' | 'opus' | 'sonnet' | 'haiku'
+type AnthropicMap = Record<ClaudeFamily, string>
+interface MappableModel { modelId: string; displayName: string; enabled: boolean }
+const FAMILY_ORDER: { key: ClaudeFamily; labelKey: string }[] = [
+  { key: 'default', labelKey: 'keys.familyDefault' },
+  { key: 'opus', labelKey: 'keys.familyOpus' },
+  { key: 'sonnet', labelKey: 'keys.familySonnet' },
+  { key: 'haiku', labelKey: 'keys.familyHaiku' },
+]
+
+// Small "Get API key" external link shown next to a provider (#137).
+function GetKeyLink({ url }: { url: string }) {
+  const { t } = useI18n()
   if (!url) return null
   return (
     <a
@@ -21,7 +37,7 @@ function GetKeyLink({ url, label }: { url: string; label: string }) {
       rel="noopener noreferrer"
       className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
     >
-      {label}
+      {t('keys.getApiKey')}
       <ExternalLink className="size-3" />
     </a>
   )
@@ -51,6 +67,9 @@ const PLATFORMS: { value: Platform; label: string; url: string; keyless?: boolea
   { value: 'llm7', label: 'LLM7 (anon ok)', url: 'https://llm7.io' },
   { value: 'huggingface', label: 'HuggingFace Router', url: 'https://huggingface.co/settings/tokens' },
   { value: 'opencode', label: 'OpenCode Zen (free key)', url: 'https://opencode.ai/auth' },
+  { value: 'agnes', label: 'Agnes AI (free key)', url: 'https://platform.agnes-ai.com' },
+  { value: 'reka', label: 'Reka (free key)', url: 'https://platform.reka.ai' },
+  { value: 'siliconflow', label: 'SiliconFlow (image + TTS)', url: 'https://siliconflow.com' },
 ]
 
 // 'custom' is configured through its own form (base URL + model), not the
@@ -69,15 +88,12 @@ const statusDot: Record<string, string> = {
   unknown: 'bg-muted-foreground/40',
 }
 
-function statusLabel(status: string, t: (k: string) => string): string {
-  const map: Record<string, string> = {
-    healthy: t('status.healthy'),
-    rate_limited: t('status.rateLimited'),
-    invalid: t('status.invalid'),
-    error: t('status.error'),
-    unknown: t('status.unknown'),
-  }
-  return map[status] ?? status
+const statusLabelKey: Record<string, string> = {
+  healthy: 'status.healthy',
+  rate_limited: 'status.rateLimited',
+  invalid: 'status.invalid',
+  error: 'status.error',
+  unknown: 'status.unchecked',
 }
 
 interface HealthPlatform {
@@ -93,13 +109,62 @@ interface HealthPlatform {
 interface HealthData {
   platforms: HealthPlatform[]
   keys: { id: number; platform: string; status: string; lastCheckedAt: string | null }[]
+  quotaStates: ProviderQuotaState[]
+}
+
+function formatQuotaNumber(value: number | null): string {
+  return value == null ? '—' : new Intl.NumberFormat().format(value)
+}
+
+function formatResetAt(value: string | null): string {
+  if (!value) return '—'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString()
+}
+
+function QuotaSignalsSection({ states }: { states: ProviderQuotaState[] }) {
+  return (
+    <section>
+      <h2 className="text-sm font-medium mb-3">Quota signals</h2>
+      {states.length === 0 ? (
+        <div className="rounded-3xl border border-dashed p-6 text-sm text-muted-foreground bg-card">
+          No quota observations yet. The dashboard will fill in after providers return headers, quota errors, or validation signals.
+        </div>
+      ) : (
+        <div className="rounded-3xl border divide-y bg-card overflow-hidden">
+          {states.map((state) => (
+            <div key={`${state.platform}:${state.keyId}:${state.quotaPoolKey}:${state.metric}`} className="px-4 py-3.5 text-sm">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="font-medium">{state.platform}</span>
+                <span className="text-muted-foreground">key #{state.keyId}</span>
+                <span className="text-muted-foreground">pool {state.quotaPoolKey}</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{state.metric}</span>
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {state.source} · {Math.round(state.confidence * 100)}%
+                </span>
+              </div>
+              <div className="mt-2 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2 lg:grid-cols-4">
+                <div><span className="text-foreground">Limit</span> {formatQuotaNumber(state.limit)}</div>
+                <div><span className="text-foreground">Remaining</span> {formatQuotaNumber(state.remaining)}</div>
+                <div><span className="text-foreground">Reset</span> {formatResetAt(state.resetAt)}</div>
+                <div><span className="text-foreground">Observed</span> {formatSqliteUtcToLocalTime(state.observedAt, { hour: '2-digit', minute: '2-digit' })}</div>
+              </div>
+              {state.notes && (
+                <p className="mt-2 text-xs text-muted-foreground">{state.notes}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  )
 }
 
 function UnifiedKeySection() {
+  const { t } = useI18n()
   const queryClient = useQueryClient()
   const [showKey, setShowKey] = useState(false)
   const [copied, setCopied] = useState(false)
-  const { t } = useI18n()
 
   const { data, isError } = useQuery<{ apiKey: string }>({
     queryKey: ['unified-key'],
@@ -127,8 +192,10 @@ function UnifiedKeySection() {
     <section className="rounded-3xl border bg-card p-5">
       <div className="flex items-start justify-between gap-4 mb-3">
         <div>
-          <h2 className="text-sm font-medium">{t('keys.unifiedApiKey')}</h2>
-          <p className="text-xs text-muted-foreground mt-0.5" dangerouslySetInnerHTML={{ __html: t('keys.unifiedKeyDescription') }} />
+          <h2 className="text-sm font-medium">{t('keys.unifiedKey')}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {t('keys.unifiedKeyDescBefore')}<code className="font-mono">api_key</code>{t('keys.unifiedKeyDescAfter')}
+          </p>
         </div>
         <Button
           variant="ghost"
@@ -141,17 +208,19 @@ function UnifiedKeySection() {
       </div>
 
       {isError ? (
-        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-xs text-destructive" dangerouslySetInnerHTML={{ __html: t('keys.cantReachServer', { base: baseUrl.replace('/v1', '') }) }} />
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-xs text-destructive">
+          {t('keys.serverUnreachableBefore')}<code className="font-mono">{baseUrl.replace('/v1', '')}</code>{t('keys.serverUnreachableAfter')}
+        </div>
       ) : (
         <div className="flex items-center gap-2">
           <code className="flex-1 font-mono text-xs bg-muted px-3 py-2 rounded-lg select-all truncate tabular-nums">
             {showKey ? apiKey : masked}
           </code>
           <Button variant="outline" size="sm" onClick={() => setShowKey(!showKey)}>
-            {showKey ? t('keys.hide') : t('keys.show')}
+            {showKey ? t('keys.hideKey') : t('keys.showKey')}
           </Button>
           <Button variant="outline" size="sm" onClick={copy}>
-            {copied ? t('keys.copied') : t('keys.copy')}
+            {copied ? t('keys.copiedKey') : t('keys.copyKey')}
           </Button>
         </div>
       )}
@@ -159,27 +228,31 @@ function UnifiedKeySection() {
       <div className="mt-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs">
         <span className="text-muted-foreground">{t('keys.baseUrl')}</span>
         <code className="font-mono">{baseUrl}</code>
-        <span className="text-muted-foreground">{t('keys.chat')}</span>
+        <span className="text-muted-foreground">{t('keys.endpointChat')}</span>
         <code className="font-mono">/v1/chat/completions</code>
-        <span className="text-muted-foreground">{t('keys.responses')}</span>
+        <span className="text-muted-foreground">{t('keys.endpointResponses')}</span>
         <code className="font-mono">/v1/responses</code>
-        <span className="text-muted-foreground">{t('keys.embeddings')}</span>
-        <code className="font-mono">/v1/embeddings</code>
+        <span className="text-muted-foreground">{t('keys.endpointMessages')}</span>
+        <code className="font-mono">/v1/messages <span className="text-muted-foreground">({t('keys.endpointMessagesHint')})</span></code>
+        <span className="text-muted-foreground">{t('keys.endpointEmbeddings')}</span>
+        <code className="font-mono">/v1/embeddings <span className="text-muted-foreground">({t('keys.endpointEmbeddingsHint')})</span></code>
       </div>
     </section>
   )
 }
 
 function ProxySettingsSection() {
+  const { t } = useI18n()
   const queryClient = useQueryClient()
   const [proxyUrl, setProxyUrl] = useState('')
-  const { t } = useI18n()
 
   const { data, isError } = useQuery<{ proxyUrl: string; enabled: boolean; bypassPlatforms: string[]; active: boolean }>({
     queryKey: ['proxy-url'],
     queryFn: () => apiFetch('/api/settings/proxy'),
   })
 
+  // Sync from server when the query refetches; keep the user's typed value
+  // in between (controlled input).
   useEffect(() => {
     if (data) setProxyUrl(data.proxyUrl)
   }, [data?.proxyUrl])
@@ -207,10 +280,10 @@ function ProxySettingsSection() {
         <div>
           <h2 className="text-sm font-medium flex items-center gap-2">
             <Globe className="size-3.5 text-muted-foreground" />
-            {t('proxy.title')}
+            {t('keys.outboundProxy')}
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {t('proxy.description')}
+            {t('keys.outboundProxyDescription')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -221,18 +294,18 @@ function ProxySettingsSection() {
           />
           {active && enabled && (
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium">
-              {t('proxy.active')}
+              {t('common.active')}
             </span>
           )}
         </div>
       </div>
 
       {isError ? (
-        <p className="text-xs text-muted-foreground">{t('keys.couldNotLoadProxySettings')}</p>
+        <p className="text-xs text-muted-foreground">{t('keys.proxyLoadFailed')}</p>
       ) : (
         <form onSubmit={submit} className="flex items-end gap-3">
           <div className="space-y-1.5 flex-1">
-            <Label className="text-xs">{t('proxy.proxyUrl')}</Label>
+            <Label className="text-xs">{t('keys.proxyUrl')}</Label>
             <Input
               value={proxyUrl}
               onChange={e => setProxyUrl(e.target.value)}
@@ -241,7 +314,7 @@ function ProxySettingsSection() {
             />
           </div>
           <Button type="submit" size="sm" disabled={saveProxy.isPending}>
-            {saveProxy.isPending ? t('common.saving') : t('common.save')}
+            {saveProxy.isPending ? t('keys.savingProxy') : t('keys.saveProxy')}
           </Button>
         </form>
       )}
@@ -250,21 +323,43 @@ function ProxySettingsSection() {
         <p className="text-destructive text-xs mt-2">{(saveProxy.error as Error).message}</p>
       )}
 
-      <div className="mt-3 text-[11px] text-muted-foreground" dangerouslySetInnerHTML={{ __html: t('proxy.urlConfigTip') }} />
+      <div className="mt-3 text-[11px] text-muted-foreground">
+        <p>
+          {t('keys.proxyEnvHintBefore')}<code className="font-mono">PROXY_URL</code>{t('keys.proxyEnvHintAfter')}
+        </p>
+        <ul className="list-disc list-inside mt-1 space-y-0.5">
+          <li><code className="font-mono">socks5://127.0.0.1:1080</code></li>
+          <li><code className="font-mono">http://proxy.corp.com:8080</code></li>
+          <li><code className="font-mono">socks5://user:pass@proxy:1080</code></li>
+        </ul>
+      </div>
     </section>
   )
 }
 
+// Split a free-text model field on commas / newlines into a clean id list,
+// dropping blanks and duplicates so one endpoint can take several models. (#281)
+function parseModelList(raw: string): string[] {
+  const seen = new Set<string>()
+  return raw
+    .split(/[\n,]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0 && !seen.has(s) && seen.add(s))
+}
+
 function CustomProviderSection() {
+  const { t } = useI18n()
   const queryClient = useQueryClient()
   const [baseUrl, setBaseUrl] = useState('')
   const [model, setModel] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [apiKey, setApiKey] = useState('')
-  const { t } = useI18n()
+
+  const models = parseModelList(model)
+  const multiple = models.length > 1
 
   const addCustom = useMutation({
-    mutationFn: (body: { baseUrl: string; model: string; displayName?: string; apiKey?: string }) =>
+    mutationFn: (body: { baseUrl: string; models: string[]; displayName?: string; apiKey?: string }) =>
       apiFetch('/api/keys/custom', { method: 'POST', body: JSON.stringify(body) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['keys'] })
@@ -278,17 +373,26 @@ function CustomProviderSection() {
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!baseUrl || !model) return
-    addCustom.mutate({ baseUrl, model, displayName: displayName || undefined, apiKey: apiKey || undefined })
+    if (!baseUrl || models.length === 0) return
+    // A single display name only makes sense for a lone model; with several
+    // ids the server names each model after its own id.
+    addCustom.mutate({
+      baseUrl,
+      models,
+      displayName: !multiple ? (displayName || undefined) : undefined,
+      apiKey: apiKey || undefined,
+    })
   }
 
   return (
     <section>
-      <h2 className="text-sm font-medium mb-1">{t('custom.title')}</h2>
-      <p className="text-xs text-muted-foreground mb-3">{t('custom.description')}</p>
+      <h2 className="text-sm font-medium mb-1">{t('keys.addCustom')}</h2>
+      <p className="text-xs text-muted-foreground mb-3">
+        {t('keys.addCustomDescription')}
+      </p>
       <form onSubmit={submit} className="flex flex-wrap items-end gap-3 rounded-3xl border p-4 bg-card">
         <div className="space-y-1.5 flex-1 min-w-[240px]">
-          <Label className="text-xs">{t('custom.baseUrl')}</Label>
+          <Label className="text-xs">{t('keys.customBaseUrl')}</Label>
           <Input
             value={baseUrl}
             onChange={e => setBaseUrl(e.target.value)}
@@ -297,35 +401,37 @@ function CustomProviderSection() {
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs">{t('custom.model')}</Label>
-          <Input
+          <Label className="text-xs">{t('keys.customModels')}</Label>
+          <Textarea
             value={model}
             onChange={e => setModel(e.target.value)}
-            placeholder="qwen3:4b"
-            className="w-[180px] font-mono text-xs"
+            placeholder={'qwen3:4b\nllama3:8b'}
+            rows={2}
+            className="w-[200px] font-mono text-xs"
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs">{t('custom.displayName')}</Label>
+          <Label className="text-xs">{t('keys.customDisplayName')}</Label>
           <Input
             value={displayName}
             onChange={e => setDisplayName(e.target.value)}
-            placeholder={t('common.optional')}
+            placeholder={multiple ? t('keys.customDisplayNamePerModel') : t('keys.customDisplayNameOptional')}
+            disabled={multiple}
             className="w-[150px]"
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs">{t('keys.apiKey')}</Label>
+          <Label className="text-xs">{t('keys.customApiKey')}</Label>
           <Input
             type="password"
             value={apiKey}
             onChange={e => setApiKey(e.target.value)}
-            placeholder={t('common.optional')}
+            placeholder={t('keys.customDisplayNameOptional')}
             className="w-[150px] font-mono text-xs"
           />
         </div>
-        <Button type="submit" size="sm" disabled={!baseUrl || !model || addCustom.isPending}>
-          {addCustom.isPending ? t('keys.adding') : t('keys.addModel')}
+        <Button type="submit" size="sm" disabled={!baseUrl || models.length === 0 || addCustom.isPending}>
+          {addCustom.isPending ? t('keys.addingCustom') : multiple ? t('keys.addModels', { count: models.length }) : t('keys.addModel')}
         </Button>
       </form>
       {addCustom.isError && (
@@ -335,16 +441,107 @@ function CustomProviderSection() {
   )
 }
 
-export default function KeysPage() {
+// Claude (Anthropic) model mapping: point a Claude / Anthropic SDK client at
+// this server and decide how its built-in model names route into the free pool.
+function AnthropicSection() {
+  const { t } = useI18n()
   const queryClient = useQueryClient()
+
+  // Anthropic clients append `/v1/messages` to the base URL, so they want the
+  // bare origin (OpenAI clients use origin + /v1, shown in the key section).
+  const origin = import.meta.env.DEV
+    ? `http://${window.location.hostname}:${__SERVER_PORT__}`
+    : window.location.origin
+
+  const { data: mapData } = useQuery<{ map: AnthropicMap }>({
+    queryKey: ['anthropic-map'],
+    queryFn: () => apiFetch('/api/settings/anthropic-map'),
+  })
+  const { data: models = [] } = useQuery<MappableModel[]>({
+    queryKey: ['fallback'],
+    queryFn: () => apiFetch('/api/fallback'),
+  })
+
+  const [draft, setDraft] = useState<AnthropicMap | null>(null)
+  useEffect(() => { if (mapData?.map) setDraft(mapData.map) }, [mapData])
+
+  const save = useMutation({
+    mutationFn: (map: AnthropicMap) => apiFetch('/api/settings/anthropic-map', { method: 'PUT', body: JSON.stringify(map) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['anthropic-map'] }),
+  })
+
+  // Dedup catalog models by id; only enabled models can be pinned.
+  const modelOptions = Array.from(new Map(models.filter(m => m.enabled).map(m => [m.modelId, m])).values())
+    .sort((a, b) => a.displayName.localeCompare(b.displayName))
+  const dirty = !!(draft && mapData?.map && JSON.stringify(draft) !== JSON.stringify(mapData.map))
+
+  return (
+    <section className="rounded-3xl border bg-card p-5">
+      <div className="flex items-start justify-between gap-4 mb-3">
+        <div>
+          <h2 className="text-sm font-medium">{t('keys.anthropicTitle')}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5 max-w-prose">{t('keys.anthropicDesc')}</p>
+        </div>
+        <Button size="sm" disabled={!dirty || save.isPending} onClick={() => draft && save.mutate(draft)}>
+          {save.isSuccess && !dirty ? t('keys.anthropicSaved') : t('keys.anthropicSave')}
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-xs mb-4">
+        <span className="text-muted-foreground">{t('keys.anthropicBaseUrl')}</span>
+        <code className="font-mono break-all">{origin}</code>
+        <span className="text-muted-foreground">{t('keys.anthropicAuth')}</span>
+        <code className="font-mono">x-api-key</code>
+      </div>
+
+      <div className="space-y-2">
+        {FAMILY_ORDER.map(({ key, labelKey }) => (
+          <div key={key} className="flex items-center gap-3">
+            <span className="w-40 text-xs font-medium shrink-0">{t(labelKey)}</span>
+            <Select
+              value={draft?.[key] ?? 'auto'}
+              onValueChange={(v) => setDraft(d => (d ? { ...d, [key]: v } : d))}
+            >
+              <SelectTrigger className="w-[320px] max-w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">{t('keys.anthropicAuto')}</SelectItem>
+                {/* Keep a currently-pinned-but-now-disabled model selectable. */}
+                {draft?.[key] && draft[key] !== 'auto' && !modelOptions.some(m => m.modelId === draft[key]) && (
+                  <SelectItem value={draft[key]}>{draft[key]}</SelectItem>
+                )}
+                {modelOptions.map(m => (
+                  <SelectItem key={m.modelId} value={m.modelId}>{m.displayName}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-xs text-muted-foreground mt-4 max-w-prose">{t('keys.anthropicNote')}</p>
+    </section>
+  )
+}
+
+type KeysTab = 'providers' | 'apiKey' | 'anthropic'
+const KEYS_TABS: { id: KeysTab; labelKey: string }[] = [
+  { id: 'providers', labelKey: 'keys.tabProviders' },
+  { id: 'apiKey', labelKey: 'keys.tabApiKey' },
+  { id: 'anthropic', labelKey: 'keys.tabAnthropic' },
+]
+
+export default function KeysPage() {
+  const { t } = useI18n()
+  const queryClient = useQueryClient()
+  const [tab, setTab] = useState<KeysTab>('providers')
   const [platform, setPlatform] = useState<Platform | ''>('')
   const [apiKey, setApiKey] = useState('')
   const [accountId, setAccountId] = useState('')
   const [label, setLabel] = useState('')
   const [editingKeyId, setEditingKeyId] = useState<number | null>(null)
   const [editingLabel, setEditingLabel] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
-  const { t } = useI18n()
 
   const { data: keys = [], isLoading } = useQuery<ApiKey[]>({
     queryKey: ['keys'],
@@ -485,30 +682,55 @@ export default function KeysPage() {
   return (
     <div>
       <PageHeader
-        title={t('keys.title')}
-        description={t('keys.description')}
+        title={t('keys.pageTitle')}
+        description={t('keys.pageDescription')}
         actions={
-          keys.length > 0 && (
-            <Button variant="outline" size="sm" onClick={() => checkAll.mutate()} disabled={checkAll.isPending}>
-              {checkAll.isPending ? t('common.checking') : t('common.checkAll')}
-            </Button>
-          )
+          <>
+            {tab === 'providers' && keys.length > 0 && (
+              <Button variant="outline" size="sm" onClick={() => checkAll.mutate()} disabled={checkAll.isPending}>
+                {checkAll.isPending ? t('keys.checking') : t('keys.checkAll')}
+              </Button>
+            )}
+            <div className="inline-flex gap-1 rounded-xl border p-1">
+              {KEYS_TABS.map(tb => (
+                <button
+                  key={tb.id}
+                  type="button"
+                  onClick={() => setTab(tb.id)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                    tab === tb.id ? 'bg-foreground text-background font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  }`}
+                >
+                  {t(tb.labelKey)}
+                </button>
+              ))}
+            </div>
+          </>
         }
       />
 
       <div className="space-y-8">
-        <UnifiedKeySection />
+        {tab === 'apiKey' && (
+          <>
+            <UnifiedKeySection />
+            <ProxySettingsSection />
+          </>
+        )}
 
-        <ProxySettingsSection />
+        {tab === 'anthropic' && <AnthropicSection />}
+
+        {tab === 'providers' && (
+        <>
+        <QuotaSignalsSection states={(healthData?.quotaStates ?? []).slice(0, 24)} />
 
         <section>
-          <h2 className="text-sm font-medium mb-3">{t('keys.addProviderKey')}</h2>
+          <h2 className="text-sm font-medium mb-3">{t('keys.addProvider')}</h2>
           <form onSubmit={handleSubmit} className="flex flex-wrap gap-3 rounded-3xl border p-4 bg-card">
             <div className="space-y-1.5">
               <Label className="text-xs">{t('keys.platform')}</Label>
               <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
                 <SelectTrigger className="w-[220px]">
-                  <SelectValue placeholder={t('keys.selectProvider')} />
+                  <SelectValue placeholder={t('keys.selectPlatform')} />
                 </SelectTrigger>
                 <SelectContent>
                   {PLATFORMS.map(p => (
@@ -518,7 +740,7 @@ export default function KeysPage() {
               </Select>
               {(() => {
                 const sel = PLATFORMS.find(p => p.value === platform)
-                return sel?.url ? <div className="pt-0.5"><GetKeyLink url={sel.url} label={t('keys.getApiKey')} /></div> : null
+                return sel?.url ? <div className="pt-0.5"><GetKeyLink url={sel.url} /></div> : null
               })()}
             </div>
             {needsAccountId && (
@@ -533,18 +755,18 @@ export default function KeysPage() {
               </div>
             )}
             <div className="space-y-1.5 flex-1 min-w-[240px]">
-              <Label className="text-xs">{needsAccountId ? t('keys.apiToken') : t('keys.apiKey')}</Label>
+              <Label className="text-xs">{needsAccountId ? t('keys.apiToken') : t('keys.customApiKey')}</Label>
               <Input
                 type="password"
                 value={isKeyless ? '' : apiKey}
                 onChange={e => setApiKey(e.target.value)}
-                placeholder={isKeyless ? t('keys.noKeyNeeded') : (needsAccountId ? t('keys.bearerTokenPlaceholder') : t('keys.apiKeyPlaceholder'))}
+                placeholder={isKeyless ? t('keys.noKeyNeededPlaceholder') : (needsAccountId ? t('keys.bearerTokenPlaceholder') : t('keys.pasteKeyPlaceholder'))}
                 className="font-mono text-xs"
                 disabled={isKeyless}
               />
               {isKeyless && (
                 <p className="text-[11px] text-muted-foreground">
-                  {t('keys.noKeyNeeded')}
+                  {t('keys.keylessHint')}
                 </p>
               )}
             </div>
@@ -554,7 +776,7 @@ export default function KeysPage() {
                 <Input
                   value={label}
                   onChange={e => setLabel(e.target.value)}
-                  placeholder={t('common.optional')}
+                  placeholder={t('keys.customDisplayNameOptional')}
                   className="w-[160px]"
                 />
                 <Button type="submit" size="sm" disabled={!platform || (!isKeyless && !apiKey) || (needsAccountId && !accountId) || addKey.isPending}>
@@ -596,7 +818,7 @@ export default function KeysPage() {
                       <h3 className="text-sm font-medium">{group.label}</h3>
                       {proxyEnabled && (
                         <div className="inline-flex items-center gap-1.5 ml-1">
-                          <span className="text-[10px] text-muted-foreground">{t('keys.proxy')}</span>
+                          <span className="text-[10px] text-muted-foreground">{t('keys.proxyToggleLabel')}</span>
                           <Switch
                             checked={!bypassPlatforms.includes(group.value)}
                             onCheckedChange={() => toggleBypass.mutate(group.value)}
@@ -604,10 +826,10 @@ export default function KeysPage() {
                           />
                         </div>
                       )}
-                      <GetKeyLink url={group.url} label={t('keys.getApiKey')} />
+                      <GetKeyLink url={group.url} />
                     </div>
                     <span className="text-xs text-muted-foreground tabular-nums">
-                      {group.keys.length} {group.keys.length === 1 ? t('keys.key') : t('keys.keys')}
+                      {t(group.keys.length === 1 ? 'keys.keyCountOne' : 'keys.keyCountOther', { count: group.keys.length })}
                     </span>
                   </div>
                   <div className="rounded-2xl border divide-y bg-card overflow-hidden">
@@ -638,7 +860,7 @@ export default function KeysPage() {
                               {k.label && <span className="text-xs text-muted-foreground">{k.label}</span>}
                             </>
                           )}
-                          <span className="text-xs text-muted-foreground">{statusLabel(status, t)}</span>
+                          <span className="text-xs text-muted-foreground">{statusLabelKey[status] ? t(statusLabelKey[status]) : status}</span>
                           <div className="flex-1" />
                           {lastChecked && (
                             <span className="text-[11px] text-muted-foreground tabular-nums">
@@ -653,8 +875,22 @@ export default function KeysPage() {
                           <Button variant="ghost" size="xs" onClick={() => checkKey.mutate(k.id)} disabled={checkKey.isPending}>
                             {t('common.check')}
                           </Button>
-                          <Button variant="ghost" size="xs" className="text-muted-foreground hover:text-destructive" onClick={() => deleteKey.mutate(k.id)} disabled={deleteKey.isPending}>
-                            {t('common.remove')}
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            className={confirmDeleteId === k.id ? 'text-destructive' : 'text-muted-foreground hover:text-destructive'}
+                            onClick={() => {
+                              if (confirmDeleteId === k.id) {
+                                deleteKey.mutate(k.id)
+                                setConfirmDeleteId(null)
+                              } else {
+                                setConfirmDeleteId(k.id)
+                                setTimeout(() => setConfirmDeleteId(c => (c === k.id ? null : c)), 3000)
+                              }
+                            }}
+                            disabled={deleteKey.isPending}
+                          >
+                            {confirmDeleteId === k.id ? t('keys.confirmRemove') : t('common.remove')}
                           </Button>
                         </div>
                       )
@@ -665,6 +901,8 @@ export default function KeysPage() {
             </div>
           )}
         </section>
+        </>
+        )}
       </div>
     </div>
   )

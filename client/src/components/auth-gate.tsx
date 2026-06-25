@@ -1,10 +1,10 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiFetch, setToken, UNAUTHORIZED_EVENT } from '@/lib/api'
-import { useI18n } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useI18n } from '@/i18n'
 
 interface AuthStatus {
   needsSetup: boolean
@@ -54,9 +54,11 @@ function AuthForm({ mode, onAuthed }: { mode: 'setup' | 'login'; onAuthed: () =>
         <span className="font-semibold tracking-tight text-sm">FreeLLMAPI</span>
       </div>
       <div className="rounded-3xl border bg-card p-6">
-        <h1 className="text-base font-medium">{isSetup ? t('auth.createAccount') : t('auth.signIn')}</h1>
+        <h1 className="text-base font-medium">{isSetup ? t('auth.createYourAccount') : t('auth.signIn')}</h1>
         <p className="text-xs text-muted-foreground mt-1 mb-4">
-          {isSetup ? t('auth.createAccountDesc') : t('auth.signInDesc')}
+          {isSetup
+            ? t('auth.setupDescription')
+            : t('auth.loginDescription')}
         </p>
         <form onSubmit={submit} className="space-y-3">
           <div className="space-y-1.5">
@@ -67,7 +69,7 @@ function AuthForm({ mode, onAuthed }: { mode: 'setup' | 'login'; onAuthed: () =>
               autoComplete="username"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t('auth.emailPlaceholder')}
             />
           </div>
           <div className="space-y-1.5">
@@ -83,7 +85,7 @@ function AuthForm({ mode, onAuthed }: { mode: 'setup' | 'login'; onAuthed: () =>
           </div>
           {error && <p className="text-destructive text-xs">{error}</p>}
           <Button type="submit" className="w-full" disabled={busy || !email || !password}>
-            {busy ? (isSetup ? t('auth.creating') : t('auth.signingIn')) : isSetup ? t('auth.createAccountBtn') : t('auth.signInBtn')}
+            {busy ? (isSetup ? t('auth.creating') : t('auth.signingIn')) : isSetup ? t('auth.createAccount') : t('auth.signIn')}
           </Button>
         </form>
       </div>
@@ -112,12 +114,13 @@ export function AuthGate({ children }: { children: ReactNode }) {
     refetch()
   }
 
-  if (isLoading) return <Centered><p className="text-sm text-muted-foreground text-center">{t('common.loading')}</p></Centered>
+  if (isLoading) return <Centered><p className="text-sm text-muted-foreground text-center">{t('auth.loading')}</p></Centered>
   if (isError || !data) {
     return (
       <Centered>
-        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-xs text-destructive"
-          dangerouslySetInnerHTML={{ __html: t('auth.cantReachServer') }} />
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-xs text-destructive">
+          {t('auth.serverUnreachableBefore')}<code className="font-mono">npm run dev</code>{t('auth.serverUnreachableAfter')}
+        </div>
       </Centered>
     )
   }

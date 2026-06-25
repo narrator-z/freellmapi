@@ -44,8 +44,10 @@ export function migrateDbSchema(db: Database.Database) {
   // (drives the realistic "Est. savings" analytics stat).
   applyModelPricing(db);
   migrateEmbeddingsV1(db);
+  migrateMediaV1(db);
   migrateQuirksV1(db);
   ensureUnifiedKey(db);
+  migrateProfilesInit(db);
 }
 
 function createTables(db: Database.Database) {
@@ -123,6 +125,28 @@ function createTables(db: Database.Database) {
       UNIQUE(model_db_id)
     );
 
+    CREATE TABLE IF NOT EXISTS profiles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      emoji TEXT NOT NULL DEFAULT '',
+      color TEXT NOT NULL DEFAULT '#6366f1',
+      type TEXT NOT NULL DEFAULT 'custom',
+      is_favorite INTEGER NOT NULL DEFAULT 0,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      auto_sort TEXT,
+      layout_config TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS profile_models (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      profile_id INTEGER NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+      model_db_id INTEGER NOT NULL REFERENCES models(id) ON DELETE CASCADE,
+      priority INTEGER NOT NULL,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      UNIQUE(profile_id, model_db_id)
+    );
+
     CREATE TABLE IF NOT EXISTS settings (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
@@ -149,6 +173,50 @@ function createTables(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_rate_limit_usage_lookup ON rate_limit_usage(platform, model_id, key_id, kind, created_at_ms);
     CREATE INDEX IF NOT EXISTS idx_rate_limit_cooldowns_expires ON rate_limit_cooldowns(expires_at_ms);
     CREATE INDEX IF NOT EXISTS idx_api_keys_platform ON api_keys(platform);
+
+    CREATE TABLE IF NOT EXISTS provider_quota_state (
+      platform TEXT NOT NULL,
+      key_id INTEGER NOT NULL,
+      quota_pool_key TEXT NOT NULL,
+      metric TEXT NOT NULL,
+      limit_value INTEGER,
+      remaining_value INTEGER,
+      reset_at TEXT,
+      reset_strategy TEXT NOT NULL DEFAULT 'unknown',
+      source TEXT NOT NULL DEFAULT 'probe',
+      confidence REAL NOT NULL DEFAULT 0,
+      notes TEXT,
+      observed_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (platform, key_id, quota_pool_key, metric)
+    );
+    CREATE INDEX IF NOT EXISTS idx_provider_quota_state_platform ON provider_quota_state(platform, key_id, updated_at);
+    CREATE INDEX IF NOT EXISTS idx_provider_quota_state_reset_at ON provider_quota_state(reset_at);
+
+    CREATE TABLE IF NOT EXISTS provider_quota_observations (
+      id TEXT PRIMARY KEY,
+      platform TEXT NOT NULL,
+      key_id INTEGER NOT NULL,
+      provider_account_id TEXT,
+      model_id TEXT,
+      quota_pool_key TEXT NOT NULL,
+      metric TEXT NOT NULL,
+      status_code INTEGER,
+      limit_value INTEGER,
+      remaining_value INTEGER,
+      reset_at TEXT,
+      retry_after_ms INTEGER,
+      reset_strategy TEXT NOT NULL DEFAULT 'unknown',
+      source TEXT NOT NULL DEFAULT 'probe',
+      confidence REAL NOT NULL DEFAULT 0,
+      notes TEXT,
+      raw_json TEXT,
+      endpoint TEXT,
+      observed_at TEXT NOT NULL DEFAULT (datetime('now')),
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_provider_quota_observations_platform ON provider_quota_observations(platform, key_id, observed_at);
+    CREATE INDEX IF NOT EXISTS idx_provider_quota_observations_reset_at ON provider_quota_observations(reset_at);
   `);
 
   ensureRequestKeyIdColumn(db);
@@ -1945,6 +2013,35 @@ function migrateEmbeddingsV1(db: Database.Database) {
 }
 
 /**
+ * Media (image + audio/TTS) models V1 (June 2026): SCHEMA ONLY.
+ *
+ * Generative-media models live in their OWN table — exactly like embeddings —
+ * so they never enter the chat router's candidate pool (a chat request can't
+ * misroute to an image model) and never pollute the chat token budget. This is
+ * schema only: per the no-model-data-in-migrations rule (see migrateDbSchema),
+ * the rows are maintained in the published catalog and arrive via catalog-sync
+ * (premium on the live tier within ~12h, free at the monthly promote). `modality`
+ * is 'image' | 'audio'; `quota_label` mirrors the catalog's display note. The
+ * request_type column (added by migrateEmbeddingsV1) tags media traffic 'image'
+ * / 'audio' so it stays out of the chat budget math.
+ */
+function migrateMediaV1(db: Database.Database) {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS media_models (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      platform TEXT NOT NULL,
+      model_id TEXT NOT NULL,
+      display_name TEXT NOT NULL,
+      modality TEXT NOT NULL,
+      priority INTEGER NOT NULL DEFAULT 0,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      quota_label TEXT NOT NULL DEFAULT '',
+      UNIQUE(platform, model_id)
+    );
+  `);
+}
+
+/**
  * Quirks V1 (June 2026): promote the catalog's free-form "quirks" out of code
  * comments into structured, reusable data so the catalog server can ship them.
  *
@@ -2142,3 +2239,53 @@ function ensureUnifiedKey(db: Database.Database) {
     console.log(`\n  Your unified API key: ${key}\n`);
   }
 }
+
+/**
+ * Migration helper to ensure Default profile exists, legacy profiles converted, 
+ * and fallback_config synced.
+ */
+function migrateProfilesInit(db: Database.Database) {
+  // 1. Convert any legacy built-in profiles to custom profiles (type = 'custom')
+  db.prepare(`
+    UPDATE profiles
+    SET type = 'custom'
+    WHERE type = 'builtin'
+  `).run();
+
+  // 2. Ensure Default profile exists
+  const hasDefault = db.prepare("SELECT COUNT(*) as cnt FROM profiles WHERE type = 'default'").get() as { cnt: number };
+  if (hasDefault.cnt === 0) {
+    const minOrder = (db.prepare('SELECT COALESCE(MIN(sort_order), 0) AS mn FROM profiles').get() as { mn: number }).mn;
+    const targetOrder = Math.min(-1, minOrder - 1);
+
+    const result = db.prepare(
+      "INSERT INTO profiles (name, emoji, color, type, sort_order) VALUES ('Default', '⚙️', '#6366f1', 'default', ?)"
+    ).run(targetOrder);
+
+    const profileId = result.lastInsertRowid as number;
+
+    // Seed profile models from fallback_config
+    db.prepare(`
+      INSERT INTO profile_models (profile_id, model_db_id, priority, enabled)
+      SELECT ?, model_db_id, priority, enabled
+      FROM fallback_config
+      ORDER BY priority ASC
+    `).run(profileId);
+
+    // Make it the active profile if none is set
+    db.prepare(`
+      INSERT INTO settings (key, value) VALUES ('active_profile_id', ?)
+      ON CONFLICT(key) DO NOTHING
+    `).run(String(profileId));
+
+    console.log('Created Default profile');
+  } else {
+    // If it exists, ensure its emoji is '⚙️'
+    db.prepare(`
+      UPDATE profiles
+      SET emoji = '⚙️'
+      WHERE type = 'default' AND emoji != '⚙️'
+    `).run();
+  }
+}
+
