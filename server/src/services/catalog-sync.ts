@@ -249,7 +249,7 @@ async function fetchYangmaoData(): Promise<{ models: CatalogModel[]; version: st
         speedRank: 0,
         sizeLabel: '',
         limits,
-        monthlyTokenBudget: null,
+        monthlyTokenBudget: '',
         contextWindow,
         enabled: true,
         supportsVision: false,
