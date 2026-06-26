@@ -10,7 +10,7 @@ ENCRYPTION_KEY="$(openssl rand -hex 32)"
 printf "ENCRYPTION_KEY=%s\nPORT=3001\n" "$ENCRYPTION_KEY" > .env
 
 # Create data directory
-mkdir -p .freellmapi-data
+mkdir -p freellmapi-data
 
 # Start the app
 docker compose up -d
@@ -53,7 +53,7 @@ docker compose up -d
 freellmapi/
 ├── docker-compose.yml   ← compose file (at project root)
 ├── .env                 ← environment config (same level as compose)
-├── .freellmapi-data/    ← SQLite data directory (same level)
+├── freellmapi-data/     ← SQLite data directory (same level)
 ├── docker/
 │   ├── Dockerfile       ← container build file (in docker/ subdirectory)
 │   └── README.md
@@ -69,7 +69,7 @@ freellmapi/
 | `ENCRYPTION_KEY` | Yes | None | 64-character hex key used to encrypt provider API keys at rest. Generate it once and keep it stable. |
 | `PORT` | No | `3001` | Host port exposed by Docker Compose. The container listens on port 3001. |
 
-Data is stored in `.freellmapi-data/`. Keep the same data directory and `ENCRYPTION_KEY` when upgrading, otherwise existing encrypted provider keys cannot be decrypted.
+Data is stored in `freellmapi-data/`. Keep the same data directory and `ENCRYPTION_KEY` when upgrading, otherwise existing encrypted provider keys cannot be decrypted.
 
 ## Published Image
 
