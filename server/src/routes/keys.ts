@@ -8,13 +8,24 @@ import { encrypt, decrypt, maskKey } from '../lib/crypto.js';
 export const keysRouter = Router();
 
 // Active providers — must match providers/index.ts registrations + shared/types.ts Platform.
-// Moonshot and MiniMax direct integrations were dropped in V4. HuggingFace
-// was dropped in V4 and re-added in V13 via the router.huggingface.co route.
-// SambaNova was dropped in V23 (free tier permanently retired).
+// This list drives the /keys page UI (which platforms the user can add/manage keys for).
+// When adding new platforms, update both this list, providers/index.ts, and shared/types.ts.
 const PLATFORMS = [
+  // Original v1 platforms
   'google', 'groq', 'cerebras', 'nvidia', 'mistral',
   'openrouter', 'github', 'cohere', 'cloudflare', 'zhipu', 'ollama',
-  'kilo', 'pollinations', 'llm7', 'huggingface', 'opencode', 'ovh', 'agnes', 'reka', 'siliconflow', 'custom',
+  'kilo', 'pollinations', 'llm7', 'huggingface', 'opencode', 'ovh', 'agnes', 'reka', 'siliconflow',
+  // Yangmao-supplemented platforms
+  'aimlapi', 'ai21-labs', 'anyscale', 'awanllm', 'baichuan',
+  'cerebras-cloud', 'clawbrain', 'cloudflare-workers-ai',
+  'deepinfra', 'deepseek', 'doubao', 'ernie',
+  'fireworks', 'fireworks-ai', 'grok',
+  'kimi', 'lepton', 'llama-cpp', 'lmstudio', 'localai',
+  'minimax', 'monsterapi', 'novita', 'nvidia-build',
+  'octoai', 'openpipe', 'parasail', 'portkey-ai',
+  'qwen', 'stepfun', 'together-ai', 'sambanova', 'runpod', 'nebius',
+  // User-configured custom endpoint
+  'custom',
 ] as const;
 
 // `key` is optional so keyless providers (Kilo's anonymous gateway) can be added
