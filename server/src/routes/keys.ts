@@ -15,15 +15,13 @@ const PLATFORMS = [
   'google', 'groq', 'cerebras', 'nvidia', 'mistral',
   'openrouter', 'github', 'cohere', 'cloudflare', 'zhipu', 'ollama',
   'kilo', 'pollinations', 'llm7', 'huggingface', 'opencode', 'ovh', 'agnes', 'reka', 'siliconflow',
-  // Yangmao-supplemented platforms
+  // Yangmao-supplemented platforms (excludes duplicates, local-only)
   'aimlapi', 'ai21-labs', 'anyscale', 'awanllm', 'baichuan',
-  'cerebras-cloud', 'clawbrain', 'cloudflare-workers-ai',
-  'deepinfra', 'deepseek', 'doubao', 'ernie',
-  'fireworks', 'fireworks-ai', 'grok',
-  'kimi', 'lepton', 'llama-cpp', 'lmstudio', 'localai',
-  'minimax', 'monsterapi', 'novita', 'nvidia-build',
+  'clawbrain', 'deepinfra', 'deepseek', 'doubao', 'ernie',
+  'fireworks', 'grok', 'kimi', 'lepton',
+  'minimax', 'monsterapi', 'nebius', 'novita',
   'octoai', 'openpipe', 'parasail', 'portkey-ai',
-  'qwen', 'stepfun', 'together-ai', 'sambanova', 'runpod', 'nebius',
+  'qwen', 'runpod', 'sambanova', 'stepfun', 'together-ai',
   // User-configured custom endpoint
   'custom',
 ] as const;
