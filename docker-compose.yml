@@ -2,7 +2,7 @@ services:
   freellmapi:
     image: ghcr.io/narrator-z/freellmapi:latest
     env_file:
-      - ../.env
+      - .env
     environment:
       NODE_ENV: production
       PORT: 3001
@@ -11,7 +11,7 @@ services:
     ports:
       - "${HOST_BIND:-127.0.0.1}:${PORT:-3001}:3001"
     volumes:
-      - ../.freellmapi-data:/app/server/data
+      - ./.freellmapi-data:/app/server/data
     restart: unless-stopped
     healthcheck:
       test:

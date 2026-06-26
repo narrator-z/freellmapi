@@ -2,21 +2,15 @@
 
 Docker Compose is the recommended way to run FreeLLMAPI for personal use. The container serves the Express API and the built React dashboard from one process on port 3001, with SQLite persisted in a local bind mount.
 
-## Prerequisites
-
-- Docker
-- Docker Compose
-- OpenSSL for generating `ENCRYPTION_KEY`
-
 ## Quick Start
 
 ```bash
 # Generate encryption key
 ENCRYPTION_KEY="$(openssl rand -hex 32)"
-printf "ENCRYPTION_KEY=%s\nPORT=3001\n" "$ENCRYPTION_KEY" > ../.env
+printf "ENCRYPTION_KEY=%s\nPORT=3001\n" "$ENCRYPTION_KEY" > .env
 
 # Create data directory
-mkdir -p ../.freellmapi-data
+mkdir -p .freellmapi-data
 
 # Start the app
 docker compose up -d
@@ -38,11 +32,7 @@ curl http://localhost:3001/v1/chat/completions \
 
 ## Operations
 
-All commands run from the `docker/` directory:
-
 ```bash
-cd docker
-
 # Check status
 docker compose ps
 
@@ -57,6 +47,21 @@ docker compose pull
 docker compose up -d
 ```
 
+## File Structure
+
+```
+freellmapi/
+├── docker-compose.yml   ← compose file (at project root)
+├── .env                 ← environment config (same level as compose)
+├── .freellmapi-data/    ← SQLite data directory (same level)
+├── docker/
+│   ├── Dockerfile       ← container build file (in docker/ subdirectory)
+│   └── README.md
+├── server/
+├── client/
+└── ...
+```
+
 ## Configuration
 
 | Variable | Required | Default | Description |
@@ -64,7 +69,7 @@ docker compose up -d
 | `ENCRYPTION_KEY` | Yes | None | 64-character hex key used to encrypt provider API keys at rest. Generate it once and keep it stable. |
 | `PORT` | No | `3001` | Host port exposed by Docker Compose. The container listens on port 3001. |
 
-Data is stored in `.freellmapi-data/` (next to the project root). Keep the same data directory and `ENCRYPTION_KEY` when upgrading, otherwise existing encrypted provider keys cannot be decrypted.
+Data is stored in `.freellmapi-data/`. Keep the same data directory and `ENCRYPTION_KEY` when upgrading, otherwise existing encrypted provider keys cannot be decrypted.
 
 ## Published Image
 
