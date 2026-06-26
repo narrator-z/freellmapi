@@ -1,6 +1,6 @@
 # Docker Guide
 
-Docker Compose is the recommended way to run FreeLLMAPI for personal use. The container serves the Express API and the built React dashboard from one process on port 3001, with SQLite persisted in a named volume.
+Docker Compose is the recommended way to run FreeLLMAPI for personal use. The container serves the Express API and the built React dashboard from one process on port 3001, with SQLite persisted in a local bind mount.
 
 ## Prerequisites
 
@@ -10,16 +10,15 @@ Docker Compose is the recommended way to run FreeLLMAPI for personal use. The co
 
 ## Quick Start
 
-Create a `.env` file with a 32-byte encryption key:
-
 ```bash
+# Generate encryption key
 ENCRYPTION_KEY="$(openssl rand -hex 32)"
-printf "ENCRYPTION_KEY=%s\nPORT=3001\n" "$ENCRYPTION_KEY" > .env
-```
+printf "ENCRYPTION_KEY=%s\nPORT=3001\n" "$ENCRYPTION_KEY" > ../.env
 
-Start the app:
+# Create data directory
+mkdir -p ../.freellmapi-data
 
-```bash
+# Start the app
 docker compose up -d
 ```
 
@@ -39,35 +38,23 @@ curl http://localhost:3001/v1/chat/completions \
 
 ## Operations
 
-Check status:
+All commands run from the `docker/` directory:
 
 ```bash
+cd docker
+
+# Check status
 docker compose ps
-```
 
-Tail logs:
-
-```bash
+# Tail logs
 docker compose logs -f freellmapi
-```
 
-Stop the app:
-
-```bash
+# Stop
 docker compose down
-```
 
-Update to the latest GHCR image after a release:
-
-```bash
+# Update to latest image
 docker compose pull
 docker compose up -d
-```
-
-Rebuild locally from source:
-
-```bash
-docker compose up -d --build
 ```
 
 ## Configuration
@@ -77,14 +64,14 @@ docker compose up -d --build
 | `ENCRYPTION_KEY` | Yes | None | 64-character hex key used to encrypt provider API keys at rest. Generate it once and keep it stable. |
 | `PORT` | No | `3001` | Host port exposed by Docker Compose. The container listens on port 3001. |
 
-The `freellmapi-data` volume stores SQLite data at `/app/server/data`. Keep the same volume and `ENCRYPTION_KEY` when upgrading, otherwise existing encrypted provider keys cannot be decrypted.
+Data is stored in `.freellmapi-data/` (next to the project root). Keep the same data directory and `ENCRYPTION_KEY` when upgrading, otherwise existing encrypted provider keys cannot be decrypted.
 
 ## Published Image
 
 Images are published to GitHub Container Registry:
 
 ```bash
-docker pull ghcr.io/tashfeenahmed/freellmapi:latest
+docker pull ghcr.io/narrator-z/freellmapi:latest
 ```
 
-The Docker workflow builds pull requests without pushing. After this repository receives the workflow on `main`, pushes to `main` and version tags publish images to GHCR automatically.
+The Docker workflow in `.github/workflows/docker.yml` publishes images to GHCR on pushes to `main` and version tags. PRs only build (no push).

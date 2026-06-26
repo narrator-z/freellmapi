@@ -24,3 +24,6 @@ qa-report-*.md
 
 # WorkBuddy configuration files
 .workbuddy/
+
+# Docker data directory
+.freellmapi-data/
