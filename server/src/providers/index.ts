@@ -28,10 +28,11 @@ register(new OpenAICompatProvider({
   baseUrl: 'https://api.cerebras.ai/v1',
 }));
 
-// SambaNova was dropped in V23 (June 2026): the free tier is permanently gone.
-// The always-free tier was retired in early 2025 for a one-time $5 trial
-// credit (expires in 3 months); once it lapses, every chat call 402s
-// "payment method required" with no recurring no-card path back.
+// SambaNova — OpenAI-compatible. Free tier 50 RPM, fast inference on custom
+// RDU hardware. Llama 3.3 70B is free to use. Re-added via yangmao supplement
+// (2026-06): after being dropped in V23 when the promotional $5 trial expired,
+// the free tier appears to be active again; model catalog rows are managed by
+// the yangmao catalog pipeline.
 
 // NVIDIA NIM - OpenAI-compatible. Several NIM models reject parallel tool calls
 // ("This model only supports single tool-calls at once!"), so pin
@@ -391,6 +392,55 @@ register(new OpenAICompatProvider({
   platform: 'portkey-ai',
   name: 'Portkey AI',
   baseUrl: 'https://api.portkey.ai/v1',
+}));
+
+// Qwen (Alibaba Cloud) — OpenAI-compatible. DashScope is Alibaba's model
+// serving platform. Qwen-Turbo is permanently free (2M tokens/month),
+// Qwen-Max and Qwen 3.5 have competitive pricing.
+register(new OpenAICompatProvider({
+  platform: 'qwen',
+  name: 'Qwen (Alibaba Cloud)',
+  baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+}));
+
+// StepFun (StepStar) — OpenAI-compatible. Step-3 Flash is ¥5 free credits,
+// extremely fast and competitive with GPT-4o mini for reasoning/coding.
+register(new OpenAICompatProvider({
+  platform: 'stepfun',
+  name: 'StepFun (StepStar)',
+  baseUrl: 'https://api.stepfun.com/v1',
+}));
+
+// Together AI — OpenAI-compatible inference platform for open models.
+// $1 free credits on signup, 30 RPM free tier.
+register(new OpenAICompatProvider({
+  platform: 'together-ai',
+  name: 'Together AI',
+  baseUrl: 'https://api.together.xyz/v1',
+}));
+
+// SambaNova — OpenAI-compatible. 50 RPM free tier, fast inference on
+// custom RDU hardware. Llama 3.3 70B is free to use.
+register(new OpenAICompatProvider({
+  platform: 'sambanova',
+  name: 'SambaNova',
+  baseUrl: 'https://api.sambanova.ai/v1',
+}));
+
+// RunPod — OpenAI-compatible serverless inference. Up to $10 free credits.
+// Supports Llama, Flux, and community models.
+register(new OpenAICompatProvider({
+  platform: 'runpod',
+  name: 'RunPod',
+  baseUrl: 'https://api.runpod.ai/v1',
+}));
+
+// Nebius AI Studio — OpenAI-compatible. European cloud GPU infrastructure.
+// Trial credits may be available; verify AI Studio dashboard.
+register(new OpenAICompatProvider({
+  platform: 'nebius',
+  name: 'Nebius AI Studio',
+  baseUrl: 'https://api.studio.nebius.com/v1',
 }));
 
 // Placeholder so getProvider('custom')/hasProvider('custom')/getAllProviders()

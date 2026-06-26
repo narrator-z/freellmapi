@@ -15,3 +15,12 @@ update-hermes.sh
 
 # Monetization planning — private, never committed
 monetization/
+
+# Generated deliverables & audit reports
+deliverables/
+overview.md
+security-audit-report-*.md
+qa-report-*.md
+
+# WorkBuddy configuration files
+.workbuddy/

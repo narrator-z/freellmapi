@@ -8,15 +8,21 @@ import type { Platform } from '@freellmapi/shared/types.js';
 // ========================================================================
 // catalog-sync — keeps the local model catalog in step with published data.
 //
-// Data sources (two-tier merge):
-//   1. PRIMARY: yangmao.ai/data/exports/ai-free-tiers.json — the
-//      authoritative list of free/live API models. Always the latest export.
-//   2. SECONDARY: api.freellmapi.co/v1/latest — intelligence/speed
-//      rankings, quirks, and metadata enrichment. Ed25519‑signed.
+// Data sources (priority merge):
+//   1. PRIMARY: api.freellmapi.co/v1/latest — curated model catalog with
+//      intelligence/speed rankings, quirks, and metadata. Ed25519‑signed.
+//      Always authoritative when available.
+//   2. SUPPLEMENT: yangmao.ai/data/exports/ai-free-tiers.json — broad
+//      coverage of free API providers. Added as extras only where v1 has
+//      no matching model, so the curated v1 data is never overridden.
 //
-// The secondary source provides ranking metadata that yangmao doesn't have.
-// If the ranking fetch fails (network, bad signature) the yangmao models are
-// still applied, just without ranking data — the sync is never blocked by it.
+// Merge strategy:
+//   - v1 data loads first and is authoritative (rankings, quirks, IDs)
+//   - Yangmao supplements by adding models from v1-unknown platforms,
+//     and adding models to known platforms that v1 doesn't list
+//   - Yangmao models are matched to v1 by normalized display name to
+//     avoid duplicates when the modelId formats differ
+//   - When v1 updates, the new v1 takes precedence; yangmao re-supplements
 //
 // There is no Premium/free tier distinction. Every install gets the same
 // catalog, refreshed every 12 hours.
@@ -31,10 +37,6 @@ MCowBQYDK2VwAyEAq9yv4+3EeyMHKsfVYBhkcz1lYgIXSUeHNnN6tNgYX3k=
 -----END PUBLIC KEY-----
 `;
 
-// Floor for the ranking catalog. Yangmao data is always current, so this
-// only applies to the optional ranking overlay.
-const MIN_RANKING_VERSION = '2026.01.01';
-
 const SYNC_INTERVAL_MS = 12 * 60 * 60 * 1000; // twice daily
 const BOOT_DELAY_MS = 10 * 1000;
 const FETCH_TIMEOUT_MS = 20 * 1000;
@@ -48,6 +50,7 @@ const SETTING_APPLIED_VERSION = 'catalog_applied_version';
 const SETTING_APPLIED_JSON = 'catalog_applied_json';
 const SETTING_LAST_SYNC_MS = 'catalog_last_sync_ms';
 const SETTING_LAST_ERROR = 'catalog_last_error';
+const SETTING_V1_VERSION = 'catalog_v1_version';
 const SETTING_YANGMA_VERSION = 'catalog_yangma_version';
 
 export function catalogBaseUrl(): string {
@@ -125,6 +128,7 @@ interface YangmaoProvider {
   name: string;
   openai_compatible: boolean;
   has_free_api: boolean;
+  api_free_credits?: string;
   models: YangmaoModel[];
 }
 
@@ -134,18 +138,33 @@ interface YangmaoResponse {
   providers: YangmaoProvider[];
 }
 
-// Platform ID mappings between yangmao and ranking catalog.
-// Some providers use different IDs in the two data sources.
+// Platform ID mappings between yangmao and internal providers.
+// These map yangmao.ai provider IDs to the platform IDs used by the
+// internal provider registry (providers/index.ts) and/or the v1 catalog.
 const PLATFORM_ALIASES: Record<string, string> = {
   'nebius-ai-studio': 'nebius',
   'nvidia-build': 'nvidia',
+  'gemini': 'google',              // yangmao "gemini" → internal "google"
+  'github-models': 'github',       // yangmao "github-models" → internal "github"
+  'yi': '01-ai',                   // yangmao "yi" → internal "01-ai"
 };
 
-// Reverse lookup: ranking-catalog ID → yangmao ID.
+// Reverse lookup: internal → yangmao ID.
 const REVERSE_ALIASES: Record<string, string> = {};
 for (const [k, v] of Object.entries(PLATFORM_ALIASES)) {
   REVERSE_ALIASES[v] = k;
 }
+
+// Mapping from yangmao platform IDs to v1/latest platform IDs.
+// This is used during merge to match yangmao supplements against the v1 base,
+// so yangmao models can be correctly attributed and deduplicated.
+const YANGMAO_TO_V1_PLATFORM: Record<string, string> = {
+  'nvidia-build': 'nvidia',
+  'gemini': 'google',
+  'github-models': 'github',
+  'cloudflare-workers-ai': 'cloudflare', // v1 uses short platform ID
+  'nebius-ai-studio': 'nebius',
+};
 
 // ---- Helpers ----
 
@@ -171,7 +190,7 @@ function isCatalog(value: unknown): value is Catalog {
   );
 }
 
-function parseContext(s: string): number | null {
+export function parseContext(s: string): number | null {
   if (!s) return null;
   const t = s.trim().toLowerCase();
   if (t === 'n/a' || t === 'varies' || t === '' || t === 'model dependent') return null;
@@ -184,27 +203,100 @@ function parseContext(s: string): number | null {
   return n;
 }
 
-function parseRateLimit(s: string): { rpm: number | null; rpd: number | null; tpm: number | null; tpd: number | null } {
+export function parseRateLimit(s: string): { rpm: number | null; rpd: number | null; tpm: number | null; tpd: number | null } {
   const result = { rpm: null as number | null, rpd: null as number | null, tpm: null as number | null, tpd: null as number | null };
   if (!s) return result;
 
+  const lowered = s.trim().toLowerCase();
+
   // Try patterns like "30 RPM", "50 RPD", "30 RPM / 60K TPM", "1000 RPD / 350K TPD"
-  const parts = s.split(/[/,，、]/);
+  // Split on commas (full/half-width) or slash-separated spec pairs.
+  // IMPORTANT: do NOT split on bare /day — that's a single rate unit, not a separator.
+  // We first try to match "/day" as a single token, then split remaining parts on
+  // commas and slashes-with-spaces-around.
+  const parts: string[] = [];
+
+  // Step 1: try to extract the "/day" pattern as a whole token from the raw string
+  const dayGlobal = lowered.match(/\d+(?:\.\d+)?\s*\/?\s*(?:requests?|req|reqs?)?\s*\/?\s*day/);
+  let remainder = lowered;
+  if (dayGlobal) {
+    parts.push(dayGlobal[0]);
+    remainder = remainder.replace(dayGlobal[0], '').trim();
+  }
+
+  // Step 2: split the remainder on commas or slashes with surrounding whitespace
+  const remainingParts = remainder.split(/\s*\/\s*|[,，、]/).map((p) => p.trim()).filter(Boolean);
+  parts.push(...remainingParts);
+
+  // Helper to parse an integer value that may include K/k suffix (e.g. "60K" → 60000)
+  function parseCount(s: string): number {
+    const kMatch = s.match(/^(\d+(?:\.\d+)?)\s*(k)?$/);
+    if (!kMatch) return parseInt(s, 10);
+    const base = parseFloat(kMatch[1]);
+    return kMatch[2] ? Math.round(base * 1000) : Math.round(base);
+  }
+
   for (const part of parts) {
     const p = part.trim().toLowerCase();
-    const m = p.match(/^(\d+(?:\.\d+)?)\s*(rpm|rpd|tpm|tpd)$/);
+    // Match standard format: "10000/day" → rpd
+    const dayMatch = p.match(/^(\d+(?:\.\d+)?)\s*\/?\s*(?:requests?|req|reqs?)?\s*\/?\s*day$/);
+    if (dayMatch) {
+      result.rpd = parseInt(dayMatch[1], 10);
+      continue;
+    }
+    // Match standard format: "30 RPM", "60K TPM", etc.
+    const m = p.match(/^(\d+(?:\.\d+)?)\s*(k|m)?\s*(rpm|rpd|tpm|tpd)$/);
     if (m) {
-      const val = parseInt(m[1], 10);
-      if (m[2] === 'rpm') result.rpm = val;
-      else if (m[2] === 'rpd') result.rpd = val;
-      else if (m[2] === 'tpm') result.tpm = val;
-      else if (m[2] === 'tpd') result.tpd = val;
+      const raw = parseFloat(m[1]);
+      let val: number;
+      if (m[2] === 'k') val = Math.round(raw * 1000);
+      else if (m[2] === 'm') val = Math.round(raw * 1000000);
+      else val = Math.round(raw);
+      if (m[3] === 'rpm') result.rpm = val;
+      else if (m[3] === 'rpd') result.rpd = val;
+      else if (m[3] === 'tpm') result.tpm = val;
+      else if (m[3] === 'tpd') result.tpd = val;
     }
   }
   return result;
 }
 
-// ---- Yangmao fetch & parse ----
+// ---- V1 catalog fetch (primary source) ----
+
+/**
+ * Normalize a model display name for cross-source matching.
+ * Strips parenthetical suffixes, whitespace, and common noise
+ * so "Llama 3.3 70B Versatile" matches "Llama 3.3 70B".
+ */
+export function normalizeModelName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\s*\([^)]*\)\s*/g, ' ')  // "(CF)", "(NV)", "(Ollama)" etc.
+    .replace(/versatile|instruct|free|fast|fp8|it|beta|preview/gi, '')
+    .replace(/[^a-z0-9.\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** Fetch the authoritative v1 catalog from api.freellmapi.co/v1/latest. */
+async function fetchV1Catalog(): Promise<Catalog> {
+  const url = new URL(`${catalogBaseUrl()}/v1/latest`);
+  const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+
+  if (!res.ok) throw new Error(`v1 catalog fetch failed: HTTP ${res.status}`);
+
+  const signature = res.headers.get('x-catalog-signature');
+  if (!signature) throw new Error('v1 catalog response missing signature');
+  const bytes = Buffer.from(await res.arrayBuffer());
+  const verified = crypto.verify(null, bytes, catalogPublicKey(), Buffer.from(signature, 'base64'));
+  if (!verified) throw new Error('v1 catalog signature verification FAILED');
+
+  const parsed: unknown = JSON.parse(bytes.toString('utf8'));
+  if (!isCatalog(parsed)) throw new Error('v1 catalog payload has unexpected shape');
+  return parsed;
+}
+
+// ---- Yangmao fetch & parse (supplement) ----
 
 /** Single model's ranking data extracted from the original catalog. */
 interface RankingValue {
@@ -218,7 +310,16 @@ interface RankingValue {
   supportsTools: boolean;
 }
 
-export async function fetchYangmaoData(): Promise<{ models: CatalogModel[]; version: string }> {
+/**
+ * Fetch yangmao.ai data and convert it to the /v1/latest Catalog format.
+ *
+ * Filter rule: only providers with `has_free_api: true` are included.
+ * The `openai_compatible` flag is NOT checked here — applyCatalog drops
+ * platforms that have no registered provider implementation, and some
+ * registered providers (e.g. Cohere, ERNIE) report openai_compatible=false
+ * in yangmao despite having working internal provider adapters.
+ */
+export async function fetchYangmaoData(): Promise<Catalog> {
   const res = await fetch(YANGMAO_URL, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
   if (!res.ok) throw new Error(`yangmao fetch failed: HTTP ${res.status}`);
 
@@ -229,18 +330,17 @@ export async function fetchYangmaoData(): Promise<{ models: CatalogModel[]; vers
   }
 
   const version = body.generated_at;
-
   const models: CatalogModel[] = [];
+
   for (const p of body.providers) {
-    // Only include providers that are OpenAI-compatible AND have a free API tier
-    if (!p.openai_compatible || !p.has_free_api) continue;
+    // Only include providers that have a free API tier
+    if (!p.has_free_api) continue;
     if (!p.models || p.models.length === 0) continue;
 
     const platform = PLATFORM_ALIASES[p.id] ?? p.id;
 
     for (const m of p.models) {
       // Skip entries that look like category descriptions rather than model names.
-      // Yangmao occasionally puts provider-level descriptions in the models array.
       const lowerName = m.name.trim().toLowerCase();
       if (/\b(routes?|compute|quota|fine-tuned|logging proxy|open-weight|and open)\b/.test(lowerName)) continue;
       if (!m.name.includes(' ') && !m.name.includes('-') && !m.name.includes('.') && m.name.length > 20) continue;
@@ -252,12 +352,14 @@ export async function fetchYangmaoData(): Promise<{ models: CatalogModel[]; vers
       if (/^(dall-e|stable-diffusion|flux|imagen|midjourney)/i.test(m.name)) modality = 'image';
       else if (/^(tts|whisper|hifi-gan)/i.test(m.name)) modality = 'audio';
 
-      // Yangmao stores human-readable names; normalize to the kebab-case
-      // API identifier format so the modelId is directly usable by providers.
-      // Skip entries whose slugified ID is empty (e.g. non-Latin category
-      // descriptions, placeholder text).
       const slugifiedId = toSlug(m.name);
       if (!slugifiedId) continue;
+
+      // Heuristic: detect vision/tools from model name keywords
+      const lower = lowerName;
+      const supportsVision = /\b(vl|vision|multimodal|image)\b/i.test(lower);
+      const supportsTools = !/\b(image|tts|whisper|embedding|rerank)\b/i.test(lower);
+
       models.push({
         platform,
         modelId: slugifiedId,
@@ -266,120 +368,103 @@ export async function fetchYangmaoData(): Promise<{ models: CatalogModel[]; vers
         speedRank: 0,
         sizeLabel: '',
         limits,
-        monthlyTokenBudget: '',
+        monthlyTokenBudget: p.api_free_credits || null,
         contextWindow,
         enabled: true,
-        supportsVision: false,
-        supportsTools: false,
+        supportsVision,
+        supportsTools,
         modality,
         mediaNote: m.notes || undefined,
       });
     }
   }
 
-  return { models, version };
+  return {
+    version,
+    generatedAt: body.generated_at,
+    tier: 'live',
+    models,
+    quirks: [],
+  };
 }
 
-// ---- Ranking enrichment from the original catalog ----
-
-async function fetchRankingEnrichment(): Promise<{
-  rankings: Map<string, RankingValue>;
-  quirks: CatalogQuirk[];
-}> {
-  const rankings = new Map<string, RankingValue>();
-  const quirks: CatalogQuirk[] = [];
-
-  try {
-    // Always fetch the full ranking catalog; yangmao's version is an ISO
-    // timestamp and is not comparable to the original catalog's date format,
-    // so using it as a `since` parameter would short-circuit enrichment.
-    const url = new URL(`${catalogBaseUrl()}/v1/latest`);
-
-    const res = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
-
-    if (res.status === 304) return { rankings, quirks };
-    if (!res.ok) throw new Error(`ranking catalog fetch failed: HTTP ${res.status}`);
-
-    const signature = res.headers.get('x-catalog-signature');
-    if (!signature) throw new Error('ranking catalog response missing signature');
-    const bytes = Buffer.from(await res.arrayBuffer());
-    const verified = crypto.verify(null, bytes, catalogPublicKey(), Buffer.from(signature, 'base64'));
-    if (!verified) throw new Error('ranking catalog signature verification FAILED');
-
-    const parsed: unknown = JSON.parse(bytes.toString('utf8'));
-    if (!isCatalog(parsed)) throw new Error('ranking catalog payload has unexpected shape');
-    const catalog = parsed;
-
-    if (catalog.version < MIN_RANKING_VERSION) {
-      return { rankings, quirks }; // Too old, skip enrichment
-    }
-
-    for (const m of catalog.models) {
-      const key = `${m.platform}:${m.modelId}`;
-      rankings.set(key, {
-        intelligenceRank: m.intelligenceRank,
-        speedRank: m.speedRank,
-        sizeLabel: m.sizeLabel,
-        limits: m.limits,
-        monthlyTokenBudget: m.monthlyTokenBudget,
-        contextWindow: m.contextWindow,
-        supportsVision: m.supportsVision,
-        supportsTools: m.supportsTools,
-      });
-    }
-
-    quirks.push(...catalog.quirks);
-  } catch (err) {
-    // Non-fatal — ranking is just enrichment
-    console.warn(`[catalog-sync] ranking enrichment unavailable: ${err instanceof Error ? err.message : err}`);
-  }
-
-  return { rankings, quirks };
-}
+// ---- Merge v1 (primary) + yangmao (supplement) ----
 
 /**
- * Merge ranking data into the yangmao-derived model list.
- * Fields from the original catalog override yangmao defaults.
+ * Merge v1 catalog (primary) with yangmao supplements.
  *
- * Ranking catalog model IDs are kebab-case URL slugs (e.g.
- * "llama-3.3-70b-versatile") while yangmao model IDs are human-readable
- * Title Case strings (e.g. "Llama 3.3 70B Versatile").  We normalize
- * both sides to a common slug for comparison.
+ * Strategy:
+ *   - v1 models are always kept with their original data (rankings, IDs, quirks)
+ *   - Yangmao models are added only when they don't already exist in v1
+ *   - For shared platforms: match by normalized display name to avoid duplicates
+ *     when modelId formats differ (e.g. v1 "deepseek-ai/deepseek-v4-pro" vs
+ *     yangmao slug "deepseek-v4-pro")
+ *   - For yangmao-only platforms: all models are added
+ *   - The merged catalog preserves v1's version/tier so future updates
+ *     are compared against v1's version
  */
-export function mergeRankings(yangmaoModels: CatalogModel[], rankings: Map<string, RankingValue>): CatalogModel[] {
-  // Build a secondary lookup keyed by normalized (slug) model IDs so we
-  // can match yangmao's Title Case identifiers against the ranking
-  // catalog's kebab-case URL-style identifiers.
-  const rankingBySlug = new Map<string, RankingValue>();
-  for (const [key, value] of rankings) {
-    const slug = key.split('/').pop() ?? key;
-    rankingBySlug.set(slug, value);
+export function mergeCatalogs(v1: Catalog, yangmao: Catalog): Catalog {
+  const mergedModels: CatalogModel[] = [...v1.models];
+
+  // Track all v1 model keys for dedup
+  const v1KeySet = new Set<string>();
+  for (const m of v1.models) {
+    v1KeySet.add(`${m.platform}:${m.modelId}`);
   }
 
-  return yangmaoModels.map((m) => {
-    const slug = toSlug(m.modelId);
-    // Ranking catalog may use a different platform ID for the same provider
-    // (e.g. yangmao "minimax" → ranking "nvidia-build").  Try the direct
-    // key first, then the alias-mapped variants.
-    const altPlatform = REVERSE_ALIASES[m.platform];
-    const r = rankings.get(`${m.platform}/${m.modelId}`)
-      ?? (altPlatform ? rankings.get(`${altPlatform}/${m.modelId}`) : undefined)
-      ?? rankingBySlug.get(`${m.platform}/${slug}`)
-      ?? (altPlatform ? rankingBySlug.get(`${altPlatform}/${slug}`) : undefined)
-      ?? rankingBySlug.get(slug);
-    if (!r) return m;
-    return {
-      ...m,
-      intelligenceRank: r.intelligenceRank,
-      speedRank: r.speedRank,
-      sizeLabel: r.sizeLabel,
-      limits: r.limits,
-      monthlyTokenBudget: r.monthlyTokenBudget,
-      contextWindow: r.contextWindow ?? m.contextWindow,
-      supportsVision: r.supportsVision,
-      supportsTools: r.supportsTools,
-    };
-  });
+  // Build v1 lookup by normalized display name per platform
+  const v1ByName = new Map<string, Map<string, string>>();
+  for (const m of v1.models) {
+    let byName = v1ByName.get(m.platform);
+    if (!byName) {
+      byName = new Map();
+      v1ByName.set(m.platform, byName);
+    }
+    byName.set(normalizeModelName(m.displayName), m.modelId);
+  }
+
+  for (const ym of yangmao.models) {
+    // Map yangmao platform to v1 platform for merge matching
+    const targetPlatform = YANGMAO_TO_V1_PLATFORM[ym.platform] ?? ym.platform;
+
+    // Check by modelId key first
+    const key = `${targetPlatform}:${ym.modelId}`;
+    if (v1KeySet.has(key)) continue;
+
+    // If platform exists in v1, check by normalized display name
+    const v1Names = v1ByName.get(targetPlatform);
+    if (v1Names) {
+      const normName = normalizeModelName(ym.displayName);
+      if (v1Names.has(normName)) continue;
+
+      // Also try without the ym's modelId slug — some v1 models have
+      // very different displayNames but represent the same model
+      let matched = false;
+      for (const [v1Norm, v1Mid] of v1Names) {
+        // If one normalized name contains the other, they're likely the same model
+        if ((normName.includes(v1Norm) || v1Norm.includes(normName)) && normName.length > 3 && v1Norm.length > 3) {
+          matched = true;
+          break;
+        }
+      }
+      if (matched) continue;
+    }
+
+    // New model — add with correct platform
+    mergedModels.push({
+      ...ym,
+      platform: targetPlatform,
+    });
+    v1KeySet.add(key);
+  }
+
+  return {
+    version: v1.version,
+    generatedAt: v1.generatedAt,
+    tier: v1.tier,
+    models: mergedModels,
+    quirks: v1.quirks,
+  };
 }
 
 /**
@@ -575,56 +660,112 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
   return counts;
 }
 
-// ---- Sync orchestration ----
+// ---- Legacy mergeRankings (kept for test backward compatibility) ----
 
 /**
- * Main sync: fetch yangmao data (primary), enrich with rankings from the
- * original catalog (secondary, non-fatal), then apply the merged result.
+ * Merge ranking data into the yangmao-derived model list.
+ * Fields from the original catalog override yangmao defaults.
+ *
+ * NOTE: The main sync flow no longer calls this directly — v1 data
+ * (with full rankings) is the primary source; mergeCatalogs is used
+ * instead. This function is kept for test backward compatibility.
+ */
+export function mergeRankings(yangmaoModels: CatalogModel[], rankings: Map<string, RankingValue>): CatalogModel[] {
+  const rankingBySlug = new Map<string, RankingValue>();
+  for (const [key, value] of rankings) {
+    const slug = key.split('/').pop() ?? key;
+    rankingBySlug.set(slug, value);
+  }
+
+  return yangmaoModels.map((m) => {
+    const slug = toSlug(m.modelId);
+    const altPlatform = REVERSE_ALIASES[m.platform];
+    const r = rankings.get(`${m.platform}/${m.modelId}`)
+      ?? (altPlatform ? rankings.get(`${altPlatform}/${m.modelId}`) : undefined)
+      ?? rankingBySlug.get(`${m.platform}/${slug}`)
+      ?? (altPlatform ? rankingBySlug.get(`${altPlatform}/${slug}`) : undefined)
+      ?? rankingBySlug.get(slug);
+    if (!r) return m;
+    return {
+      ...m,
+      intelligenceRank: r.intelligenceRank,
+      speedRank: r.speedRank,
+      sizeLabel: r.sizeLabel,
+      limits: r.limits,
+      monthlyTokenBudget: r.monthlyTokenBudget,
+      contextWindow: r.contextWindow ?? m.contextWindow,
+      supportsVision: r.supportsVision,
+      supportsTools: r.supportsTools,
+    };
+  });
+}
+
+// ---- Sync orchestration (v1 primary, yangmao supplement) ----
+
+/**
+ * Main sync: fetch v1 catalog (primary), supplement with yangmao models
+ * that v1 doesn't have, then apply the merged result.
+ *
+ * Priority:
+ *   1. v1/latest is authoritative — its models, rankings, and quirks
+ *      are kept intact. Yangmao never overrides v1 data.
+ *   2. Yangmao supplements by adding models that v1 doesn't list,
+ *      either on new platforms or as additional models on known platforms.
+ *   3. If v1 fetch fails (network/signature), falls back to yangmao-only.
+ *   4. If yangmao also fails, the error is reported and no sync happens.
  */
 export async function syncCatalog(): Promise<SyncResult> {
   const db = getDb();
 
   try {
-    // 1. Fetch yangmao data (primary)
-    const { models: yangmaoModels, version } = await fetchYangmaoData();
-    const applied = getSetting(SETTING_APPLIED_VERSION);
+    // 1. Fetch v1 catalog (primary — authoritative)
+    let v1Catalog: Catalog | null = null;
+    try {
+      v1Catalog = await fetchV1Catalog();
+    } catch (v1Err) {
+      console.warn(`[catalog-sync] v1 catalog unavailable: ${v1Err instanceof Error ? v1Err.message : v1Err}`);
+    }
 
-    // 2. Fetch ranking enrichment (secondary, non-fatal)
-    const { rankings, quirks } = await fetchRankingEnrichment();
+    // 2. Fetch yangmao supplements (non-fatal)
+    let yangmaoCatalog: Catalog | null = null;
+    try {
+      yangmaoCatalog = await fetchYangmaoData();
+    } catch (ymErr) {
+      console.warn(`[catalog-sync] yangmao supplement unavailable: ${ymErr instanceof Error ? ymErr.message : ymErr}`);
+    }
 
-    // 3. Merge rankings onto yangmao models
-    const mergedModels = mergeRankings(yangmaoModels, rankings);
+    // 3. Build the merged catalog
+    let catalog: Catalog;
+    if (v1Catalog && yangmaoCatalog) {
+      catalog = mergeCatalogs(v1Catalog, yangmaoCatalog);
+    } else if (v1Catalog) {
+      catalog = v1Catalog;
+    } else if (yangmaoCatalog) {
+      catalog = yangmaoCatalog;
+    } else {
+      throw new Error('both v1 catalog and yangmao supplement failed — nothing to apply');
+    }
 
-    // 4. Build the catalog object for applyCatalog
-    const catalog: Catalog & { schemaVersion: number } = {
-      version,
-      generatedAt: new Date().toISOString(),
-      tier: 'live',
-      schemaVersion: CATALOG_SCHEMA_VERSION,
-      models: mergedModels,
-      quirks,
-    };
-
-    // 5. Always apply — applyCatalog is idempotent (INSERT OR UPDATE), so
-    // re-running is harmless and is the mechanism that refreshes ranking
-    // scores and quirks when the yangmao version hasn't changed.
-
-    // 6. Apply
+    // 4. Always apply — applyCatalog is idempotent
     const counts = applyCatalog(db, catalog);
-    setSetting(SETTING_APPLIED_VERSION, version);
+    setSetting(SETTING_APPLIED_VERSION, catalog.version);
     setSetting(SETTING_APPLIED_JSON, JSON.stringify(catalog));
-    setSetting(SETTING_YANGMA_VERSION, version); // remember yangma version for staleness check
+    if (v1Catalog) setSetting(SETTING_V1_VERSION, v1Catalog.version);
+    if (yangmaoCatalog) setSetting(SETTING_YANGMA_VERSION, yangmaoCatalog.version);
 
+    const sourceLabel = v1Catalog
+      ? `v${v1Catalog.version}`
+      : `yangmao-only v${yangmaoCatalog!.version}`;
     console.log(
-      `[catalog-sync] applied yangmao v${version}: ` +
+      `[catalog-sync] applied ${sourceLabel}: ` +
         `${counts.updated} updated, ${counts.inserted} new, ${counts.removed} removed, ` +
-        `${counts.quirks} quirks in catalog` +
+        `${counts.quirks} quirks` +
         (counts.skippedUnknownPlatform ? `, ${counts.skippedUnknownPlatform} skipped (unknown platform)` : ''),
     );
 
     setSetting(SETTING_LAST_SYNC_MS, String(Date.now()));
     setSetting(SETTING_LAST_ERROR, '');
-    return { ok: true, action: 'applied', version, counts };
+    return { ok: true, action: 'applied', version: catalog.version, counts };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.warn(`[catalog-sync] ${message}`);

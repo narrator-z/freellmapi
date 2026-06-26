@@ -71,6 +71,20 @@ export type Platform =
   | 'openpipe'
   | 'parasail'
   | 'portkey-ai'
+  // Qwen (Alibaba Cloud) — OpenAI-compatible, DashScope endpoint
+  | 'qwen'
+  // StepFun (StepStar) — OpenAI-compatible, ¥5 free credits
+  | 'stepfun'
+  // Together AI — OpenAI-compatible inference platform
+  | 'together-ai'
+  // SambaNova was dropped in V23 (free tier permanently retired — 402
+  // "payment method required" once the one-time $5 trial credit lapses).
+  // Re-added via yangmao supplement: free tier is active again as of 2026-06.
+  // | 'sambanova'  — already defined above
+  // RunPod — OpenAI-compatible serverless inference
+  | 'runpod'
+  // Nebius AI Studio — OpenAI-compatible, European cloud GPU infrastructure
+  | 'nebius'
   // User-configured OpenAI-compatible endpoint (llama.cpp, LM Studio, vLLM,
   // Ollama, any base_url). The endpoint URL lives on the api_keys row; see #117.
   | 'custom';
