@@ -140,12 +140,14 @@ function inferPoolForPlatform(platform: Platform, modelId?: string | null): stri
 }
 
 function isSharedPool(platform: Platform): boolean {
-  return ['openrouter', 'google', 'groq', 'cerebras', 'sambanova', 'nvidia', 'mistral', 'github', 'cohere', 'cloudflare', 'zhipu', 'ollama', 'kilo', 'pollinations', 'llm7', 'huggingface', 'opencode',
+  return [
+    'openrouter', 'google', 'groq', 'cerebras', 'sambanova', 'nvidia', 'mistral', 'github', 'cohere', 'cloudflare', 'zhipu', 'ollama', 'kilo', 'pollinations', 'llm7', 'huggingface', 'opencode',
     'aimlapi', 'ai21-labs', 'anyscale', 'awanllm', 'baichuan', 'cerebras-cloud', 'clawbrain', 'cloudflare-workers-ai',
     'deepinfra', 'deepseek', 'doubao', 'ernie', 'fireworks', 'fireworks-ai', 'grok',
     'kimi', 'lepton', 'llama-cpp', 'lmstudio', 'localai', 'minimax', 'monsterapi', 'novita', 'nvidia-build',
     'octoai', 'openpipe', 'parasail', 'portkey-ai',
     'qwen', 'stepfun', 'together-ai', 'runpod', 'nebius',
+    'routeway', 'bazaarlink', 'ainative'
   ].includes(platform);
 }
 

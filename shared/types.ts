@@ -42,7 +42,23 @@ export type Platform =
   // models (FLUX.1-schnell image, CosyVoice2 TTS) routed via services/media.ts;
   // chat is supported too. Key from siliconflow.com (no card).
   | 'siliconflow'
+  // Routeway — OpenAI-compatible aggregator. Free ':free' models ($0) on a
+  // rate-limited pool (~5 rpm observed); requires a browser User-Agent (CF
+  // blocks others). Key from routeway.ai/dashboard (no card).
+  | 'routeway'
+  // BazaarLink — OpenAI-compatible aggregator. Free 'auto:free' route picks an
+  // available zero-cost model. Key from bazaarlink.ai/api/v1/agents/register
+  // (no card, supports agent self-registration).
+  | 'bazaarlink'
+  // AINative Studio — OpenAI-compatible aggregator. Advertises a recurring
+  // ~10M tokens/month free allocation (no card); quota unverified. Key from
+  // ainative.studio/signup.
+  | 'ainative'
   // Additional free OpenAI-compatible providers from yangmao.ai
+  // Note: cerebras-cloud = cerebras (same baseUrl), nvidia-build = nvidia,
+  // fireworks-ai = fireworks, cloudflare-workers-ai = cloudflare — kept as
+  // separate platform IDs only so the yangmao catalog can map its models; the
+  // providers share the same base URL and API key.
   | 'aimlapi'
   | 'ai21-labs'
   | 'anyscale'

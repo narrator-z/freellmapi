@@ -22,6 +22,10 @@ const PLATFORMS = [
   'minimax', 'monsterapi', 'nebius', 'novita',
   'octoai', 'openpipe', 'parasail', 'portkey-ai',
   'qwen', 'runpod', 'sambanova', 'stepfun', 'together-ai',
+  'routeway', 'bazaarlink', 'ainative',
+  // Duplicate aliases (same baseUrl as the main platform) — kept as aliases only so yangmao can map its models
+  // To add a key for these, use the main platform name (e.g. 'cerebras' instead of 'cerebras-cloud')
+  // duplicates: 'cerebras-cloud' = 'cerebras', 'fireworks-ai' = 'fireworks', 'nvidia-build' = 'nvidia', 'cloudflare-workers-ai' = 'cloudflare',
   // User-configured custom endpoint
   'custom',
 ] as const;
