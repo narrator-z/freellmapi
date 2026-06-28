@@ -101,6 +101,8 @@ export type Platform =
   | 'runpod'
   // Nebius AI Studio — OpenAI-compatible, European cloud GPU infrastructure
   | 'nebius'
+  // AI Horde — free, community-powered inference (volunteer workers)
+  | 'aihorde'
   // User-configured OpenAI-compatible endpoint (llama.cpp, LM Studio, vLLM,
   // Ollama, any base_url). The endpoint URL lives on the api_keys row; see #117.
   | 'custom';
@@ -154,15 +156,25 @@ export interface ModelListRow {
 
 export type KeyStatus = 'healthy' | 'rate_limited' | 'invalid' | 'error' | 'unknown';
 
+export interface ApiKeyModel {
+  id: number;
+  kind: 'chat' | 'embedding' | 'image' | 'audio';
+  modelId: string;
+  displayName: string;
+  family?: string | null;
+}
+
 export interface ApiKey {
   id: number;
   platform: Platform;
   label: string;
   maskedKey: string;
+  baseUrl: string | null;
   status: KeyStatus;
   enabled: boolean;
   createdAt: string;
   lastCheckedAt: string | null;
+  models?: ApiKeyModel[];
 }
 
 export interface ApiKeyCreate {
@@ -276,6 +288,7 @@ export interface ChatCompletionRequest {
   max_tokens?: number;
   stream?: boolean;
   top_p?: number;
+  stop?: string | string[];
   tools?: ChatToolDefinition[];
   tool_choice?: ChatToolChoice;
   parallel_tool_calls?: boolean;

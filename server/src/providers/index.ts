@@ -4,6 +4,7 @@ import { GoogleProvider } from './google.js';
 import { OpenAICompatProvider } from './openai-compat.js';
 import { CohereProvider } from './cohere.js';
 import { CloudflareProvider } from './cloudflare.js';
+import { AIHordeProvider } from './aihorde.js';
 
 const providers = new Map<Platform, BaseProvider>();
 
@@ -427,7 +428,39 @@ register(new OpenAICompatProvider({
   baseUrl: 'https://api.together.xyz/v1',
 }));
 
-// Routeway — OpenAI-compatible aggregator (api.routeway.ai/v1). Free models
+// SambaNova — OpenAI-compatible. 50 RPM free tier, fast inference on
+// custom RDU hardware. Llama 3.3 70B is free to use.
+register(new OpenAICompatProvider({
+  platform: 'sambanova',
+  name: 'SambaNova',
+  baseUrl: 'https://api.sambanova.ai/v1',
+}));
+
+// RunPod — OpenAI-compatible serverless inference. Up to $10 free credits.
+// Supports Llama, Flux, and community models.
+register(new OpenAICompatProvider({
+  platform: 'runpod',
+  name: 'RunPod',
+  baseUrl: 'https://api.runpod.ai/v1',
+}));
+
+// Nebius AI Studio — OpenAI-compatible. European cloud GPU infrastructure.
+// Trial credits may be available; verify AI Studio dashboard.
+register(new OpenAICompatProvider({
+  platform: 'nebius',
+  name: 'Nebius AI Studio',
+  baseUrl: 'https://api.studio.nebius.com/v1',
+}));
+
+// AI Horde — free, community-powered inference (volunteer workers) via an
+// OpenAI-compatible proxy. Dedicated AIHordeProvider (not OpenAICompatProvider)
+// because the proxy is queue-based and diverges from the OpenAI contract:
+// max_tokens must be >=16, stop must be an array, no tool calling, usage is
+// reported as kudos (synthesized into token counts), and calls can take tens of
+// seconds (120s timeout, no upstream streaming). Registered keyless so it
+// auto-configures and works anonymously (key 0000000000, lowest queue
+// priority); a registered aihorde.net key raises priority. See issue #345.
+register(new AIHordeProvider());
 // carry a ':free' suffix and cost $0; the free pool is rate-limited (docs say
 // 20 rpm / 200 rpd, but a live test on 2026-06-26 observed a stricter 5 rpm).
 // Cloudflare in front rejects non-browser User-Agents with error 1010, so a
@@ -488,6 +521,16 @@ register(new OpenAICompatProvider({
   name: 'Nebius AI Studio',
   baseUrl: 'https://api.studio.nebius.com/v1',
 }));
+
+// AI Horde — free, community-powered inference (volunteer workers) via an
+// OpenAI-compatible proxy. Dedicated AIHordeProvider (not OpenAICompatProvider)
+// because the proxy is queue-based and diverges from the OpenAI contract:
+// max_tokens must be >=16, stop must be an array, no tool calling, usage is
+// reported as kudos (synthesized into token counts), and calls can take tens of
+// seconds (120s timeout, no upstream streaming). Registered keyless so it
+// auto-configures and works anonymously (key 0000000000, lowest queue
+// priority); a registered aihorde.net key raises priority. See issue #345.
+register(new AIHordeProvider());
 
 // Placeholder so getProvider('custom')/hasProvider('custom')/getAllProviders()
 // behave — but the real instance is built per-key by resolveProvider(), since

@@ -4,6 +4,13 @@ import { getDb, setSetting, getSetting } from '../db/index.js';
 import { hasProvider } from '../providers/index.js';
 import { MEDIA_PLATFORMS } from './media.js';
 import type { Platform } from '@freellmapi/shared/types.js';
+import type { Scheduler } from '../lib/scheduler.js';
+import {
+  applyAllModelOverrides,
+  applyModelOverrides,
+  deleteTombstonedCatalogModels,
+  isCatalogModelTombstoned,
+} from './model-state.js';
 
 // ========================================================================
 // catalog-sync — keeps the local model catalog in step with published data.
@@ -494,12 +501,13 @@ export function toSlug(s: string): string {
  * Apply a verified catalog to the local DB inside one transaction.
  *
  * Rules of engagement with user data:
- *  - metadata (name, ranks, limits, context, capabilities) always tracks the
- *    catalog — that is the whole point of the product;
+ *  - metadata (name, ranks, limits, context, capabilities) tracks the catalog
+ *    unless the user has an explicit local override;
  *  - catalog enabled=false force-disables (the model is dead upstream), but
  *    enabled=true never re-enables a model the user turned off themselves;
  *  - models the user added via custom providers (platform='custom' or bound to
  *    a key) are never touched;
+ *  - catalog models the user deleted stay deleted via tombstones;
  *  - models that vanished from the catalog are deleted, exactly like the
  *    dead-model migrations do (fallback_config row first, FK order).
  */
@@ -549,6 +557,7 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
           counts.skippedUnknownPlatform++;
           continue;
         }
+        if (isCatalogModelTombstoned(db, 'media', m.platform, m.modelId)) continue;
         inMediaCatalog.add(`${m.platform}:${m.modelId}`);
         const mrow = selectMedia.get(m.platform, m.modelId) as { id: number; enabled: number } | undefined;
         const mfields = {
@@ -572,6 +581,7 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
         counts.skippedUnknownPlatform++;
         continue;
       }
+      if (isCatalogModelTombstoned(db, 'chat', m.platform, m.modelId)) continue;
       inCatalog.add(`${m.platform}:${m.modelId}`);
 
       const row = selectModel.get(m.platform, m.modelId) as { id: number; enabled: number } | undefined;
@@ -592,14 +602,19 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
       if (row) {
         const enabled = m.enabled ? row.enabled : 0;
         updateModel.run({ ...fields, id: row.id, enabled });
+        applyModelOverrides(db, m.platform, m.modelId);
         counts.updated++;
       } else {
         insertModel.run({ ...fields, platform: m.platform, modelId: m.modelId, enabled: m.enabled ? 1 : 0 });
+        applyModelOverrides(db, m.platform, m.modelId);
         counts.inserted++;
       }
     }
 
-    // Ensure every model has a fallback_config row
+counts.removed += deleteTombstonedCatalogModels(db);
+    applyAllModelOverrides(db);
+
+    // Ensure every model has a fallback_config row (same invariant migrations keep).
     const missingFb = db
       .prepare(
         `SELECT m.id FROM models m LEFT JOIN fallback_config f ON m.id = f.model_db_id WHERE f.id IS NULL`,
@@ -613,7 +628,13 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
 
     // Remove catalog-managed models that the catalog no longer lists
     const candidates = db
-      .prepare(`SELECT id, platform, model_id FROM models WHERE platform != 'custom' AND key_id IS NULL`)
+      .prepare(`
+        SELECT id, platform, model_id
+          FROM models
+         WHERE platform != 'custom'
+           AND key_id IS NULL
+           AND size_label NOT IN ('User', 'Custom')
+      `)
       .all() as { id: number; platform: string; model_id: string }[];
     const deleteFb = db.prepare('DELETE FROM fallback_config WHERE model_db_id = ?');
     const deleteModel = db.prepare('DELETE FROM models WHERE id = ?');
@@ -830,11 +851,11 @@ export function reapplyCachedCatalog(): { reapplied: boolean; version?: string }
   }
 }
 
-let intervalId: ReturnType<typeof setInterval> | null = null;
-let bootTimer: ReturnType<typeof setTimeout> | null = null;
+let cancelBootTimer: (() => void) | null = null;
+let cancelInterval: (() => void) | null = null;
 
-export function startCatalogSync(): void {
-  if (intervalId) return;
+export function startCatalogSync(scheduler: Scheduler): void {
+  if (cancelInterval) return;
   if (process.env.CATALOG_SYNC_DISABLED === '1') {
     console.log('[catalog-sync] disabled via CATALOG_SYNC_DISABLED=1');
     return;
@@ -843,18 +864,18 @@ export function startCatalogSync(): void {
   const run = () => {
     void syncCatalog();
   };
-  bootTimer = setTimeout(run, BOOT_DELAY_MS);
-  intervalId = setInterval(run, SYNC_INTERVAL_MS);
-  console.log(`[catalog-sync] polling ${YANGMAO_URL} every ${SYNC_INTERVAL_MS / 3600000}h`);
+  cancelBootTimer = scheduler.after(BOOT_DELAY_MS, run);
+  cancelInterval = scheduler.every(SYNC_INTERVAL_MS, run);
+  console.log(`[catalog-sync] polling ${catalogBaseUrl()} every ${SYNC_INTERVAL_MS / 3600000}h`);
 }
 
 export function stopCatalogSync(): void {
-  if (bootTimer) {
-    clearTimeout(bootTimer);
-    bootTimer = null;
+  if (cancelBootTimer) {
+    cancelBootTimer();
+    cancelBootTimer = null;
   }
-  if (intervalId) {
-    clearInterval(intervalId);
-    intervalId = null;
+  if (cancelInterval) {
+    cancelInterval();
+    cancelInterval = null;
   }
 }
