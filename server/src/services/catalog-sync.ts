@@ -237,9 +237,9 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
       const row = selectModel.get(platform, m.modelId) as { id: number; enabled: number } | undefined;
       const fields = {
         displayName: m.displayName,
-        intelligenceRank: m.intelligenceRank,
-        speedRank: m.speedRank,
-        sizeLabel: m.sizeLabel,
+        intelligenceRank: m.intelligenceRank ?? 50,
+        speedRank: m.speedRank ?? 50,
+        sizeLabel: m.sizeLabel ?? 'Medium',
         rpm: m.limits.rpm,
         rpd: m.limits.rpd,
         tpm: m.limits.tpm,
