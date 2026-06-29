@@ -373,7 +373,7 @@ export async function fetchYangmaoData(): Promise<Catalog> {
         displayName: m.name,
         intelligenceRank: 50,
         speedRank: 50,
-        sizeLabel: '',
+        sizeLabel: 'Medium',
         limits,
         monthlyTokenBudget: p.api_free_credits || null,
         contextWindow,
