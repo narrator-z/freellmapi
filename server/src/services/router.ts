@@ -312,7 +312,7 @@ export function refreshStatsCache(db: Database, force = false): void {
 // Composite intelligence: size_label is the cross-provider capability tier
 // (issue #135 — intelligence_rank is only meaningful within one provider), so
 // tier dominates and intelligence_rank breaks ties inside a tier.
-const TIER_VALUE: Record<string, number> = { Frontier: 4, Large: 3, Medium: 2, Small: 2, Custom: 1 };
+const TIER_VALUE: Record<string, number> = { Frontier: 4, Large: 3, Medium: 2, Small: 1, Custom: 1 };
 function intelligenceComposite(sizeLabel: string, intelligenceRank: number): number {
   const tier = TIER_VALUE[sizeLabel] ?? 0;
   // tier*1000 keeps tiers strictly separated; -rank prefers lower rank in-tier.

@@ -48,8 +48,6 @@ HOST_BIND=0.0.0.0 docker compose up -d  # Expose on LAN (trusted networks only)
    - `PROXY_RATE_LIMIT_RPM=60` - Configures per-IP rate limit (requests per minute)
    - `REQUEST_ANALYTICS_RETENTION_DAYS=0` - Disable request analytics retention by days
    - `REQUEST_ANALYTICS_MAX_ROWS=0` - Disable request analytics retention by row count
-   - `CATALOG_BASE_URL` - Custom catalog URL for ranking enrichment (default: https://api.freellmapi.co)
-   - `CATALOG_PUBKEY` - Custom catalog public key for ranking signature verification (for self-hosted catalog server)
    - `CATALOG_SYNC_DISABLED=1` - Disable automatic catalog synchronization
 
 ## Architecture Overview
@@ -192,4 +190,4 @@ Build native menu-bar app:
 - Context handoff improves continuity during model switches but cannot recover provider-internal hidden state
 - Free tier limitations apply: intelligence degrades as daily quotas are exhausted, resets at UTC midnight
 - This is for personal experimentation and learning - swap to paid APIs before shipping production software
-- Model catalog syncs from `yangmao.ai` (free-tier model list), enriched with intelligence/speed rankings from the FreeLLMAPI catalog. Updated every 12 hours for all installs.
+- Model catalog syncs from the freellmapi-augmented repository (merged v1 + yangmao.ai data), updated every 12 hours for all installs.
