@@ -31,6 +31,19 @@ const SYNC_INTERVAL_MS = 12 * 60 * 60 * 1000; // twice daily
 const BOOT_DELAY_MS = 10 * 1000;
 const FETCH_TIMEOUT_MS = 20 * 1000;
 
+// yangmao-* platforms in the augmented catalog are passthrough wrappers that
+// map to existing registered providers. Remap them so models get stored under
+// the correct platform and pass the hasProvider() check.
+const YANGMAO_PLATFORM_ALIASES: Record<string, string> = {
+  'yangmao-anyscale': 'anyscale',
+  'yangmao-baichuan': 'baichuan',
+  'yangmao-huggingface': 'huggingface',
+  'yangmao-moonshot': 'kimi',
+  'yangmao-siliconcloud': 'siliconflow',
+  'yangmao-baidu': 'ernie',
+  'yangmao-alibaba': 'qwen',
+};
+
 // Generative-media modalities are routed into the separate media_models table
 // (see services/media.ts), never into the chat `models` table.
 const MEDIA_MODALITIES = new Set(['image', 'audio']);
@@ -186,15 +199,17 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
     const inMediaCatalog = new Set<string>();
 
     for (const m of catalog.models) {
+      // Remap yangmao-* wrapper platforms to their real provider.
+      const platform = YANGMAO_PLATFORM_ALIASES[m.platform] ?? m.platform;
       const modality = m.modality ?? 'text';
       if (MEDIA_MODALITIES.has(modality)) {
-        if (!MEDIA_PLATFORMS.has(m.platform)) {
+        if (!MEDIA_PLATFORMS.has(platform)) {
           counts.skippedUnknownPlatform++;
           continue;
         }
-        if (isCatalogModelTombstoned(db, 'media', m.platform, m.modelId)) continue;
-        inMediaCatalog.add(`${m.platform}:${m.modelId}`);
-        const mrow = selectMedia.get(m.platform, m.modelId) as { id: number; enabled: number } | undefined;
+        if (isCatalogModelTombstoned(db, 'media', platform, m.modelId)) continue;
+        inMediaCatalog.add(`${platform}:${m.modelId}`);
+        const mrow = selectMedia.get(platform, m.modelId) as { id: number; enabled: number } | undefined;
         const mfields = {
           displayName: m.displayName,
           modality,
@@ -206,20 +221,20 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
           updateMedia.run({ ...mfields, id: mrow.id, enabled });
           counts.updated++;
         } else {
-          insertMedia.run({ ...mfields, platform: m.platform, modelId: m.modelId, enabled: m.enabled ? 1 : 0 });
+          insertMedia.run({ ...mfields, platform, modelId: m.modelId, enabled: m.enabled ? 1 : 0 });
           counts.inserted++;
         }
         continue;
       }
 
-      if (m.platform === 'custom' || !hasProvider(m.platform as Platform)) {
+      if (platform === 'custom' || !hasProvider(platform as Platform)) {
         counts.skippedUnknownPlatform++;
         continue;
       }
-      if (isCatalogModelTombstoned(db, 'chat', m.platform, m.modelId)) continue;
-      inCatalog.add(`${m.platform}:${m.modelId}`);
+      if (isCatalogModelTombstoned(db, 'chat', platform, m.modelId)) continue;
+      inCatalog.add(`${platform}:${m.modelId}`);
 
-      const row = selectModel.get(m.platform, m.modelId) as { id: number; enabled: number } | undefined;
+      const row = selectModel.get(platform, m.modelId) as { id: number; enabled: number } | undefined;
       const fields = {
         displayName: m.displayName,
         intelligenceRank: m.intelligenceRank,
@@ -237,11 +252,11 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
       if (row) {
         const enabled = m.enabled ? row.enabled : 0;
         updateModel.run({ ...fields, id: row.id, enabled });
-        applyModelOverrides(db, m.platform, m.modelId);
+        applyModelOverrides(db, platform, m.modelId);
         counts.updated++;
       } else {
-        insertModel.run({ ...fields, platform: m.platform, modelId: m.modelId, enabled: m.enabled ? 1 : 0 });
-        applyModelOverrides(db, m.platform, m.modelId);
+        insertModel.run({ ...fields, platform, modelId: m.modelId, enabled: m.enabled ? 1 : 0 });
+        applyModelOverrides(db, platform, m.modelId);
         counts.inserted++;
       }
     }
