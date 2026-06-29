@@ -2,18 +2,13 @@
 
 // Active platforms — must match server/src/providers/index.ts and
 // server/src/routes/keys.ts PLATFORMS allowlist.
-// Moonshot and MiniMax direct integrations were dropped in migrateModelsV4
-// (see server/src/db/index.ts). HuggingFace was dropped in V4 and re-added
-// in V13 via the router.huggingface.co Inference Providers meta-router.
-// SambaNova was dropped in V23 (free tier permanently retired — 402
-// "payment method required" once the one-time $5 trial credit lapses).
+// SambaNova was dropped in V23 (free tier permanently retired).
 export type Platform =
   | 'google'
   | 'groq'
   | 'cerebras'
   | 'nvidia'
   | 'mistral'
-  | 'sambanova'
   | 'openrouter'
   | 'github'
   | 'cohere'
@@ -30,35 +25,20 @@ export type Platform =
   // OVHcloud AI Endpoints — OpenAI-compatible, keyless anonymous tier
   // (2 req/min per IP per model); see migrateModelsV26.
   | 'ovh'
-  // Agnes AI (Sapiens AI) — OpenAI-compatible (LiteLLM + vLLM backend). Serves
-  // its own proprietary Agnes models; the free key comes from
-  // platform.agnes-ai.com (no card).
+  // Agnes AI (Sapiens AI) — OpenAI-compatible (LiteLLM + vLLM backend).
   | 'agnes'
-  // Reka — OpenAI-compatible. Native multimodal models (reka-edge takes
-  // image/video); free via a recurring monthly credit grant, key from
-  // platform.reka.ai (no card).
+  // Reka — OpenAI-compatible. Free via a recurring monthly credit grant.
   | 'reka'
-  // SiliconFlow — OpenAI-compatible. Registered for its FREE generative-media
-  // models (FLUX.1-schnell image, CosyVoice2 TTS) routed via services/media.ts;
-  // chat is supported too. Key from siliconflow.com (no card).
+  // SiliconFlow — OpenAI-compatible. Registered for FREE generative-media models.
   | 'siliconflow'
-  // Routeway — OpenAI-compatible aggregator. Free ':free' models ($0) on a
-  // rate-limited pool (~5 rpm observed); requires a browser User-Agent (CF
-  // blocks others). Key from routeway.ai/dashboard (no card).
+  // Routeway — OpenAI-compatible aggregator. Free ':free' models.
   | 'routeway'
-  // BazaarLink — OpenAI-compatible aggregator. Free 'auto:free' route picks an
-  // available zero-cost model. Key from bazaarlink.ai/api/v1/agents/register
-  // (no card, supports agent self-registration).
+  // BazaarLink — OpenAI-compatible aggregator. Free 'auto:free' route.
   | 'bazaarlink'
-  // AINative Studio — OpenAI-compatible aggregator. Advertises a recurring
-  // ~10M tokens/month free allocation (no card); quota unverified. Key from
-  // ainative.studio/signup.
+  // AINative Studio — OpenAI-compatible aggregator.
   | 'ainative'
-  // Additional free OpenAI-compatible providers from yangmao.ai
-  // Note: cerebras-cloud = cerebras (same baseUrl), nvidia-build = nvidia,
-  // fireworks-ai = fireworks, cloudflare-workers-ai = cloudflare — kept as
-  // separate platform IDs only so the yangmao catalog can map its models; the
-  // providers share the same base URL and API key.
+  // Additional providers registered in providers/index.ts.
+  // Alias platforms map to primary counterparts in the catalog.
   | 'aimlapi'
   | 'ai21-labs'
   | 'anyscale'
@@ -93,18 +73,9 @@ export type Platform =
   | 'stepfun'
   // Together AI — OpenAI-compatible inference platform
   | 'together-ai'
-  // SambaNova was dropped in V23 (free tier permanently retired — 402
-  // "payment method required" once the one-time $5 trial credit lapses).
-  // Re-added via yangmao supplement: free tier is active again as of 2026-06.
-  // | 'sambanova'  — already defined above
-  // RunPod — OpenAI-compatible serverless inference
-  | 'runpod'
-  // Nebius AI Studio — OpenAI-compatible, European cloud GPU infrastructure
-  | 'nebius'
   // AI Horde — free, community-powered inference (volunteer workers)
   | 'aihorde'
-  // User-configured OpenAI-compatible endpoint (llama.cpp, LM Studio, vLLM,
-  // Ollama, any base_url). The endpoint URL lives on the api_keys row; see #117.
+  // User-configured OpenAI-compatible endpoint
   | 'custom';
 
 export interface Model {

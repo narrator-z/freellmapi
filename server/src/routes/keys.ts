@@ -15,13 +15,13 @@ const PLATFORMS = [
   'google', 'groq', 'cerebras', 'nvidia', 'mistral',
   'openrouter', 'github', 'cohere', 'cloudflare', 'zhipu', 'ollama',
   'kilo', 'pollinations', 'llm7', 'huggingface', 'opencode', 'ovh', 'agnes', 'reka', 'siliconflow',
-  // Yangmao-supplemented platforms (excludes duplicates, local-only)
+  // Augmented catalog platforms
   'aimlapi', 'ai21-labs', 'anyscale', 'awanllm', 'baichuan',
   'clawbrain', 'deepinfra', 'deepseek', 'doubao', 'ernie',
   'fireworks', 'grok', 'kimi', 'lepton',
-  'minimax', 'monsterapi', 'nebius', 'novita',
+  'minimax', 'monsterapi', 'novita',
   'octoai', 'openpipe', 'parasail', 'portkey-ai',
-  'qwen', 'runpod', 'sambanova', 'stepfun', 'together-ai',
+  'qwen', 'stepfun', 'together-ai',
   'routeway', 'bazaarlink', 'ainative', 'aihorde',
   // User-configured custom endpoint
   'custom',

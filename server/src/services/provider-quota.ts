@@ -123,7 +123,6 @@ function inferPoolForPlatform(platform: Platform, modelId?: string | null): stri
   if (platform === 'google') return 'google::project';
   if (platform === 'groq') return 'groq::account';
   if (platform === 'cerebras') return 'cerebras::shared';
-  if (platform === 'sambanova') return 'sambanova::shared';
   if (platform === 'nvidia') return 'nvidia::credit-pool';
   if (platform === 'mistral') return 'mistral::experiment-pool';
   if (platform === 'github') return 'github::account';
@@ -149,12 +148,12 @@ function inferPoolForPlatform(platform: Platform, modelId?: string | null): stri
 
 function isSharedPool(platform: Platform): boolean {
   return [
-    'openrouter', 'google', 'groq', 'cerebras', 'sambanova', 'nvidia', 'mistral', 'github', 'cohere', 'cloudflare', 'zhipu', 'ollama', 'kilo', 'pollinations', 'llm7', 'huggingface', 'opencode',
-    'aimlapi', 'ai21-labs', 'anyscale', 'awanllm', 'baichuan', 'cerebras-cloud', 'clawbrain', 'cloudflare-workers-ai',
-    'deepinfra', 'deepseek', 'doubao', 'ernie', 'fireworks', 'fireworks-ai', 'grok',
-    'kimi', 'lepton', 'llama-cpp', 'lmstudio', 'localai', 'minimax', 'monsterapi', 'novita', 'nvidia-build',
+    'openrouter', 'google', 'groq', 'cerebras', 'nvidia', 'mistral', 'github', 'cohere', 'cloudflare', 'zhipu', 'ollama', 'kilo', 'pollinations', 'llm7', 'huggingface', 'opencode',
+    'aimlapi', 'ai21-labs', 'anyscale', 'awanllm', 'baichuan', 'clawbrain',
+    'deepinfra', 'deepseek', 'doubao', 'ernie', 'fireworks', 'grok',
+    'kimi', 'lepton', 'llama-cpp', 'lmstudio', 'localai', 'minimax', 'monsterapi', 'novita',
     'octoai', 'openpipe', 'parasail', 'portkey-ai',
-    'qwen', 'stepfun', 'together-ai', 'runpod', 'nebius',
+    'qwen', 'stepfun', 'together-ai',
     'routeway', 'bazaarlink', 'ainative', 'aihorde'
   ].includes(platform);
 }

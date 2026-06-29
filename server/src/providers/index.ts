@@ -29,11 +29,10 @@ register(new OpenAICompatProvider({
   baseUrl: 'https://api.cerebras.ai/v1',
 }));
 
-// SambaNova — OpenAI-compatible. Free tier 50 RPM, fast inference on custom
-// RDU hardware. Llama 3.3 70B is free to use. Re-added via yangmao supplement
-// (2026-06): after being dropped in V23 when the promotional $5 trial expired,
-// the free tier appears to be active again; model catalog rows are managed by
-// the yangmao catalog pipeline.
+// SambaNova was dropped in V23 (June 2026): the free tier is permanently gone.
+// The always-free tier was retired in early 2025 for a one-time $5 trial credit
+// (expires in 3 months); once it lapses, every chat call 402s "payment method
+// required" with no recurring no-card path back.
 
 // NVIDIA NIM - OpenAI-compatible. Several NIM models reject parallel tool calls
 // ("This model only supports single tool-calls at once!"), so pin
@@ -226,11 +225,11 @@ register(new OpenAICompatProvider({
   baseUrl: 'https://api.siliconflow.com/v1',
 }));
 
-// Additional free OpenAI-compatible providers from yangmao.ai
-// Note: cerebras-cloud = cerebras (same baseUrl), nvidia-build = nvidia,
-// fireworks-ai = fireworks, cloudflare-workers-ai = cloudflare — kept as
-// separate platform IDs only so the yangmao catalog can map its models; the
-// providers share the same base URL and API key.
+// Additional providers whose catalog rows are managed by the augmented catalog
+// (not seeded in migrations). Cerebras Cloud and NVIDIA Build are aliases for
+// cerebras and nvidia respectively, kept as separate platform IDs for catalog
+// mapping; fireworks-ai is an alias for fireworks; cloudflare-workers-ai is an
+// alias for cloudflare.
 register(new OpenAICompatProvider({
   platform: 'aimlapi',
   name: 'AI/ML API',
@@ -427,110 +426,6 @@ register(new OpenAICompatProvider({
   name: 'Together AI',
   baseUrl: 'https://api.together.xyz/v1',
 }));
-
-// SambaNova — OpenAI-compatible. 50 RPM free tier, fast inference on
-// custom RDU hardware. Llama 3.3 70B is free to use.
-register(new OpenAICompatProvider({
-  platform: 'sambanova',
-  name: 'SambaNova',
-  baseUrl: 'https://api.sambanova.ai/v1',
-}));
-
-// RunPod — OpenAI-compatible serverless inference. Up to $10 free credits.
-// Supports Llama, Flux, and community models.
-register(new OpenAICompatProvider({
-  platform: 'runpod',
-  name: 'RunPod',
-  baseUrl: 'https://api.runpod.ai/v1',
-}));
-
-// Nebius AI Studio — OpenAI-compatible. European cloud GPU infrastructure.
-// Trial credits may be available; verify AI Studio dashboard.
-register(new OpenAICompatProvider({
-  platform: 'nebius',
-  name: 'Nebius AI Studio',
-  baseUrl: 'https://api.studio.nebius.com/v1',
-}));
-
-// AI Horde — free, community-powered inference (volunteer workers) via an
-// OpenAI-compatible proxy. Dedicated AIHordeProvider (not OpenAICompatProvider)
-// because the proxy is queue-based and diverges from the OpenAI contract:
-// max_tokens must be >=16, stop must be an array, no tool calling, usage is
-// reported as kudos (synthesized into token counts), and calls can take tens of
-// seconds (120s timeout, no upstream streaming). Registered keyless so it
-// auto-configures and works anonymously (key 0000000000, lowest queue
-// priority); a registered aihorde.net key raises priority. See issue #345.
-register(new AIHordeProvider());
-// carry a ':free' suffix and cost $0; the free pool is rate-limited (docs say
-// 20 rpm / 200 rpd, but a live test on 2026-06-26 observed a stricter 5 rpm).
-// Cloudflare in front rejects non-browser User-Agents with error 1010, so a
-// browser-style UA is required. Free key from routeway.ai (no card). Catalog
-// rows live in the catalog (premium → age into free).
-register(new OpenAICompatProvider({
-  platform: 'routeway',
-  name: 'Routeway',
-  baseUrl: 'https://api.routeway.ai/v1',
-  extraHeaders: {
-    'User-Agent': 'Mozilla/5.0 FreeLLMAPI/1.0',
-  },
-}));
-
-// BazaarLink — OpenAI-compatible aggregator (bazaarlink.ai/api/v1). The
-// 'auto:free' route picks a currently-available zero-cost model (routed to
-// deepseek-v4-flash in a 2026-06-26 live test, usage.cost 0); direct model IDs
-// are paid, so only 'auto:free' is cataloged. Free key from bazaarlink.ai
-// (no card, supports agent self-registration). Reasoning models can consume a
-// tiny max_tokens internally, so default to a non-trivial output cap.
-register(new OpenAICompatProvider({
-  platform: 'bazaarlink',
-  name: 'BazaarLink',
-  baseUrl: 'https://bazaarlink.ai/api/v1',
-}));
-
-// AINative Studio — OpenAI-compatible aggregator (api.ainative.studio/api/v1).
-// Advertises a recurring ~10M tokens/month free allocation (no card), though
-// its own pages disagree on scale; treat the quota as unverified until a real
-// account confirms it. Bearer auth works (X-API-Key also accepted). Catalog
-// rows live in the catalog (premium → age into free).
-register(new OpenAICompatProvider({
-  platform: 'ainative',
-  name: 'AINative Studio',
-  baseUrl: 'https://api.ainative.studio/api/v1',
-}));
-
-// SambaNova — OpenAI-compatible. 50 RPM free tier, fast inference on
-// custom RDU hardware. Llama 3.3 70B is free to use.
-register(new OpenAICompatProvider({
-  platform: 'sambanova',
-  name: 'SambaNova',
-  baseUrl: 'https://api.sambanova.ai/v1',
-}));
-
-// RunPod — OpenAI-compatible serverless inference. Up to $10 free credits.
-// Supports Llama, Flux, and community models.
-register(new OpenAICompatProvider({
-  platform: 'runpod',
-  name: 'RunPod',
-  baseUrl: 'https://api.runpod.ai/v1',
-}));
-
-// Nebius AI Studio — OpenAI-compatible. European cloud GPU infrastructure.
-// Trial credits may be available; verify AI Studio dashboard.
-register(new OpenAICompatProvider({
-  platform: 'nebius',
-  name: 'Nebius AI Studio',
-  baseUrl: 'https://api.studio.nebius.com/v1',
-}));
-
-// AI Horde — free, community-powered inference (volunteer workers) via an
-// OpenAI-compatible proxy. Dedicated AIHordeProvider (not OpenAICompatProvider)
-// because the proxy is queue-based and diverges from the OpenAI contract:
-// max_tokens must be >=16, stop must be an array, no tool calling, usage is
-// reported as kudos (synthesized into token counts), and calls can take tens of
-// seconds (120s timeout, no upstream streaming). Registered keyless so it
-// auto-configures and works anonymously (key 0000000000, lowest queue
-// priority); a registered aihorde.net key raises priority. See issue #345.
-register(new AIHordeProvider());
 
 // Placeholder so getProvider('custom')/hasProvider('custom')/getAllProviders()
 // behave — but the real instance is built per-key by resolveProvider(), since
