@@ -73,6 +73,9 @@ export type Platform =
   | 'stepfun'
   // Together AI — OpenAI-compatible inference platform
   | 'together-ai'
+  | 'sambanova'
+  | 'runpod'
+  | 'nebius'
   // AI Horde — free, community-powered inference (volunteer workers)
   | 'aihorde'
   // User-configured OpenAI-compatible endpoint
