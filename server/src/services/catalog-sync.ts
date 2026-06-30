@@ -165,8 +165,11 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
   const selectModel = db.prepare('SELECT id, enabled FROM models WHERE platform = ? AND model_id = ?');
   const updateModel = db.prepare(`
     UPDATE models SET
-      display_name = @displayName, intelligence_rank = @intelligenceRank, speed_rank = @speedRank,
-      size_label = @sizeLabel, rpm_limit = @rpm, rpd_limit = @rpd, tpm_limit = @tpm, tpd_limit = @tpd,
+      display_name = @displayName,
+      intelligence_rank = COALESCE(@intelligenceRank, 50),
+      speed_rank = COALESCE(@speedRank, 50),
+      size_label = COALESCE(@sizeLabel, 'Medium'),
+      rpm_limit = @rpm, rpd_limit = @rpd, tpm_limit = @tpm, tpd_limit = @tpd,
       monthly_token_budget = @monthlyTokenBudget, context_window = @contextWindow,
       supports_vision = @supportsVision, supports_tools = @supportsTools,
       enabled = @enabled
@@ -176,7 +179,8 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
     INSERT INTO models (platform, model_id, display_name, intelligence_rank, speed_rank, size_label,
                         rpm_limit, rpd_limit, tpm_limit, tpd_limit, monthly_token_budget, context_window,
                         enabled, supports_vision, supports_tools)
-    VALUES (@platform, @modelId, @displayName, @intelligenceRank, @speedRank, @sizeLabel,
+    VALUES (@platform, @modelId, @displayName,
+            COALESCE(@intelligenceRank, 50), COALESCE(@speedRank, 50), COALESCE(@sizeLabel, 'Medium'),
             @rpm, @rpd, @tpm, @tpd, @monthlyTokenBudget, @contextWindow,
             @enabled, @supportsVision, @supportsTools)
   `);
