@@ -170,7 +170,8 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
       speed_rank = COALESCE(@speedRank, 50),
       size_label = COALESCE(@sizeLabel, 'Medium'),
       rpm_limit = @rpm, rpd_limit = @rpd, tpm_limit = @tpm, tpd_limit = @tpd,
-      monthly_token_budget = @monthlyTokenBudget, context_window = @contextWindow,
+      monthly_token_budget = COALESCE(@monthlyTokenBudget, ''),
+      context_window = @contextWindow,
       supports_vision = @supportsVision, supports_tools = @supportsTools,
       enabled = @enabled
     WHERE id = @id
@@ -181,7 +182,7 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
                         enabled, supports_vision, supports_tools)
     VALUES (@platform, @modelId, @displayName,
             COALESCE(@intelligenceRank, 50), COALESCE(@speedRank, 50), COALESCE(@sizeLabel, 'Medium'),
-            @rpm, @rpd, @tpm, @tpd, @monthlyTokenBudget, @contextWindow,
+            @rpm, @rpd, @tpm, @tpd, COALESCE(@monthlyTokenBudget, ''), @contextWindow,
             @enabled, @supportsVision, @supportsTools)
   `);
 
