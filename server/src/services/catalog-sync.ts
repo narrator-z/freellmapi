@@ -143,8 +143,12 @@ async function fetchAugmentedCatalog(): Promise<Catalog> {
   return parsed;
 }
 
-// ---- applyCatalog (unchanged write path) ----
+function routableContextWindow(platform: string, modelId: string, contextWindow: number | null): number | null {
+  if (platform === 'github' && modelId === 'openai/gpt-4.1') return 8000;
+  return contextWindow;
+}
 
+// ---- applyCatalog (unchanged write path) ----
 /**
  * Apply a catalog to the local DB inside one transaction.
  *
@@ -250,7 +254,7 @@ export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNu
         tpm: m.limits.tpm,
         tpd: m.limits.tpd,
         monthlyTokenBudget: m.monthlyTokenBudget,
-        contextWindow: m.contextWindow,
+        contextWindow: routableContextWindow(m.platform, m.modelId, m.contextWindow),
         supportsVision: m.supportsVision ? 1 : 0,
         supportsTools: m.supportsTools ? 1 : 0,
       };
