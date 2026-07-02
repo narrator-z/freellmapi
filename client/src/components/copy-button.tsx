@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, copyToClipboard } from '@/lib/utils'
 
 interface CopyButtonProps {
   text: string
@@ -9,15 +9,18 @@ interface CopyButtonProps {
 }
 
 // Small icon button that copies `text` to the clipboard and briefly shows a
-// check. Shared by markdown code blocks and Playground replies.
+// check. Shared by markdown code blocks and Playground replies. Uses
+// copyToClipboard so it still works on plain HTTP over a LAN IP, where the
+// async Clipboard API is unavailable.
 export function CopyButton({ text, className, label = 'Copy' }: CopyButtonProps) {
   const [copied, setCopied] = useState(false)
   return (
     <button
       type="button"
       aria-label={copied ? 'Copied' : label}
-      onClick={() => {
-        void navigator.clipboard?.writeText(text)
+      onClick={async () => {
+        const ok = await copyToClipboard(text)
+        if (!ok) return
         setCopied(true)
         setTimeout(() => setCopied(false), 1500)
       }}

@@ -10,7 +10,7 @@ import { Switch } from '@/components/ui/switch'
 import { PageHeader } from '@/components/page-header'
 import type { ApiKey, ApiKeyModel, Platform, ProviderQuotaState } from '../../../shared/types'
 import { ChevronDown, Pencil, ExternalLink, Globe, Trash2 } from 'lucide-react'
-import { formatSqliteUtcToLocalTime } from '@/lib/utils'
+import { formatSqliteUtcToLocalTime, copyToClipboard } from '@/lib/utils'
 import { useI18n } from '@/i18n'
 
 // Claude (Anthropic) model families the mapping editor exposes. Anthropic
@@ -228,8 +228,12 @@ function UnifiedKeySection() {
     ? `http://${window.location.hostname}:${__SERVER_PORT__}/v1`
     : `${window.location.origin}/v1`
 
-  function copy() {
-    navigator.clipboard.writeText(apiKey)
+  async function copy() {
+    // copyToClipboard falls back to a hidden-textarea execCommand copy when
+    // the async Clipboard API is unavailable (plain HTTP over a LAN IP),
+    // which is the typical way this self-hosted gateway is reached.
+    const ok = await copyToClipboard(apiKey)
+    if (!ok) return
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
