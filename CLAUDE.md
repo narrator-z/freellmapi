@@ -78,7 +78,7 @@ The server is a single-process Express 5 app serving:
 **Key Directories:**
 - `providers/` - Provider adapters (`base.ts` defines `BaseProvider`; `openai-compat.ts` handles OpenAI-compatible providers; `google.ts`, `cohere.ts`, `cloudflare.ts` handle non-OpenAI-wire formats)
 - `services/` - Core logic: `router.ts` (model selection), `ratelimit.ts` (rate tracking), `health.ts` (key probing), `catalog-sync.ts` (model catalog sync), `scoring.ts` (Thompson sampling bandit), `context-handoff.ts` (handoff messages), `embeddings.ts` (family-based routing), `quirks.ts` (model-specific behaviors), plus newer services: `media.ts` (image/audio processing), `fusion.ts` (multi-model synthesis), `model-groups.ts` (model categorization), `model-listing.ts` (model discovery), `provider-quota.ts` (quota tracking), `anthropic-map.ts` (Anthropic API mapping)
-- `routes/` - Express handlers for proxy (`proxy.ts`, `responses.ts`, `embeddings.ts`) and admin API (`keys.ts`, `models.ts`, `fallback.ts`, `analytics.ts`, `auth.ts`, `settings.ts`, `premium.ts`, `health.ts`), plus newer routes: `anthropic.ts` (Claude API), `media.ts` (media endpoints), `profiles.ts` (user profiles)
+- `routes/` - Express handlers for proxy (`proxy.ts`, `responses.ts`, `embeddings.ts`) and admin API (`keys.ts`, `models.ts`, `fallback.ts`, `analytics.ts`, `auth.ts`, `settings.ts`, `catalog.ts`, `health.ts`), plus newer routes: `anthropic.ts` (Claude API), `media.ts` (media endpoints), `profiles.ts` (user profiles)
 - `middleware/` - `requireAuth.ts` (session-token auth for `/api/*`), `rateLimit.ts` (per-IP proxy rate limiter), `errorHandler.ts`
 - `db/index.ts` - Drizzle ORM + better-sqlite3 schema, migrations, and seed data
 - `lib/` - Utilities: `crypto.ts` (AES-256-GCM encrypt/decrypt), `proxy.ts` (SOCKS proxy), `content.ts` (multimodal content), `tool-args.ts`, `tool-call-rescue.ts`, `password.ts` (scrypt), `budget.ts`, `error-redaction.ts`, plus newer utilities: `error-classify.ts` (error classification), `process-safety-net.ts` (process safety), `request-log.ts` (request logging)
@@ -123,7 +123,7 @@ React 19 SPA with:
 - Recharts
 - TanStack Query
 
-Pages: Playground, Keys, Fallback Chain, Models (chat + embeddings tabs), Analytics, Premium, Settings, Audio, Image, Embedding Detail, Media Detail, Model Detail, Fusion
+Pages: Playground, Keys, Fallback Chain, Models (chat + embeddings tabs), Analytics, Catalog, Settings, Audio, Image, Embedding Detail, Media Detail, Model Detail, Fusion
 Auth gate via `auth-gate.tsx` - redirects to login/setup if no session.
 
 ### Internationalization (i18n)

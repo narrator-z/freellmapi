@@ -1,20 +1,29 @@
-.git
-.github
-node_modules
-client/node_modules
-server/node_modules
-shared/node_modules
-client/dist
-server/dist
-server/data
-dist
-.env
-.env.*
+node_modules/
+dist/
+server/data/
 *.db
 *.db-wal
 *.db-shm
 *.bak
+.env
+.env.local
 .DS_Store
-npm-debug.log*
-repo-assets
-free-ai-apis.pdf
+
+# Personal deployment scripts (contain keys/credentials — kept local)
+deploy-pi.sh
+update-hermes.sh
+
+# Monetization planning — private, never committed
+monetization/
+
+# Generated deliverables & audit reports
+deliverables/
+overview.md
+security-audit-report-*.md
+qa-report-*.md
+
+# WorkBuddy configuration files
+.workbuddy/
+
+# Docker data directory
+freellmapi-data/

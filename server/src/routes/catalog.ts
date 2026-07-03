@@ -5,7 +5,7 @@ import {
   syncCatalog,
 } from '../services/catalog-sync.js';
 
-export const premiumRouter = Router();
+export const catalogRouter = Router();
 
 function statusPayload() {
   return {
@@ -13,13 +13,13 @@ function statusPayload() {
   };
 }
 
-/** GET /api/premium — catalog sync status. */
-premiumRouter.get('/', (_req: Request, res: Response) => {
+/** GET /api/catalog — catalog sync status. */
+catalogRouter.get('/', (_req: Request, res: Response) => {
   res.json(statusPayload());
 });
 
-/** POST /api/premium/sync — check for updates now. */
-premiumRouter.post('/sync', async (_req: Request, res: Response) => {
+/** POST /api/catalog/sync — check for updates now. */
+catalogRouter.post('/sync', async (_req: Request, res: Response) => {
   const sync = await syncCatalog();
   res.json({ ...statusPayload(), sync });
 });
