@@ -363,7 +363,8 @@
     "howToUse": "如何使用",
     "howToUseHelp": "发送普通的对话请求，并将 model 设为 “fusion”。这些设置为默认值；任何请求都可以通过 “fusion” 字段覆盖它们。",
     "unsavedChanges": "有未保存的更改",
-    "save": "保存"
+    "save": "保存",
+    "loadError": "加载配置失败: {error}"
   },
   "catalog": {
     "title": "目录同步",

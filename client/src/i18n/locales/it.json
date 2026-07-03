@@ -361,7 +361,8 @@
     "howToUse": "Come usare",
     "howToUseHelp": "Invia una normale richiesta chat con modello \"fusion\". Queste impostazioni sono il default; qualsiasi richiesta può sovrascriverle con un campo \"fusion\".",
     "unsavedChanges": "Modifiche non salvate",
-    "save": "Salva"
+    "save": "Salva",
+    "loadError": "Caricamento configurazione fallito: {error}"
   },
   "languages": {
     "en": "English",

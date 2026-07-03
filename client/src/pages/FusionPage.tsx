@@ -45,11 +45,11 @@ export default function FusionPage() {
   const { t } = useI18n()
   const queryClient = useQueryClient()
 
-  const { data, isLoading } = useQuery<FusionConfigResponse>({
+  const { data, isLoading, isError, error } = useQuery<FusionConfigResponse>({
     queryKey: ['fusion-config'],
     queryFn: () => apiFetch('/api/settings/fusion'),
   })
-  const { data: fallbackEntries = [] } = useQuery<FallbackEntry[]>({
+  const { data: fallbackEntries = [], isError: fbError } = useQuery<FallbackEntry[]>({
     queryKey: ['fallback'],
     queryFn: () => apiFetch('/api/fallback'),
   })
@@ -105,10 +105,14 @@ export default function FusionPage() {
     expose_panel: exposePanel,
   }
 
-  const hasChanges = !!data && JSON.stringify({
-    ...data.config,
-    judge: data.config.judge ?? null,
-  }) !== JSON.stringify(draft)
+  const hasChanges = !!data && (
+    data.config.mode !== mode ||
+    data.config.strategy !== strategy ||
+    data.config.expose_panel !== exposePanel ||
+    data.config.k !== k ||
+    (data.config.judge ?? null) !== (judge === JUDGE_AUTO ? null : judge) ||
+    JSON.stringify(data.config.models) !== JSON.stringify(models)
+  )
 
   const toggleModel = (modelId: string) => {
     setModels(prev => prev.includes(modelId)
@@ -127,6 +131,8 @@ export default function FusionPage() {
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
+      ) : isError ? (
+        <p className="text-sm text-destructive">{t('fusion.loadError', { error: (error as Error)?.message ?? '' })}</p>
       ) : (
         <div className="space-y-8">
           {/* Panel mode */}
@@ -281,6 +287,9 @@ export default function FusionPage() {
 
       <FloatingBar show={hasChanges}>
         <span className="text-xs text-muted-foreground">{t('fusion.unsavedChanges')}</span>
+        {saveMutation.isError && (
+          <span className="text-xs text-destructive">{(saveMutation.error as Error)?.message}</span>
+        )}
         <Button size="sm" onClick={() => saveMutation.mutate(draft)} disabled={saveMutation.isPending}>
           {saveMutation.isPending ? t('common.loading') : t('fusion.save')}
         </Button>

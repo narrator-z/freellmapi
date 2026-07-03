@@ -340,7 +340,8 @@
     "howToUse": "Como usar",
     "howToUseHelp": "Envie uma requisição de chat normal com o modelo \"fusion\". Estas configurações são o padrão; qualquer requisição pode sobrescrevê-las com um campo \"fusion\".",
     "unsavedChanges": "Alterações não salvas",
-    "save": "Salvar"
+    "save": "Salvar",
+    "loadError": "Falha ao carregar configuração: {error}"
   },
   "languages": {
     "en": "English",

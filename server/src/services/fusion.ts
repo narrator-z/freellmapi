@@ -674,7 +674,7 @@ export async function runFusion(params: {
       : options;
 
     const getJudgeRoute = config.judge
-      ? (skipKeys: Set<string>) => {
+      ? (skipKeys: Set<string>, _skipModels: Set<number>) => {
           const cand = resolveFusionCandidate(config.judge!);
           return cand ? routePinnedModel(cand.modelDbId, judgeEstimate, skipKeys) : null;
         }
