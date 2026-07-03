@@ -707,7 +707,8 @@ keysRouter.get('/platforms', (_req: Request, res: Response) => {
   const platforms = providersArr.map(p => ({
     value: p.platform,
     label: p.name,
-    url: catalogUrls[p.platform] ?? FALLBACK_URLS[p.platform] ?? '',
+    // Hardcoded known URLs preferred (more reliable); catalog supplements unknown ones.
+    url: FALLBACK_URLS[p.platform] ?? catalogUrls[p.platform] ?? '',
     keyless: p.keyless,
   }));
   res.json(platforms);
