@@ -44,14 +44,12 @@ function GetKeyLink({ url }: { url: string }) {
   )
 }
 
-// `url` points to each provider's key-management / signup page so the Keys page
-// can show a "Get API key" shortcut (#137). OpenCode Zen's key is free from
-// opencode.ai/auth — no card needed; billing only applies to paid models (#128).
-// `keyless: true` providers (Kilo's anonymous free tier) need no API key — the
-// form disables the key field and submits a sentinel the backend stores so
-// routing treats the platform as configured.
-const PLATFORMS: { value: Platform; label: string; url: string; keyless?: boolean }[] = [
-  // Original v1 platforms
+// Platform list is fetched from GET /api/keys/platforms (driven by the
+// provider registry: upstream hand-maintained + catalog auto-registered).
+// Falls back to a minimal static list while the request is in flight.
+interface PlatformEntry { value: string; label: string; url: string; keyless?: boolean }
+
+const FALLBACK_PLATFORMS: PlatformEntry[] = [
   { value: 'google', label: 'Google AI Studio', url: 'https://aistudio.google.com/apikey' },
   { value: 'groq', label: 'Groq', url: 'https://console.groq.com/keys' },
   { value: 'cerebras', label: 'Cerebras', url: 'https://cloud.cerebras.ai' },
@@ -72,43 +70,25 @@ const PLATFORMS: { value: Platform; label: string; url: string; keyless?: boolea
   { value: 'agnes', label: 'Agnes AI (free key)', url: 'https://platform.agnes-ai.com' },
   { value: 'reka', label: 'Reka (free key)', url: 'https://platform.reka.ai' },
   { value: 'siliconflow', label: 'SiliconFlow (image + TTS)', url: 'https://siliconflow.com' },
-  // Yangmao-supplemented platforms (no duplicates, no local-only)
-  { value: 'aimlapi', label: 'AI/ML API', url: 'https://aimlapi.com/profile/api-keys' },
-  { value: 'ai21-labs', label: 'AI21 Labs', url: 'https://studio.ai21.com/account/api-keys' },
-  { value: 'anyscale', label: 'Anyscale', url: 'https://app.anyscale.com/token' },
-  { value: 'awanllm', label: 'AwanLLM', url: 'https://app.awnllm.com' },
-  { value: 'baichuan', label: 'Baichuan AI', url: 'https://platform.baichuan-ai.com/api-key' },
-  { value: 'clawbrain', label: 'ClawBrain', url: 'https://app.clawbrain.com' },
-  { value: 'deepinfra', label: 'DeepInfra', url: 'https://deepinfra.com/dash/api_keys' },
-  { value: 'deepseek', label: 'DeepSeek', url: 'https://platform.deepseek.com/api_keys' },
-  { value: 'doubao', label: 'Doubao (ByteDance)', url: 'https://console.volcengine.com/ark/api-key' },
-  { value: 'ernie', label: 'ERNIE Bot (Baidu)', url: 'https://console.bce.baidu.com/ai/#/ai/wenxinworkshop/app/list' },
-  { value: 'fireworks', label: 'Fireworks AI', url: 'https://fireworks.ai/api-keys' },
-  { value: 'grok', label: 'Grok (xAI)', url: 'https://console.x.ai' },
-  { value: 'kimi', label: 'Kimi (Moonshot AI)', url: 'https://kimi.moonshot.cn' },
-  { value: 'lepton', label: 'Lepton AI', url: 'https://www.lepton.ai/api-keys' },
-  { value: 'minimax', label: 'MiniMax', url: 'https://platform.minimaxi.com/api-keys' },
-  { value: 'monsterapi', label: 'MonsterAPI', url: 'https://monsterapi.ai' },
-  { value: 'novita', label: 'Novita AI', url: 'https://novita.ai/settings/api-keys' },
-  { value: 'octoai', label: 'OctoAI', url: 'https://octo.ai/console' },
-  { value: 'openpipe', label: 'OpenPipe', url: 'https://openpipe.ai/settings/api-keys' },
-  { value: 'parasail', label: 'Parasail', url: 'https://parasail.io/settings/api-keys' },
-  { value: 'portkey-ai', label: 'Portkey AI', url: 'https://app.portkey.ai/api-keys' },
-  { value: 'qwen', label: 'Qwen (Alibaba Cloud)', url: 'https://dashscope.console.aliyun.com/apiKey' },
-  { value: 'stepfun', label: 'StepFun (StepStar)', url: 'https://platform.stepfun.com/user/api-keys' },
-  { value: 'together-ai', label: 'Together AI', url: 'https://api.together.ai/settings/api-keys' },
   { value: 'routeway', label: 'Routeway (free key)', url: 'https://routeway.ai/dashboard' },
-  { value: 'bazaarlink', label: 'BazaarLink (free key)', url: 'https://bazaarlink.ai/api/v1/agents/register' },
+  { value: 'bazaarlink', label: 'BazaarLink (free key)', url: 'https://bazaarlink.ai' },
   { value: 'ainative', label: 'AINative Studio (free key)', url: 'https://ainative.studio/signup' },
+  { value: 'aihorde', label: 'AI Horde (no key needed, slow)', url: 'https://aihorde.net/register', keyless: true },
 ]
+
+function usePlatforms(): PlatformEntry[] {
+  const { data } = useQuery<PlatformEntry[]>({
+    queryKey: ['platforms'],
+    queryFn: () => apiFetch('/api/keys/platforms'),
+    staleTime: 5 * 60 * 1000, // 5-minute cache
+    placeholderData: FALLBACK_PLATFORMS,
+  })
+  return data ?? FALLBACK_PLATFORMS
+}
 
 // 'custom' is configured through its own form (base URL + model), not the
 // generic key dropdown — but it still appears in the grouped provider list.
-const CUSTOM_GROUP: { value: Platform; label: string; url: string } = {
-  value: 'custom',
-  label: 'Custom (OpenAI-compatible)',
-  url: '',
-}
+  const CUSTOM_GROUP: PlatformEntry = { value: 'custom', label: 'Custom (OpenAI-compatible)', url: '' }
 
 const CUSTOM_MODEL_KIND_LABEL: Record<ApiKeyModel['kind'], string> = {
   chat: 'keys.customTypeChat',
@@ -402,7 +382,8 @@ function ImportKeysSection() {
   const [skipped, setSkipped] = useState<string[]>([])
   const [result, setResult] = useState<ImportSelectedResponse | null>(null)
 
-  const importablePlatforms = PLATFORMS.filter(p => !p.keyless)
+  const platforms = usePlatforms()
+  const importablePlatforms = platforms.filter(p => !p.keyless)
 
   function platformFromPreview(key: PreviewKey): Platform | '' {
     return importablePlatforms.some(p => p.value === key.detectedPlatform)
@@ -912,6 +893,8 @@ export default function KeysPage() {
     refetchInterval: 30000,
   })
 
+  const platforms = usePlatforms()
+
   const addKey = useMutation({
     mutationFn: (body: { platform: string; key: string; label?: string }) =>
       apiFetch('/api/keys', { method: 'POST', body: JSON.stringify(body) }),
@@ -1020,7 +1003,7 @@ export default function KeysPage() {
   }, [editingKeyId])
 
   const needsAccountId = platform === 'cloudflare'
-  const isKeyless = PLATFORMS.find(p => p.value === platform)?.keyless ?? false
+  const isKeyless = platforms.find(p => p.value === platform)?.keyless ?? false
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -1053,7 +1036,7 @@ export default function KeysPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['proxy-url'] }),
   })
 
-  const grouped = [...PLATFORMS, CUSTOM_GROUP].map(p => ({
+  const grouped = [...platforms, CUSTOM_GROUP].map(p => ({
     ...p,
     keys: keys.filter(k => k.platform === p.value),
   })).filter(p => p.keys.length > 0)
@@ -1116,13 +1099,13 @@ export default function KeysPage() {
                   <SelectValue placeholder={t('keys.selectPlatform')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {PLATFORMS.map(p => (
+                  {platforms.map(p => (
                     <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {(() => {
-                const sel = PLATFORMS.find(p => p.value === platform)
+                const sel = platforms.find(p => p.value === platform)
                 return sel?.url ? <div className="pt-0.5"><GetKeyLink url={sel.url} /></div> : null
               })()}
             </div>

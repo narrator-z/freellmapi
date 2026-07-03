@@ -1,6 +1,6 @@
 import type DatabaseType from 'better-sqlite3';
 import { getDb, setSetting, getSetting } from '../db/index.js';
-import { hasProvider } from '../providers/index.js';
+import { hasProvider, registerFromCatalog } from '../providers/index.js';
 import { MEDIA_PLATFORMS } from './media.js';
 import type { Platform } from '@freellmapi/shared/types.js';
 import type { Scheduler } from '../lib/scheduler.js';
@@ -85,7 +85,7 @@ interface Catalog {
   version: string;
   generatedAt: string;
   tier: 'live' | 'monthly';
-  platforms: { id: string; name: string }[];
+  platforms: { id: string; name: string; url: string; keyless: boolean; apiBaseUrl: string; adapter: string; timeoutMs?: number | null; forceSingleToolCall?: boolean; extraHeaders?: Record<string, string>; quota?: { poolKey?: string; headerSpecs?: unknown } | null }[];
   models: AugmentedCatalogModel[];
   quirks: CatalogQuirk[];
   counts?: { platforms: number; models: number; enabledModels: number; quirks: number; baseModelsCount: number };
@@ -354,6 +354,17 @@ export async function syncCatalog(): Promise<SyncResult> {
 
   try {
     const catalog = await fetchAugmentedCatalog();
+
+    // Register any new providers from the catalog before applying models,
+    // so their models can pass the hasProvider() gate in applyCatalog().
+    // Hand-maintained providers are never overwritten.
+    const regResult = registerFromCatalog(catalog.platforms as any[]);
+    if (regResult.added.length > 0) {
+      console.log(`[catalog-sync] auto-registered ${regResult.added.length} new provider(s): ${regResult.added.join(', ')}`);
+    }
+    if (regResult.conflicts.length > 0) {
+      console.warn(`[catalog-sync] failed to register ${regResult.conflicts.length} provider(s): ${regResult.conflicts.join(', ')}`);
+    }
 
     const counts = applyCatalog(db, catalog);
     setSetting(SETTING_APPLIED_VERSION, catalog.version);

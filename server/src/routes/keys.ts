@@ -4,51 +4,25 @@ import { z } from 'zod';
 import multer from 'multer';
 import path from 'path';
 import { getDb } from '../db/index.js';
-import { resolveProvider } from '../providers/index.js';
+import { resolveProvider, getAllProviders, hasProvider } from '../providers/index.js';
 import { encrypt, decrypt, maskKey } from '../lib/crypto.js';
 import { parseKeysFromFile, stripJsoncComments, stripTrailingCommas } from '../lib/key-parser.js';
 
 export const keysRouter = Router();
 
-// Active providers — must match providers/index.ts registrations + shared/types.ts Platform.
-// This list drives the /keys page UI (which platforms the user can add/manage keys for).
-// When adding new platforms, update both this list, providers/index.ts, and shared/types.ts.
-const PLATFORMS = [
-  // Original v1 platforms
-  'google', 'groq', 'cerebras', 'nvidia', 'mistral',
-  'openrouter', 'github', 'cohere', 'cloudflare', 'zhipu', 'ollama',
-  'kilo', 'pollinations', 'llm7', 'huggingface', 'opencode', 'ovh', 'agnes', 'reka', 'siliconflow',
-  // Augmented catalog platforms
-  'aimlapi', 'ai21-labs', 'anyscale', 'awanllm', 'baichuan',
-  'clawbrain', 'deepinfra', 'deepseek', 'doubao', 'ernie',
-  'fireworks', 'grok', 'kimi', 'lepton',
-  'minimax', 'monsterapi', 'novita',
-  'octoai', 'openpipe', 'parasail', 'portkey-ai',
-  'qwen', 'stepfun', 'together-ai',
-  'routeway', 'bazaarlink', 'ainative', 'aihorde',
-  // User-configured custom endpoint
-  'custom',
-] as const;
+// Platform list — now driven by the provider registry (hand-maintained from
+// upstream plus catalog auto-registration), not a hardcoded enum.
+// Use getAllProviders() to list available platforms at runtime.
+import type { Platform } from '@freellmapi/shared/types.js';
 
-const ALLOWED_IMPORT_EXTENSIONS = new Set(['.env', '.json', '.jsonc', '.md', '.txt']);
+function getAvailablePlatforms(): Platform[] {
+  return getAllProviders()
+    .map(p => p.platform)
+    .filter(p => p !== 'custom');
+}
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024, files: 10 },
-  fileFilter: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (!ALLOWED_IMPORT_EXTENSIONS.has(ext)) {
-      cb(new Error('Unsupported file type'));
-      return;
-    }
-    cb(null, true);
-  },
-});
-
-// `key` is optional so keyless providers (Kilo's anonymous gateway) can be added
-// without one; the handler enforces a non-empty key for everyone else.
 const addKeySchema = z.object({
-  platform: z.enum(PLATFORMS),
+  platform: z.string().refine((p) => hasProvider(p as Platform), { message: 'Unknown platform' }),
   key: z.string().optional(),
   label: z.string().optional(),
 });
@@ -63,7 +37,22 @@ const updateKeySchema = z.object({
 const importKeySchema = z.object({
   keyName: z.string().optional(),
   keyValue: z.string().min(1),
-  platform: z.enum(PLATFORMS),
+  platform: z.string().refine((p) => hasProvider(p as Platform), { message: 'Unknown platform' }),
+});
+
+const ALLOWED_IMPORT_EXTENSIONS = new Set(['.env', '.json', '.jsonc', '.md', '.txt']);
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 10 },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_IMPORT_EXTENSIONS.has(ext)) {
+      cb(new Error('Unsupported file type'));
+      return;
+    }
+    cb(null, true);
+  },
 });
 
 function handleUploadError(err: any, res: Response, next: NextFunction): boolean {
@@ -109,7 +98,7 @@ function splitRawKey(rawKey: string) {
   };
 }
 
-function insertImportedKey(platform: (typeof PLATFORMS)[number], keyName: string, keyValue: string) {
+function insertImportedKey(platform: Platform, keyName: string, keyValue: string) {
   if (platform === 'custom') {
     throw new Error('Custom providers must be added with a base URL');
   }
@@ -416,8 +405,7 @@ keysRouter.post('/import', (req: Request, res: Response, next: NextFunction) => 
           skipped.push(keyName);
           continue;
         }
-        const platformParse = z.enum(PLATFORMS).safeParse(parsedKey.platform);
-        if (!platformParse.success || platformParse.data === 'custom') {
+        if (!hasProvider(parsedKey.platform as Platform) || parsedKey.platform === 'custom') {
           skipped.push(keyName);
           continue;
         }
@@ -427,8 +415,8 @@ keysRouter.post('/import', (req: Request, res: Response, next: NextFunction) => 
         }
 
         try {
-          insertImportedKey(platformParse.data, keyName, keyValue);
-          imported.push({ keyName, platform: platformParse.data });
+          insertImportedKey(parsedKey.platform as Platform, keyName, keyValue);
+          imported.push({ keyName, platform: parsedKey.platform });
         } catch (insertErr) {
           errors.push({ key: keyName, error: (insertErr as Error).message });
         }
@@ -568,7 +556,7 @@ keysRouter.delete('/:id', (req: Request, res: Response) => {
 // Toggle all keys for a platform
 keysRouter.patch('/platform/:platform', (req: Request, res: Response) => {
   const platform = req.params.platform as string;
-  if (!(PLATFORMS as readonly string[]).includes(platform)) {
+  if (!hasProvider(platform as Platform)) {
     res.status(400).json({ error: { message: `Invalid platform '${platform}'` } });
     return;
   }
@@ -626,4 +614,19 @@ keysRouter.patch('/:id', (req: Request, res: Response) => {
   if (enabled !== undefined) response.enabled = enabled;
   if (label !== undefined) response.label = label;
   res.json(response);
+});
+
+// Get available platforms for the frontend /keys page dropdown.
+// Returns the union of hand-maintained providers and catalog auto-registered ones.
+keysRouter.get('/platforms', (_req: Request, res: Response) => {
+  const providers = getAllProviders();
+  const platforms = providers
+    .filter(p => p.platform !== 'custom')
+    .map(p => ({
+      value: p.platform,
+      label: p.name,
+      url: '',
+      keyless: p.keyless,
+    }));
+  res.json(platforms);
 });

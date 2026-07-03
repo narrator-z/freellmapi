@@ -6,11 +6,33 @@ import { CohereProvider } from './cohere.js';
 import { CloudflareProvider } from './cloudflare.js';
 import { AIHordeProvider } from './aihorde.js';
 
+export interface CatalogPlatform {
+  id: string;
+  name: string;
+  url: string;
+  keyless: boolean;
+  apiBaseUrl: string;
+  adapter: string;
+  timeoutMs?: number | null;
+  forceSingleToolCall?: boolean;
+  extraHeaders?: Record<string, string>;
+  quota?: {
+    poolKey?: string;
+    headerSpecs?: unknown;
+  } | null;
+}
+
 const providers = new Map<Platform, BaseProvider>();
 
 function register(provider: BaseProvider) {
   providers.set(provider.platform, provider);
 }
+
+// ── Hand-maintained providers (synced from upstream) ──────────────────────
+// These carry hand-verified base URLs and special tuning values that the
+// augmented catalog cannot provide.  Do NOT remove entries here without
+// upstream buy-in — custom headers, timeouts, and validate URLs are often
+// the result of live-probed edge cases.
 
 // Google - unique Gemini API format
 register(new GoogleProvider());
@@ -28,11 +50,6 @@ register(new OpenAICompatProvider({
   name: 'Cerebras',
   baseUrl: 'https://api.cerebras.ai/v1',
 }));
-
-// SambaNova was dropped in V23 (June 2026): the free tier is permanently gone.
-// The always-free tier was retired in early 2025 for a one-time $5 trial credit
-// (expires in 3 months); once it lapses, every chat call 402s "payment method
-// required" with no recurring no-card path back.
 
 // NVIDIA NIM - OpenAI-compatible. Several NIM models reject parallel tool calls
 // ("This model only supports single tool-calls at once!"), so pin
@@ -94,9 +111,6 @@ register(new OpenAICompatProvider({
   name: 'HuggingFace Router',
   baseUrl: 'https://router.huggingface.co/v1',
 }));
-
-// Moonshot direct integration was dropped in V4 (paid-only); MiniMax direct
-// was dropped in V4 (superseded by the OpenRouter route).
 
 // Ollama Cloud — OpenAI-compatible. Free plan: 1 concurrent model, 5h session
 // caps, GPU-time-based quota (not per-token). Many catalog models on the
@@ -225,207 +239,55 @@ register(new OpenAICompatProvider({
   baseUrl: 'https://api.siliconflow.com/v1',
 }));
 
-// Additional providers whose catalog rows are managed by the augmented catalog
-// (not seeded in migrations). Cerebras Cloud and NVIDIA Build are aliases for
-// cerebras and nvidia respectively, kept as separate platform IDs for catalog
-// mapping; fireworks-ai is an alias for fireworks; cloudflare-workers-ai is an
-// alias for cloudflare.
+// Routeway — OpenAI-compatible aggregator (api.routeway.ai/v1). Free models
+// carry a ':free' suffix and cost $0; the free pool is rate-limited (docs say
+// 20 rpm / 200 rpd, but a live test on 2026-06-26 observed a stricter 5 rpm).
+// Cloudflare in front rejects non-browser User-Agents with error 1010, so a
+// browser-style UA is required. Free key from routeway.ai (no card). Catalog
+// rows live in the catalog (premium → age into free).
 register(new OpenAICompatProvider({
-  platform: 'aimlapi',
-  name: 'AI/ML API',
-  baseUrl: 'https://api.aimlapi.com/v1',
+  platform: 'routeway',
+  name: 'Routeway',
+  baseUrl: 'https://api.routeway.ai/v1',
+  extraHeaders: {
+    'User-Agent': 'Mozilla/5.0 FreeLLMAPI/1.0',
+  },
 }));
 
+// BazaarLink — OpenAI-compatible aggregator (bazaarlink.ai/api/v1). The
+// 'auto:free' route picks a currently-available zero-cost model (routed to
+// deepseek-v4-flash in a 2026-06-26 live test, usage.cost 0); direct model IDs
+// are paid, so only 'auto:free' is cataloged. Free key from bazaarlink.ai
+// (no card, supports agent self-registration). Reasoning models can consume a
+// tiny max_tokens internally, so default to a non-trivial output cap.
 register(new OpenAICompatProvider({
-  platform: 'ai21-labs',
-  name: 'AI21 Labs',
-  baseUrl: 'https://api.ai21.com/v1',
+  platform: 'bazaarlink',
+  name: 'BazaarLink',
+  baseUrl: 'https://bazaarlink.ai/api/v1',
 }));
 
+// AINative Studio — OpenAI-compatible aggregator (api.ainative.studio/api/v1).
+// Advertises a recurring ~10M tokens/month free allocation (no card), though
+// its own pages disagree on scale; treat the quota as unverified until a real
+// account confirms it. Bearer auth works (X-API-Key also accepted). Catalog
+// rows live in the catalog (premium → age into free).
 register(new OpenAICompatProvider({
-  platform: 'anyscale',
-  name: 'Anyscale',
-  baseUrl: 'https://api.anyscale.com/v1',
+  platform: 'ainative',
+  name: 'AINative Studio',
+  baseUrl: 'https://api.ainative.studio/api/v1',
 }));
 
-register(new OpenAICompatProvider({
-  platform: 'awanllm',
-  name: 'AwanLLM',
-  baseUrl: 'https://api.awanllm.com/v1',
-}));
+// AI Horde — free, community-powered inference (volunteer workers) via an
+// OpenAI-compatible proxy. Dedicated AIHordeProvider (not OpenAICompatProvider)
+// because the proxy is queue-based and diverges from the OpenAI contract:
+// max_tokens must be >=16, stop must be an array, no tool calling, usage is
+// reported as kudos (synthesized into token counts), and calls can take tens of
+// seconds (120s timeout, no upstream streaming). Registered keyless so it
+// auto-configures and works anonymously (key 0000000000, lowest queue
+// priority); a registered aihorde.net key raises priority. See issue #345.
+register(new AIHordeProvider());
 
-register(new OpenAICompatProvider({
-  platform: 'baichuan',
-  name: 'Baichuan AI',
-  baseUrl: 'https://api.baichuan-ai.com/v1',
-}));
-
-// cerebras-cloud is an alias for cerebras (same baseUrl)
-register(new OpenAICompatProvider({
-  platform: 'cerebras-cloud',
-  name: 'Cerebras Cloud',
-  baseUrl: 'https://api.cerebras.ai/v1',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'clawbrain',
-  name: 'ClawBrain',
-  baseUrl: 'https://api.clawbrain.com/v1',
-}));
-
-// cloudflare-workers-ai is an alias for cloudflare (specialized endpoint format)
-register(new OpenAICompatProvider({
-  platform: 'cloudflare-workers-ai',
-  name: 'Cloudflare Workers AI',
-  baseUrl: 'https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/run/',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'deepinfra',
-  name: 'DeepInfra',
-  baseUrl: 'https://api.deepinfra.com/v1/openai',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'deepseek',
-  name: 'DeepSeek',
-  baseUrl: 'https://api.deepseek.com/v1',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'doubao',
-  name: 'Doubao (ByteDance)',
-  baseUrl: 'https://api.doubao.com/v1',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'ernie',
-  name: 'ERNIE Bot (Baidu)',
-  baseUrl: 'https://qianfan.baidubce.com/v2',
-}));
-
-// fireworks and fireworks-ai are the same provider (same baseUrl)
-register(new OpenAICompatProvider({
-  platform: 'fireworks',
-  name: 'Fireworks AI',
-  baseUrl: 'https://api.fireworks.ai/inference/v1',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'fireworks-ai',
-  name: 'Fireworks AI',
-  baseUrl: 'https://api.fireworks.ai/inference/v1',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'grok',
-  name: 'Grok (xAI)',
-  baseUrl: 'https://api.x.ai/v1',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'kimi',
-  name: 'Kimi (Moonshot AI)',
-  baseUrl: 'https://api.moonshot.cn/v1',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'lepton',
-  name: 'DGX Cloud Lepton',
-  baseUrl: 'https://api.lepton.run/v1',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'llama-cpp',
-  name: 'llama.cpp',
-  baseUrl: 'http://localhost:8080',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'lmstudio',
-  name: 'LM Studio',
-  baseUrl: 'http://localhost:1234',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'localai',
-  name: 'LocalAI',
-  baseUrl: 'http://localhost:8080',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'minimax',
-  name: 'MiniMax (稀宇科技)',
-  baseUrl: 'https://api.minimax.io/v1',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'monsterapi',
-  name: 'MonsterAPI',
-  baseUrl: 'https://api.monsterapi.ai/v1',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'novita',
-  name: 'Novita AI',
-  baseUrl: 'https://api.novita.ai/v3/openai',
-}));
-
-// nvidia-build is an alias for nvidia (same baseUrl)
-register(new OpenAICompatProvider({
-  platform: 'nvidia-build',
-  name: 'NVIDIA Build (NIM API)',
-  baseUrl: 'https://integrate.api.nvidia.com/v1',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'octoai',
-  name: 'OctoAI',
-  baseUrl: 'https://api.octoai.ai/v1',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'openpipe',
-  name: 'OpenPipe',
-  baseUrl: 'https://api.openpipe.ai/v1',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'parasail',
-  name: 'Parasail',
-  baseUrl: 'https://api.parasail.ai/v1',
-}));
-
-register(new OpenAICompatProvider({
-  platform: 'portkey-ai',
-  name: 'Portkey AI',
-  baseUrl: 'https://api.portkey.ai/v1',
-}));
-
-// Qwen (Alibaba Cloud) — OpenAI-compatible. DashScope is Alibaba's model
-// serving platform. Qwen-Turbo is permanently free (2M tokens/month),
-// Qwen-Max and Qwen 3.5 have competitive pricing.
-register(new OpenAICompatProvider({
-  platform: 'qwen',
-  name: 'Qwen (Alibaba Cloud)',
-  baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-}));
-
-// StepFun (StepStar) — OpenAI-compatible. Step-3 Flash is ¥5 free credits,
-// extremely fast and competitive with GPT-4o mini for reasoning/coding.
-register(new OpenAICompatProvider({
-  platform: 'stepfun',
-  name: 'StepFun (StepStar)',
-  baseUrl: 'https://api.stepfun.com/v1',
-}));
-
-// Together AI — OpenAI-compatible inference platform for open models.
-// $1 free credits on signup, 30 RPM free tier.
-register(new OpenAICompatProvider({
-  platform: 'together-ai',
-  name: 'Together AI',
-  baseUrl: 'https://api.together.xyz/v1',
-}));
+// ── Custom (always present) ───────────────────────────────────────────────
 
 // Placeholder so getProvider('custom')/hasProvider('custom')/getAllProviders()
 // behave — but the real instance is built per-key by resolveProvider(), since
@@ -439,6 +301,76 @@ register(new OpenAICompatProvider({
 // Locally-hosted inference (llama.cpp / vLLM / Ollama on CPU) can be slow, so
 // custom providers get the same extended timeout as Ollama Cloud.
 const CUSTOM_PROVIDER_TIMEOUT_MS = 120000;
+
+// ── Catalog-driven auto-registration ──────────────────────────────────────
+
+/**
+ * Register providers from the augmented catalog.
+ *
+ * Only platforms that do NOT already have a hand-maintained provider are
+ * created, preserving manually tuned params (timeout, extraHeaders, etc.)
+ * that the catalog cannot supply.  The catalog provides the canonical
+ * apiBaseUrl and adapter choice; everything else uses the default values
+ * from OpenAICompatProvider / GoogleProvider / etc.
+ *
+ * Called by catalog-sync.ts after fetching the augmented catalog.
+ */
+export function registerFromCatalog(platforms: CatalogPlatform[]): { added: string[]; conflicts: string[] } {
+  const added: string[] = [];
+  const conflicts: string[] = [];
+
+  for (const p of platforms) {
+    if (p.id === 'custom' || providers.has(p.id as Platform)) {
+      continue;
+    }
+    // yangmao-* wrappers are aliased during model application and should
+    // never be registered as standalone providers.
+    if (p.id.startsWith('yangmao-')) {
+      continue;
+    }
+    if (!p.apiBaseUrl) {
+      console.warn(`[catalog] skipping ${p.id}: no apiBaseUrl`);
+      continue;
+    }
+
+    try {
+      switch (p.adapter) {
+        case 'google':
+          register(new GoogleProvider());
+          break;
+        case 'cohere':
+          register(new CohereProvider());
+          break;
+        case 'cloudflare':
+          register(new CloudflareProvider());
+          break;
+        case 'aihorde':
+          register(new AIHordeProvider());
+          break;
+        case 'openai-compat':
+        default:
+          register(new OpenAICompatProvider({
+            platform: p.id as Platform,
+            name: p.name,
+            baseUrl: p.apiBaseUrl,
+            keyless: p.keyless,
+            timeoutMs: p.timeoutMs ?? undefined,
+            forceSingleToolCall: p.forceSingleToolCall ?? false,
+            extraHeaders: p.extraHeaders ?? undefined,
+          }));
+      }
+      console.log(`[catalog] auto-registered provider: ${p.id}`);
+      added.push(p.id);
+    } catch (err: any) {
+      conflicts.push(p.id);
+      console.warn(`[catalog] failed to register ${p.id}: ${err.message}`);
+    }
+  }
+
+  return { added, conflicts };
+}
+
+// ── Exports ───────────────────────────────────────────────────────────────
 
 export function getProvider(platform: Platform): BaseProvider | undefined {
   return providers.get(platform);

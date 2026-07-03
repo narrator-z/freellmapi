@@ -30,83 +30,13 @@ export interface ImportSelectedResponse {
   total: number;
 }
 
-// Active platforms — must match server/src/providers/index.ts and
-// server/src/routes/keys.ts PLATFORMS allowlist.
-// SambaNova was dropped in V23 (free tier permanently retired).
-export type Platform =
-  | 'google'
-  | 'groq'
-  | 'cerebras'
-  | 'nvidia'
-  | 'mistral'
-  | 'openrouter'
-  | 'github'
-  | 'cohere'
-  | 'cloudflare'
-  | 'zhipu'
-  | 'ollama'
-  | 'kilo'
-  | 'pollinations'
-  | 'llm7'
-  | 'huggingface'
-  // OpenCode Zen — OpenAI-compatible gateway. Free promotional models require a
-  // free (no-card) account key from opencode.ai/auth; see migrateModelsV18.
-  | 'opencode'
-  // OVHcloud AI Endpoints — OpenAI-compatible, keyless anonymous tier
-  // (2 req/min per IP per model); see migrateModelsV26.
-  | 'ovh'
-  // Agnes AI (Sapiens AI) — OpenAI-compatible (LiteLLM + vLLM backend).
-  | 'agnes'
-  // Reka — OpenAI-compatible. Free via a recurring monthly credit grant.
-  | 'reka'
-  // SiliconFlow — OpenAI-compatible. Registered for FREE generative-media models.
-  | 'siliconflow'
-  // Routeway — OpenAI-compatible aggregator. Free ':free' models.
-  | 'routeway'
-  // BazaarLink — OpenAI-compatible aggregator. Free 'auto:free' route.
-  | 'bazaarlink'
-  // AINative Studio — OpenAI-compatible aggregator.
-  | 'ainative'
-  // Additional providers registered in providers/index.ts.
-  // Alias platforms map to primary counterparts in the catalog.
-  | 'aimlapi'
-  | 'ai21-labs'
-  | 'anyscale'
-  | 'awanllm'
-  | 'baichuan'
-  | 'cerebras-cloud'
-  | 'clawbrain'
-  | 'cloudflare-workers-ai'
-  | 'deepinfra'
-  | 'deepseek'
-  | 'doubao'
-  | 'ernie'
-  | 'fireworks'
-  | 'fireworks-ai'
-  | 'grok'
-  | 'kimi'
-  | 'lepton'
-  | 'llama-cpp'
-  | 'lmstudio'
-  | 'localai'
-  | 'minimax'
-  | 'monsterapi'
-  | 'novita'
-  | 'nvidia-build'
-  | 'octoai'
-  | 'openpipe'
-  | 'parasail'
-  | 'portkey-ai'
-  // Qwen (Alibaba Cloud) — OpenAI-compatible, DashScope endpoint
-  | 'qwen'
-  // StepFun (StepStar) — OpenAI-compatible, ¥5 free credits
-  | 'stepfun'
-  // Together AI — OpenAI-compatible inference platform
-  | 'together-ai'
-  // AI Horde — free, community-powered inference (volunteer workers)
-  | 'aihorde'
-  // User-configured OpenAI-compatible endpoint
-  | 'custom';
+// Platform is driven by the augmented catalog at runtime — new providers are
+// auto-registered by registerFromCatalog() during catalog-sync without a code
+// change.  The hand-maintained platform list lives in
+// server/src/providers/index.ts (upstream-synced) and the catalog's
+// platforms[] array (CI-generated).  Any string that passes hasProvider() is
+// a valid platform.
+export type Platform = string;
 
 export interface Model {
   id: number;
