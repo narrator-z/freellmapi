@@ -228,7 +228,7 @@ export class OpenAICompatProvider extends BaseProvider {
         parallel_tool_calls: this.resolveParallelToolCalls(options),
         stream: true,
       }),
-    }, this.timeoutMs);
+    }, options?.timeoutMs ?? this.timeoutMs);
 
     recordQuotaObservationsFromResponse(res, {
       platform: this.platform,
