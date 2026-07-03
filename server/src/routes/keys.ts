@@ -3,7 +3,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
 import multer from 'multer';
 import path from 'path';
-import { getDb } from '../db/index.js';
+import { getDb, getSetting } from '../db/index.js';
 import { resolveProvider, getAllProviders, hasProvider } from '../providers/index.js';
 import { encrypt, decrypt, maskKey } from '../lib/crypto.js';
 import { parseKeysFromFile, stripJsoncComments, stripTrailingCommas } from '../lib/key-parser.js';
@@ -657,16 +657,58 @@ keysRouter.patch('/:id', (req: Request, res: Response) => {
 });
 
 // Get available platforms for the frontend /keys page dropdown.
-// Returns the union of hand-maintained providers and catalog auto-registered ones.
+// Uses urls from the cached catalog if available; falls back to known URLs.
 keysRouter.get('/platforms', (_req: Request, res: Response) => {
   const providers = getAllProviders();
-  const platforms = providers
-    .filter(p => p.platform !== 'custom')
-    .map(p => ({
-      value: p.platform,
-      label: p.name,
-      url: '',
-      keyless: p.keyless,
-    }));
+  const providersArr = providers.filter(p => p.platform !== 'custom');
+
+  // Fallback URLs for well-known providers (used until catalog syncs)
+  const FALLBACK_URLS: Record<string, string> = {
+    'google': 'https://aistudio.google.com/apikey',
+    'groq': 'https://console.groq.com/keys',
+    'cerebras': 'https://cloud.cerebras.ai',
+    'nvidia': 'https://build.nvidia.com/settings/api-keys',
+    'mistral': 'https://console.mistral.ai/api-keys/',
+    'openrouter': 'https://openrouter.ai/keys',
+    'github': 'https://github.com/settings/tokens',
+    'cohere': 'https://dashboard.cohere.com/api-keys',
+    'cloudflare': 'https://dash.cloudflare.com',
+    'zhipu': 'https://z.ai/manage-apikey/apikey-list',
+    'ollama': 'https://ollama.com/settings/keys',
+    'kilo': 'https://app.kilo.ai',
+    'pollinations': 'https://pollinations.ai',
+    'ovh': 'https://endpoints.ai.cloud.ovh.net',
+    'llm7': 'https://llm7.io',
+    'huggingface': 'https://huggingface.co/settings/tokens',
+    'opencode': 'https://opencode.ai/auth',
+    'agnes': 'https://platform.agnes-ai.com',
+    'reka': 'https://platform.reka.ai',
+    'siliconflow': 'https://siliconflow.com',
+    'routeway': 'https://routeway.ai/dashboard',
+    'bazaarlink': 'https://bazaarlink.ai/api/v1/agents/register',
+    'ainative': 'https://ainative.studio/signup',
+    'aihorde': 'https://aihorde.net/register',
+  };
+
+  // Enrich with catalog platform URLs when available
+  let catalogUrls: Record<string, string> = {};
+  try {
+    const raw = getSetting('catalog_applied_json');
+    if (raw) {
+      const catalog = JSON.parse(raw);
+      if (catalog.platforms) {
+        for (const p of catalog.platforms) {
+          if (p.url) catalogUrls[p.id] = p.url;
+        }
+      }
+    }
+  } catch { /* catalog not synced yet — fine */ }
+
+  const platforms = providersArr.map(p => ({
+    value: p.platform,
+    label: p.name,
+    url: catalogUrls[p.platform] ?? FALLBACK_URLS[p.platform] ?? '',
+    keyless: p.keyless,
+  }));
   res.json(platforms);
 });

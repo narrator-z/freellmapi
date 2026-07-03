@@ -424,14 +424,14 @@
   },
   "catalog": {
     "title": "Catalog Sync",
-    "description": "Model catalog auto-syncs from the augmented catalog. New models, quota changes, and quirk fixes land here within hours.",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
     "loading": "Loading…",
     "checkForUpdates": "Check for updates",
     "syncing": "Syncing…",
     "catalogFeed": "Catalog feed",
     "feedLabel": "Augmented catalog",
     "lastChecked": "Last checked: {when}",
-    "syncDescription": "The augmented catalog is updated by a CI pipeline that merges v1 data with yangmao.ai free-tier coverage. This server syncs automatically every 12 hours.",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
     "lastSyncProblem": "Last sync problem: {error}",
     "bundled": "bundled"
   },
