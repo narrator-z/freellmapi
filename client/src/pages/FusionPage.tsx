@@ -49,7 +49,7 @@ export default function FusionPage() {
     queryKey: ['fusion-config'],
     queryFn: () => apiFetch('/api/settings/fusion'),
   })
-  const { data: fallbackEntries = [], isError: fbError } = useQuery<FallbackEntry[]>({
+  const { data: fallbackEntries = [] } = useQuery<FallbackEntry[]>({
     queryKey: ['fallback'],
     queryFn: () => apiFetch('/api/fallback'),
   })
