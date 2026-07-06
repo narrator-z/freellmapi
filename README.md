@@ -1,19 +1,29 @@
 <div align="center">
+
 # FreeLLMAPI
+
 **One OpenAI-compatible endpoint. 18 free LLM providers. 161 free models. ~1.7B tokens per month.**
+
 Aggregate the free tiers from Google, Groq, Cerebras, NVIDIA, Mistral, OpenRouter, GitHub Models, Cohere, Cloudflare, HuggingFace, Z.ai (Zhipu), Ollama, Kilo, Pollinations, LLM7, OVH AI Endpoints, OpenCode Zen, and AI Horde, plus custom OpenAI-compatible chat, embedding, image, and audio endpoints, behind a single `/v1` API. Keys are stored encrypted. A router picks the best available model for each request, falls over to the next provider when one is rate-limited, and tracks per-key usage so you stay under every free-tier cap.
-[![CI](https://github.com/narrator-z/freellmapi/actions/workflows/ci.yml/badge.svg)](https://github.com/narrator-z/freellmapi/actions/workflows/ci.yml)
+
+[![CI](https://github.com/tashfeenahmed/freellmapi/actions/workflows/ci.yml/badge.svg)](https://github.com/tashfeenahmed/freellmapi/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/tashfeenahmed/freellmapi?style=flat&logo=github&color=yellow)](https://github.com/tashfeenahmed/freellmapi/stargazers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
-[![Docker image](https://img.shields.io/badge/ghcr.io-freellmapi-2496ED?logo=docker&logoColor=white)](https://github.com/narrator-z/freellmapi/pkgs/container/freellmapi)
+[![Docker image](https://img.shields.io/badge/ghcr.io-freellmapi-2496ED?logo=docker&logoColor=white)](https://github.com/tashfeenahmed/freellmapi/pkgs/container/freellmapi)
+
 **[freellmapi.co](https://freellmapi.co)** · browse all 161 free models on the live catalog
+
 Your router updates its own model catalog. Free installs get each new model 30 days after it ships;
-**Free installs get each new model 30 days after it ships, and is 79 models ahead right now](https://freellmapi.co/?utm_source=github&utm_medium=readme#pricing)** ($19/yr, 30-day refund).
+
 ![Fallback chain with per-provider token budget](repo-assets/fallback-chain.png)
+
 </div>
+
 ---
+
 ## Contents
+
 - [Why this exists](#why-this-exists)
 - [Supported providers](#supported-providers)
 - [Features](#features)
@@ -23,6 +33,7 @@ Your router updates its own model catalog. Free installs get each new model 30 d
 - [Docker](#docker)
 - [Desktop app](#desktop-app)
 - [Languages](#languages)
+
 - [Using the API](#using-the-api)
 - [Screenshots](#screenshots)
 - [How it works](#how-it-works)
@@ -31,11 +42,17 @@ Your router updates its own model catalog. Free installs get each new model 30 d
 - [Contributing](#contributing)
 - [Terms of Service review](#terms-of-service-review)
 - [Disclaimer](#disclaimer)
+
 ## Why this exists
+
 Every serious AI lab now offers a free tier — a few million tokens a month, a few thousand requests a day. On its own each tier is a toy. Stacked together, they add up to roughly **1.7 billion tokens per month** of working inference capacity, across 160+ models from small-and-fast to reasonably capable.
+
 The problem is that stacking them by hand is painful: eighteen different SDKs, eighteen different rate limits, eighteen places a request can fail. FreeLLMAPI collapses that into one OpenAI-compatible endpoint. Point any OpenAI client library at your local server, and it routes transparently across whichever providers you've added keys for.
+
 And the free-tier landscape shifts weekly: providers launch models, retire them, and change quotas without notice. FreeLLMAPI tracks all of that for you. The router pulls a signed model catalog from [freellmapi.co](https://freellmapi.co) on its own, so your install keeps up without a `git pull`. The catalog syncs automatically every 12 hours.
+
 ## Supported providers
+
 <table>
 <tr>
 <td align="center" width="180"><a href="https://ai.google.dev"><b>Google</b><br/>Gemini 2.5 Flash · 3.x previews</a></td>
@@ -68,9 +85,13 @@ And the free-tier landscape shifts weekly: providers launch models, retire them,
 <td align="center"></td>
 </tr>
 </table>
+
 Plus a **custom** provider — point chat, embedding, image, or audio models at any OpenAI-compatible endpoint (llama.cpp, LM Studio, vLLM, a local Ollama, or a remote gateway) from the Keys page.
+
 The full, always-current list lives at **[freellmapi.co/models](https://freellmapi.co/models.html)** with per-model rate limits, context windows, and free-token budgets.
+
 ## Features
+
 - **OpenAI-compatible** — `POST /v1/chat/completions` and `GET /v1/models` work with the official OpenAI SDKs and any OpenAI-compatible client (LangChain, LlamaIndex, Continue, Hermes, etc.). Just change `base_url`.
 - **Responses API** — `POST /v1/responses` (the wire format current Codex CLI versions require) is implemented as a translating shim over the same router, with full streaming events and tool calls.
 - **Editor autocomplete** — `POST /v1/completions` translates legacy prompt/suffix requests into the same router, so VS Code ghost-text clients such as Continue can use FreeLLMAPI for inline suggestions.
@@ -91,42 +112,61 @@ The full, always-current list lives at **[freellmapi.co/models](https://freellma
 - **Analytics** — Per-request logging with latency, token counts, success rate, and per-provider breakdowns.
 - **Context handoff on model switch** — Optional. When a session falls over to a different model, injects one compact system message so the new model knows it is continuing an existing task. Disabled by default; enable with `FREELLMAPI_CONTEXT_HANDOFF=on_model_switch`. See [Context Handoff](#context-handoff).
 - **Runs anywhere Node 20+ runs** — Windows, macOS, Linux servers, or a small ARM SBC (Raspberry Pi included). ~40 MB RSS at idle behind PM2 / systemd / whatever supervisor you prefer.
+
 ## Not yet supported
+
 The scope is deliberately narrow. If a feature isn't on this list and isn't below, assume it isn't there yet.
+
 - **Moderation** (`/v1/moderations`)
 - **`n > 1`** (multiple completions per request)
 - **Per-user billing / multi-tenant auth** — single-user by design
+
 PRs that add any of these are very welcome. See [Contributing](#contributing).
+
 ## Quick start
+
 **One-liner** (Docker required — sets up `~/freellmapi`, generates an encryption key, pulls the image, and starts the container):
+
 ```bash
 curl -fsSL https://freellmapi.co/install.sh | bash
 ```
+
 Prefer to read before you pipe to bash? [The script is here](https://freellmapi.co/install.sh). Re-running it is safe: your `.env` (and encryption key) is preserved and the container updates to `:latest`. Override the defaults with `FREELLMAPI_DIR`, `PORT`, or `HOST_BIND` env vars.
-On Windows, the easiest path is the desktop **[`.exe` installer from Releases](https://github.com/narrator-z/freellmapi/releases/latest)** (below); the Docker steps work in WSL or any bash shell.
+
+On Windows, the easiest path is the desktop **[`.exe` installer from Releases](https://github.com/tashfeenahmed/freellmapi/releases/latest)** (below); the Docker steps work in WSL or any bash shell.
+
 **Or manually with Docker Compose.** It runs the API and dashboard together on port 3001 and persists SQLite in a named volume.
+
 **Prerequisites:** Docker, Docker Compose, OpenSSL.
+
 *On macOS / Linux (Bash):*
 ```bash
-git clone https://github.com/narrator-z/freellmapi.git
+git clone https://github.com/tashfeenahmed/freellmapi.git
 cd freellmapi
+
 # Generate an encryption key for at-rest key storage
 ENCRYPTION_KEY="$(openssl rand -hex 32)"
 printf "ENCRYPTION_KEY=%s\nPORT=3001\n" "$ENCRYPTION_KEY" > .env
+
 docker compose up -d
 ```
+
 *On Windows (PowerShell):*
 ```powershell
 git clone https://github.com/tashfeenahmed/freellmapi.git
 cd freellmapi
+
 $Bytes = New-Object Byte[] 32
 [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($Bytes)
 $ENCRYPTION_KEY = -join ($Bytes | ForEach-Object { "{0:x2}" -f $_ })
 "ENCRYPTION_KEY=$ENCRYPTION_KEY`nPORT=3001" | Out-File -Encoding utf8 .env
 docker compose up -d
 ```
+
 Open http://localhost:3001, add your provider keys on the **Keys** page, reorder the **Fallback Chain** to taste, and grab your unified API key from the **Keys** page header. That unified key is what you point your OpenAI SDK at.
+
 Your fresh install ships with the free catalog snapshot (82 models today) and keeps itself updated from there. Everything the live feed adds on top is listed at [freellmapi.co/models](https://freellmapi.co/models.html).
+
 > **Reaching it from another machine?** By default the container is published only on `127.0.0.1`, so `http://<server-ip>:3001` won't load from another device (the page just hangs). To expose it on your LAN — e.g. a Raspberry Pi at `http://192.168.1.x:3001` — start it with `HOST_BIND=0.0.0.0`:
 >
 > ```bash
@@ -134,17 +174,21 @@ Your fresh install ships with the free catalog snapshot (82 models today) and ke
 > ```
 >
 > Only do this on a trusted network: the proxy is single-user and guarded only by the unified API key.
+
 ### Local development
+
 **Prerequisites:** Node.js 20+, npm.
+
 *On macOS / Linux (Bash):*
 ```bash
-git clone https://github.com/narrator-z/freellmapi.git
+git clone https://github.com/tashfeenahmed/freellmapi.git
 cd freellmapi
 npm install
 ENCRYPTION_KEY="$(node -e 'console.log(require("crypto").randomBytes(32).toString("hex"))')"
 printf "ENCRYPTION_KEY=%s\nPORT=3001\n" "$ENCRYPTION_KEY" > .env
 npm run dev
 ```
+
 *On Windows (PowerShell):*
 ```powershell
 git clone https://github.com/tashfeenahmed/freellmapi.git
@@ -154,19 +198,25 @@ $ENCRYPTION_KEY = node -e "console.log(require('crypto').randomBytes(32).toStrin
 "ENCRYPTION_KEY=$ENCRYPTION_KEY`nPORT=3001" | Out-File -Encoding utf8 .env
 npm run dev
 ```
+
 `ENCRYPTION_KEY` is required for startup. The server only falls back to a
 database-stored development key when `NODE_ENV` is not `production`; do not use
 that fallback with real provider keys.
+
 Request analytics are retained for 90 days or 100000 request rows by default,
 whichever limit prunes first. Set `REQUEST_ANALYTICS_RETENTION_DAYS=0` or
 `REQUEST_ANALYTICS_MAX_ROWS=0` in `.env` to disable either retention limit.
+
 Open http://localhost:5173 (the Vite dev UI), add your provider keys on the **Keys** page, reorder the **Fallback Chain** to taste, and grab your unified API key from the **Keys** page header. That unified key is what you point your OpenAI SDK at.
+
 ### Declarative startup config
+
 For repeatable Docker/server installs, FreeLLMAPI can apply a JSON config on
 every boot. Set `FREEAPI_CONFIG_PATH=/path/to/freellmapi.config.json` or put the
 same JSON in `FREEAPI_CONFIG_JSON`. The config is idempotent: existing keys,
 custom providers, model edits, fallback rows, and routing settings are updated
 instead of duplicated.
+
 ```json
 {
   "keys": [
@@ -194,29 +244,42 @@ instead of duplicated.
   "routing": { "strategy": "balanced" }
 }
 ```
+
 > **Reaching the dev UI from another device on your LAN?** Use `npm run dev:lan` — it passes `--host` through to Vite, which then prints a `Network: http://<your-ip>:5173` URL you can open from a phone or another machine. (Plain `npm run dev -- --host` does *not* work here: the root `dev` script is a `concurrently` wrapper, so the flag never reaches Vite.) API calls go through Vite's dev proxy, so no extra server config is needed.
+
 For a production build without Docker:
+
 ```bash
 npm run build
 node server/dist/index.js     # server + dashboard both served on :3001
 ```
+
 ## Docker
+
 FreeLLMAPI publishes a single production image that contains the Express server and the built React dashboard:
+
 ```bash
-docker pull ghcr.io/narrator-z/freellmapi:latest   # or pin a release, e.g. :v1.2.3
+docker pull ghcr.io/tashfeenahmed/freellmapi:latest   # or pin a release, e.g. :v1.2.3
 ```
+
 The image is multi-arch (`linux/amd64` + `linux/arm64`, so it runs on a Raspberry Pi). Published tags: `latest` (default branch), `v*.*.*` (git release tags), and `sha-<commit>`.
+
 The included `docker-compose.yml` is the recommended install path:
+
 ```bash
 docker compose up -d
 docker compose logs -f freellmapi
 ```
+
 By default the container's port is bound to `127.0.0.1` (localhost only). To reach the dashboard/API from another machine on your network, publish it on all interfaces with `HOST_BIND=0.0.0.0 docker compose up -d` — only on a trusted LAN, since the proxy is single-user.
+
 SQLite data is stored in the `freellmapi-data` volume at `/app/server/data`.
 Keep the same `.env` `ENCRYPTION_KEY` and volume when upgrading, because
 provider keys are encrypted at rest. If your host only persists a specific
 directory, set `FREEAPI_DB_PATH=/that/path/freellmapi.db`.
+
 On hosts with ephemeral disks, configure an encrypted backup target:
+
 ```env
 FREEAPI_DB_BACKUP_PATH=/app/server/data/freellmapi.db.backup
 # or:
@@ -225,53 +288,73 @@ FREEAPI_DB_BACKUP_TOKEN=optional-bearer-token
 FREEAPI_DB_BACKUP_KEY=64-char-hex-backup-key
 FREEAPI_DB_BACKUP_INTERVAL_MS=300000
 ```
+
 When the database file is missing at startup, FreeLLMAPI restores the backup
 before migrations run. While the server is running it uploads a fresh encrypted
 backup periodically. If `FREEAPI_DB_BACKUP_KEY` is omitted, the app uses
 `ENCRYPTION_KEY` for the backup envelope too.
+
 More Docker operations and examples live in [docker/README.md](./docker/README.md).
+
 ## Desktop app
+
 A native menu-bar app lives in [`desktop/`](./desktop): the entire router +
 dashboard running locally from your tray, with a glass popover showing live
 request stats.
+
 ![FreeLLMAPI desktop app](repo-assets/desktop.png)
-**[Download from Releases](https://github.com/narrator-z/freellmapi/releases/latest)** — the macOS `.dmg` and the Windows `.exe` installer are built and attached to every release by the [`desktop-release`](.github/workflows/desktop-release.yml) workflow. Or build it from this repo in a few minutes:
+
+**[Download from Releases](https://github.com/tashfeenahmed/freellmapi/releases/latest)** — the macOS `.dmg` and the Windows `.exe` installer are built and attached to every release by the [`desktop-release`](.github/workflows/desktop-release.yml) workflow. Or build it from this repo in a few minutes:
+
 > **Note for Windows users building from source:** Building the desktop app requires compiling native SQLite modules for Electron. You must have [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) installed (specifically the "Desktop development with C++" workload) and Python installed before running `npm install`.
+
 ```bash
 npm install
 npm install --prefix desktop  # install desktop dependencies
 npm run desktop:dist          # macOS  → desktop/dist-electron/FreeLLMAPI-…-arm64.dmg
 npm run desktop:dist:win      # Windows → "desktop/dist-electron/FreeLLMAPI Setup ….exe"
 ```
+
 > Locally built apps are unsigned, so Windows SmartScreen may warn on first run
 > ("More info" → "Run anyway"); the macOS build launches without Gatekeeper prompts.
 > Full instructions in [desktop/README.md](./desktop/README.md).
+
 ### Credentials and where your data lives
+
 The desktop app has **no username or password to set up**. Unlike the server
 (which gates its dashboard behind an email + password account), the desktop
 build signs the dashboard in automatically with a hidden local account, so
 you're never prompted for credentials and never need one.
+
 The only credential you need is your **unified API key** — the
 `freellmapi-…` token your OpenAI/Anthropic client points at. Get it from:
+
 - the tray popover — click the tray icon, then **Copy Key**, or
 - the dashboard **Keys** page header (tray → **Open Dashboard**).
+
 You do not need to open or edit `freeapi.db` by hand.
+
 Your settings and data live in one folder per OS (copy it to migrate to
 another machine or into a container):
+
 | OS | Location |
 |----|----------|
 | Windows | `%APPDATA%\FreeLLMAPI\` (e.g. `C:\Users\<you>\AppData\Roaming\FreeLLMAPI\`) |
 | macOS | `~/Library/Application Support/FreeLLMAPI/` |
 | Linux | `~/.config/FreeLLMAPI/` |
+
 That folder holds `freeapi.db` (all keys, models, settings, encrypted at rest)
 and `config.json` (window/theme/port/LAN preferences). Copy both to move an
 install. For the server (non-desktop) deployment, the equivalent state is the
 `.env` file and the SQLite DB at `server/data/freeapi.db` (or wherever
 `FREEAPI_DB_PATH` points).
+
 ## Languages
+
 The dashboard and the desktop tray ship in 6 languages. The UI auto-detects your
 browser/system language on first load and you can switch any time from the **⋯**
 menu; the choice is remembered.
+
 | Language | Locale |
 | --- | --- |
 | English | `en` |
@@ -280,17 +363,22 @@ menu; the choice is remembered.
 | Español | `es` |
 | Português (Brasil) | `pt-BR` |
 | Italiano | `it` |
+
 Translations live in [`client/src/i18n/locales/`](./client/src/i18n/locales) as
 flat JSON files. To add a language, copy `en.json`, translate the values, and
 register the locale in `client/src/i18n/I18nProvider.tsx` (and
 `desktop/src/i18n.ts` for the tray strings) — PRs welcome.
+
 ## Works with OB-1 and other clients
+
 FreeLLMAPI is the free tier for **[OB-1](https://github.com/Overbrilliant/ob-1)**:
 the OB-1 CLI can clone, configure, start, health-check, and wire this proxy into
 its settings automatically. A new OB-1 user can pick **Start free** and reach a
 working OpenAI-compatible endpoint before creating any hosted account.
+
 It is also useful on its own. Any client that can target an OpenAI-compatible
 base URL can use FreeLLMAPI:
+
 - **OB-1**: managed automatically by the CLI, including anonymous providers.
 - **opencode, aider, Continue, LangChain, LlamaIndex**: set `base_url` to
   `http://localhost:3001/v1` and use the unified key from the dashboard.
@@ -298,18 +386,26 @@ base URL can use FreeLLMAPI:
   surface and the `ANTHROPIC_AUTH_TOKEN` flow documented below.
 - **Local GPU boxes**: add custom OpenAI-compatible endpoints for Ollama,
   llama.cpp, LM Studio, vLLM, or an internal gateway.
+
 FreeLLMAPI is local-first and single-user by design. Your provider keys stay in
 your SQLite database, encrypted at rest, and requests go from your machine to the
 upstream providers you enabled.
+
+
 ## Using the API
+
 Any OpenAI-compatible client works (Anthropic / Claude clients too — see [Anthropic / Claude clients](#anthropic--claude-clients)). Examples:
+
 **Python**
+
 ```python
 from openai import OpenAI
+
 client = OpenAI(
     base_url="http://localhost:3001/v1",
     api_key="freellmapi-your-unified-key",
 )
+
 resp = client.chat.completions.create(
     model="auto",  # let the router pick; or specify e.g. "gemini-2.5-flash"
     messages=[{"role": "user", "content": "Summarise the fall of Rome in one sentence."}],
@@ -317,7 +413,9 @@ resp = client.chat.completions.create(
 print(resp.choices[0].message.content)
 print("Routed via:", resp.headers.get("x-routed-via"))
 ```
+
 **curl**
+
 ```bash
 curl http://localhost:3001/v1/chat/completions \
   -H "Authorization: Bearer freellmapi-your-unified-key" \
@@ -327,7 +425,9 @@ curl http://localhost:3001/v1/chat/completions \
     "messages": [{"role": "user", "content": "hi"}]
   }'
 ```
+
 **Streaming**
+
 ```python
 stream = client.chat.completions.create(
     model="auto",
@@ -337,8 +437,11 @@ stream = client.chat.completions.create(
 for chunk in stream:
     print(chunk.choices[0].delta.content or "", end="", flush=True)
 ```
+
 **VS Code ghost-text autocomplete (Continue)**
+
 FreeLLMAPI exposes `/v1/completions` for editor autocomplete clients that send legacy OpenAI prompt/suffix requests. Example Continue config:
+
 ```yaml
 models:
   - name: FreeLLMAPI Autocomplete
@@ -350,8 +453,11 @@ models:
     roles:
       - autocomplete
 ```
+
 **Tool calling**
+
 Pass OpenAI-style `tools` and `tool_choice`; the assistant response round-trips back through the proxy exactly like the OpenAI API. Multi-step flows (assistant `tool_calls` → `tool` role follow-up → final answer) work across every provider the router can reach.
+
 ```python
 tools = [{
     "type": "function",
@@ -365,6 +471,7 @@ tools = [{
         },
     },
 }]
+
 # 1. Model asks for a tool call
 first = client.chat.completions.create(
     model="auto",
@@ -373,6 +480,7 @@ first = client.chat.completions.create(
     tool_choice="required",
 )
 call = first.choices[0].message.tool_calls[0]
+
 # 2. You execute the tool, feed the result back
 final = client.chat.completions.create(
     model="auto",
@@ -385,8 +493,11 @@ final = client.chat.completions.create(
 )
 print(final.choices[0].message.content)
 ```
+
 **Gemini Google Search grounding**
+
 Google's models can ground their answers in live Google Search results. Since the OpenAI wire format has no way to express that, request a tool named `google_search` and the Google provider translates it into Gemini's native grounding tool. It can be sent on its own or alongside your normal function tools.
+
 ```python
 resp = client.chat.completions.create(
     model="gemini-2.5-flash",  # pin a Google model so the request routes there
@@ -395,8 +506,11 @@ resp = client.chat.completions.create(
 )
 print(resp.choices[0].message.content)
 ```
+
 **Vision / image input**
+
 Send images with the standard OpenAI `image_url` content blocks (base64 `data:` URLs or `http(s)` URLs). When a request contains an image, the router restricts itself to **vision-capable models** and ignores text-only ones. Vision models are tagged with a **Vision** badge on the Fallback Chain page; the current set includes Gemini (2.5 / 3.x), Llama 4 Scout/Maverick (Groq, NVIDIA), GLM-4.6V Flash (Z.ai), Nemotron Nano 12B VL (OpenRouter), and GitHub's GPT-4o / GPT-4.1.
+
 ```python
 resp = client.chat.completions.create(
     model="auto",  # auto-routes to a vision model
@@ -410,11 +524,17 @@ resp = client.chat.completions.create(
 )
 print(resp.choices[0].message.content)
 ```
+
 If no vision-capable model is enabled in your Fallback Chain, an image request returns a clear `422` (`code: "no_vision_model"`) rather than silently dropping the image. (Image input on `/v1/responses` isn't supported yet — use `/v1/chat/completions`.)
+
 Works with `stream=True` as well — you'll get `delta.tool_calls` chunks followed by a `finish_reason: "tool_calls"` close. Under the hood, OpenAI-compatible providers (Groq, Cerebras, Mistral, OpenRouter, GitHub Models, HuggingFace, Cloudflare, Cohere compat) get the request passed through; Gemini requests get translated into Google's `functionDeclarations` / `functionResponse` shape and the response is translated back.
+
 Every response carries an `X-Routed-Via: <platform>/<model>` header so you can see which provider actually served each call. If a request fell over between providers, you'll also see `X-Fallback-Attempts: N`.
+
 ### Embeddings
+
 `/v1/embeddings` is OpenAI-compatible, with one deliberate difference from chat routing: **failover never crosses models.** Vectors from different models live in incompatible spaces — silently switching models would corrupt any vector store built on top of the proxy. So embeddings route by **family** (one model identity + dimension), and failover only walks the providers serving that same family.
+
 ```python
 resp = client.embeddings.create(
     model="auto",          # default family; or a family name like "bge-m3"
@@ -422,13 +542,16 @@ resp = client.embeddings.create(
 )
 print(len(resp.data), "vectors of", len(resp.data[0].embedding), "dims")
 ```
+
 ```bash
 curl http://localhost:3001/v1/embeddings \
   -H "Authorization: Bearer freellmapi-your-unified-key" \
   -H "Content-Type: application/json" \
   -d '{"model": "auto", "input": "hello world"}'
 ```
+
 `model` accepts `auto` (the configured default family), a family name, or a provider-specific model id (which resolves to its family). Available families:
+
 | Family (`model`) | Dims | Providers (failover order) |
 | --- | --- | --- |
 | `gemini-embedding-001` *(default)* | 3072 | Google |
@@ -441,9 +564,13 @@ curl http://localhost:3001/v1/embeddings \
 | `llama-nemotron-embed-1b-v2` | 2048 | NVIDIA |
 | `llama-nemotron-embed-vl-1b-v2` | 2048 | NVIDIA → OpenRouter |
 | `embeddinggemma-300m` | 768 | Cloudflare |
+
 The default family, per-provider toggles, and priorities live on the dashboard's **Models → Embeddings** page. Pick your family once and stick with it for a given vector store — that's the whole point of the family model.
+
 ### Anthropic / Claude clients
+
 FreeLLMAPI also speaks Anthropic's Messages API, so anything built for Claude — including **Claude Code** and the official Anthropic SDKs — can run against your free pool. Point the client at your server's **origin** (Anthropic clients append `/v1/messages` themselves) and authenticate with your unified key. Both `x-api-key` and `Authorization: Bearer` are accepted.
+
 ```bash
 curl http://localhost:3001/v1/messages \
   -H "x-api-key: freellmapi-your-unified-key" \
@@ -455,32 +582,49 @@ curl http://localhost:3001/v1/messages \
     "messages": [{"role": "user", "content": "hi"}]
   }'
 ```
+
 Claude model names map to your free pool on the **Keys → Anthropic** tab: each family (`default`, `opus`, `sonnet`, `haiku`) routes to `auto` (the router picks a free model) or a model you pin. `POST /v1/messages/count_tokens` and a content-negotiated `GET /v1/models` (Anthropic shape when `anthropic-version` is sent) are implemented too. Streaming, system prompts, tool use, and image input all translate across the same router as the OpenAI endpoints.
+
 **Claude Code** — point it at your server and start it:
+
 *On macOS / Linux (Bash):*
 ```bash
 export ANTHROPIC_BASE_URL=http://localhost:3001
 export ANTHROPIC_AUTH_TOKEN=freellmapi-your-unified-key   # NOT ANTHROPIC_API_KEY
 claude
 ```
+
 *On Windows (PowerShell):*
 ```powershell
 $env:ANTHROPIC_BASE_URL="http://localhost:3001"
 $env:ANTHROPIC_AUTH_TOKEN="freellmapi-your-unified-key"
 claude
 ```
+
 > Use `ANTHROPIC_AUTH_TOKEN` (sent as a Bearer token), **not** `ANTHROPIC_API_KEY` — Claude Code treats a set `ANTHROPIC_API_KEY` as a conflicting first-party credential and refuses to start.
+
 ## Screenshots
+
 ### Keys
+
 Manage provider credentials and grab the unified API key your apps connect with. Each key shows a status dot and when it was last health-checked.
+
 ![Keys page](repo-assets/keys.png)
+
 ### Playground
+
 Send a chat completion through the router and see which provider served it, with the model ID and latency printed right on the message.
+
 ![Playground page](repo-assets/playground.png)
+
 ### Analytics
+
 Request volume, success rate, tokens in and out, average latency, and per-provider breakdowns over 24h / 7d / 30d windows.
+
 ![Analytics page](repo-assets/analytics.png)
+
 ## How it works
+
 ```
 ┌──────────────────┐   Bearer freellmapi-…   ┌─────────────────────────┐
 │  OpenAI SDK /    │ ──────────────────────▶ │  Express proxy (:3001)  │
@@ -501,65 +645,90 @@ Request volume, success rate, tokens in and out, average latency, and per-provid
    ▼              ▼            ▼                    ▼             ▼          ▼
  Google         Groq        Cerebras           OpenRouter        HF       …10 more
 ```
+
 - **Router** (`server/src/services/router.ts`) — picks a model per request.
 - **Rate-limit ledger** (`server/src/services/ratelimit.ts`) — in-memory RPM/RPD/TPM/TPD counters backed by SQLite, with cooldowns on 429s.
 - **Provider adapters** (`server/src/providers/*.ts`) — one file per provider, implementing the `Provider` base class: `chatCompletion()` and `streamChatCompletion()`.
 - **Health service** (`server/src/services/health.ts`) — periodic probe keeps key status fresh.
 - **Dashboard** (`client/`) — React + Vite + shadcn/ui admin surface.
 - **Storage** — SQLite (`better-sqlite3`) with AES-256-GCM envelope encryption for keys.
+
 ## Context Handoff
+
 When FreeLLMAPI falls over to a different model mid-conversation (quota, rate limit, cooldown), the new model has no idea it is picking up someone else's task. **Context handoff** adds a single compact `system` message to the outbound request that tells the new model exactly that:
+
 ```
 FreeLLMAPI context handoff:
 You are taking over an ongoing conversation from another model (groq:llama-3 → google:gemini-flash).
 Continue the user's task using the conversation context already provided in this request.
 Do not restart the task, re-ask already answered setup questions, or discard prior tool results.
 Respect the user's latest message as the highest-priority instruction.
+
 Recent session summary:
 User: …
 Assistant: …
 ```
+
 **Enable it in `.env`:**
+
 ```env
 FREELLMAPI_CONTEXT_HANDOFF=on_model_switch
 ```
+
 **How it works:**
+
 - Messages per session are stored in memory (TTL: 3 hours).
 - Only injected when the selected model changes for a given session key.
 - Not injected on the first request, on same-model continuations, or if a handoff message is already present.
 - Session key: `X-Session-Id` header if present, otherwise SHA-1 of the first user message (same as sticky sessions).
 - Storage is in-memory only. Nothing is written to disk or logged.
+
 > **Important:** Context Handoff improves continuity for conversations routed through FreeLLMAPI. It cannot recover provider-internal hidden state or messages that were never sent to the proxy.
+
 ## Limitations
+
 Stacking free tiers has real trade-offs. Be honest with yourself about them:
+
 - **No frontier models.** The free-tier catalog tops out around Llama 3.3 70B, GLM-4.5, Qwen 3 Coder, and Gemini 2.5 Pro. You will not get GPT-5 or Claude Opus class reasoning through this. For hard problems, pay for a real API.
 - **Intelligence degrades as the day progresses.** Your top-ranked models (usually Gemini 2.5 Pro, GPT-4o via GitHub Models) have the lowest daily caps. Once they hit their limits, the router falls down your priority chain to smaller/weaker models. Expect the effective intelligence of the endpoint to drop in the late hours of each day — then reset at UTC midnight.
 - **Latency is highly variable.** Cerebras and Groq are extremely fast; others are not. You get whichever one is available.
 - **Free tiers can change without notice.** Providers regularly tighten, loosen, or remove free tiers. When that happens you'll see 429s or auth errors until the catalog update reaches you — live-feed installs get those fixes within days, free installs on the 30-day trail. Re-seed scripts live in `server/src/scripts/`.
 - **No SLA, by definition.** If you need reliability, use a paid provider with a contract.
 - **Local-first.** There's no multi-tenant auth. Run this for yourself; don't expose it to the internet.
+
 ## Contributing
+
 Contributors very welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for the dev loop, PR expectations, and the policy on AI/LLM-assisted contributions (short version: welcome, same quality bar as any other PR). Good first PRs:
+
 - **Add a provider** — copy `server/src/providers/openai-compat.ts` as a template, wire it into `server/src/providers/index.ts`, seed its models in `server/src/db/index.ts`, add a test in `server/src/__tests__/providers/`.
 - **Add an endpoint** — moderations and other OpenAI-compatible surfaces. The provider base class can grow new methods; adapters declare which they support.
 - **Improve the router** — cost-aware routing (cheapest-healthy-fastest tradeoffs), better latency-weighted priority, regional pinning.
 - **Dashboard polish** — charts on the Analytics page, key rotation UX, batch import of keys from `.env`.
 - **Docs** — more examples, client library snippets for Go/Rust/etc., a deployment recipe for Docker or Fly.
+
 **Development loop:**
+
 ```bash
 npm install
 npm run dev      # server on :3001, dashboard on :5173, both with HMR
 npm test         # server vitest; also runs client tests if the workspace adds them
 npm run build    # compile server and dashboard
 ```
+
 PRs should include a test, keep the existing test suite green, and match the `.editorconfig` / tsconfig defaults already in the repo. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full contributor workflow.
+
 ### Database Migrations
+
 In local development, apply pending migrations with:
+
 ```bash
 NODE_ENV=development npm run db:migration:up
 ```
+
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full migration CLI and workflow.
+
 ### Contributors
+
 <a href="https://github.com/moaaz12-web"><img src="https://images.weserv.nl/?url=github.com/moaaz12-web.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@moaaz12-web" /></a>
 <a href="https://github.com/lukasulc"><img src="https://images.weserv.nl/?url=github.com/lukasulc.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@lukasulc" /></a>
 <a href="https://github.com/VinhPhamAI"><img src="https://images.weserv.nl/?url=github.com/VinhPhamAI.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@VinhPhamAI" /></a>
@@ -628,8 +797,11 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full migration CLI and workflow
 <a href="https://github.com/86TheCactus"><img src="https://images.weserv.nl/?url=github.com/86TheCactus.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@86TheCactus" /></a>
 <a href="https://github.com/AmiroKD"><img src="https://images.weserv.nl/?url=github.com/AmiroKD.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@AmiroKD" /></a>
 <a href="https://github.com/ecryptomillionaire-dev"><img src="https://images.weserv.nl/?url=github.com/ecryptomillionaire-dev.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@ecryptomillionaire-dev" /></a>
+
 ## Terms of Service review
+
 A self-hosted, single-user, personal-use setup was re-reviewed against each provider's ToS (May 2026). Summary:
+
 | Provider | Verdict | Notes |
 |---|---|---|
 | Google Gemini | ⚠️ Caution | March 2026 ToS narrows scope to *"professional or business purposes, not for consumer use"* — a self-hosted developer proxy is still defensible, but the clause is new. |
@@ -646,11 +818,19 @@ A self-hosted, single-user, personal-use setup was re-reviewed against each prov
 | Ollama Cloud | ✅ Likely OK | New row — Free plan permits cloud-model access (1 concurrent, 5-hour session caps). No anti-proxy / anti-resale clauses found. *(Integration tracked in #14.)* |
 | OVH AI Endpoints | ✅ Likely OK | New row (June 2026) — anonymous access is officially documented (2 req/min per IP per model). OVH reserves the right to introduce token/consumption caps. |
 | AI Horde | ✅ Likely OK | New row (June 2026) — a free, community-powered commons run by the Haidra non-profit; anonymous use is officially supported (key `0000000000`, lowest queue priority). No anti-proxy / anti-resale clause. The OpenAI proxy is a pilot and may be restricted by usage. *(Integration #345.)* |
+
 Rules of thumb that keep most providers happy: **one account per provider**, **no reselling**, **no sharing your endpoint with other humans**, **don't hammer a free tier as a paid production backend**. This is informational, not legal advice — read each provider's ToS and make your own call.
+
 Removed since the April 2026 review: Hugging Face, Moonshot, and MiniMax direct integrations were dropped from the catalog (HF — tool-call format issues; Moonshot — moved to paid only; MiniMax — superseded by the OpenRouter `minimax/minimax-m2.5:free` route).
+
 ## Disclaimer
+
 **This project is for personal experimentation and learning, not production.** Free tiers exist so developers can prototype against them; they aren't a stable, supported inference substrate and shouldn't be treated as one. If you build something real on top of FreeLLMAPI, swap in a paid API before you ship. Your relationship with each upstream provider is governed by the terms you accepted when you created your account — those terms still apply when the traffic is proxied through this project, and you're responsible for complying with them.
+
 ## Star History
-[![Star History Chart](https://api.star-history.com/chart?repos=narrator-z/freellmapi&type=date&legend=top-left)](https://www.star-history.com/?repos=tashfeenahmed%2Ffreellmapi&type=date&legend=top-left)
+
+[![Star History Chart](https://api.star-history.com/chart?repos=tashfeenahmed/freellmapi&type=date&legend=top-left)](https://www.star-history.com/?repos=tashfeenahmed%2Ffreellmapi&type=date&legend=top-left)
+
 ## License
+
 [MIT](./LICENSE)
