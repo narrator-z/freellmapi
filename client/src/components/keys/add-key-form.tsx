@@ -43,6 +43,7 @@ export function AddKeyForm({ onSuccess }: { onSuccess: () => void }) {
 
   const needsAccountId = platform === 'cloudflare'
   const platforms = usePlatforms()
+  const isKeyless = platforms.find(p => p.value === platform)?.keyless ?? false
 
   // Field-level validation: the submit stays clickable and reveals what is
   // missing instead of being silently disabled.

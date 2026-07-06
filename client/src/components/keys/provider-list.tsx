@@ -30,7 +30,7 @@ import {
   statusDot,
   statusLabelKey,
 } from './shared'
-import type { HealthData, PlatformEntry } from './shared'
+import type { HealthData } from './shared'
 
 type StatusFilter = 'all' | 'healthy' | 'issues' | 'disabled'
 
