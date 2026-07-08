@@ -11,6 +11,7 @@ Aggregate the free tiers from Google, Groq, Cerebras, NVIDIA, Mistral, OpenRoute
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](#contributing)
 [![Docker image](https://img.shields.io/badge/ghcr.io-freellmapi-2496ED?logo=docker&logoColor=white)](https://github.com/tashfeenahmed/freellmapi/pkgs/container/freellmapi)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/tashfeenahmed/freellmapi)
 
 **[freellmapi.co](https://freellmapi.co)** · browse all 161 free models on the live catalog
 
@@ -199,9 +200,11 @@ $ENCRYPTION_KEY = node -e "console.log(require('crypto').randomBytes(32).toStrin
 npm run dev
 ```
 
-`ENCRYPTION_KEY` is required for startup. The server only falls back to a
-database-stored development key when `NODE_ENV` is not `production`; do not use
-that fallback with real provider keys.
+`ENCRYPTION_KEY` is required for startup. When `NODE_ENV` is not `production`
+and it is unset, the server auto-generates a development key and saves it to a
+`.encryption-key` file (0600) next to the SQLite database, not inside it. Older
+installs that kept the key in the database are migrated to this file on first
+boot. Do not rely on that fallback with real provider keys; set `ENCRYPTION_KEY`.
 
 Request analytics are retained for 90 days or 100000 request rows by default,
 whichever limit prunes first. Set `REQUEST_ANALYTICS_RETENTION_DAYS=0` or
@@ -797,6 +800,14 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full migration CLI and workflow
 <a href="https://github.com/86TheCactus"><img src="https://images.weserv.nl/?url=github.com/86TheCactus.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@86TheCactus" /></a>
 <a href="https://github.com/AmiroKD"><img src="https://images.weserv.nl/?url=github.com/AmiroKD.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@AmiroKD" /></a>
 <a href="https://github.com/ecryptomillionaire-dev"><img src="https://images.weserv.nl/?url=github.com/ecryptomillionaire-dev.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@ecryptomillionaire-dev" /></a>
+<a href="https://github.com/4riful"><img src="https://images.weserv.nl/?url=github.com/4riful.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@4riful" /></a>
+<a href="https://github.com/cagedbird043"><img src="https://images.weserv.nl/?url=github.com/cagedbird043.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@cagedbird043" /></a>
+<a href="https://github.com/fix2015"><img src="https://images.weserv.nl/?url=github.com/fix2015.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@fix2015" /></a>
+<a href="https://github.com/iisyw"><img src="https://images.weserv.nl/?url=github.com/iisyw.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@iisyw" /></a>
+<a href="https://github.com/xsfhacg"><img src="https://images.weserv.nl/?url=github.com/xsfhacg.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@xsfhacg" /></a>
+<a href="https://github.com/noobix"><img src="https://images.weserv.nl/?url=github.com/noobix.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@noobix" /></a>
+<a href="https://github.com/nandukmelath"><img src="https://images.weserv.nl/?url=github.com/nandukmelath.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@nandukmelath" /></a>
+<a href="https://github.com/coffcoe"><img src="https://images.weserv.nl/?url=github.com/coffcoe.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@coffcoe" /></a>
 
 ## Terms of Service review
 

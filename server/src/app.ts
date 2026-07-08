@@ -16,10 +16,13 @@ import { analyticsRouter } from './routes/analytics.js';
 import { healthRouter } from './routes/health.js';
 import { settingsRouter } from './routes/settings.js';
 import { catalogRouter } from './routes/catalog.js';
+import { cacheRouter } from './routes/cache.js';
 import { authRouter } from './routes/auth.js';
+import { docsRouter } from './routes/docs.js';
 import { requireAuth } from './middleware/requireAuth.js';
 import { createProxyRateLimiter } from './middleware/rateLimit.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { clientContextMiddleware } from './lib/client-context.js';
 import type { Config } from './lib/config.js';
 import { loadConfig } from './lib/config.js';
 
@@ -56,6 +59,10 @@ export function createApp(config?: Config) {
   // mid-conversation with an opaque 413. (#200)
   app.use(express.json({ limit: '10mb' }));
 
+  // Caller identity (IP + User-Agent) for request analytics, carried in
+  // AsyncLocalStorage so logRequest() can read it from any depth.
+  app.use(clientContextMiddleware);
+
   // Dashboard auth (#35): /api/auth/{status,setup,login} bootstrap without a
   // session; everything else under /api/* requires a logged-in dashboard user.
   // The /v1 proxy keeps its own unified-API-key auth and is NOT gated here.
@@ -72,6 +79,14 @@ export function createApp(config?: Config) {
   app.use('/api/health', requireAuth, healthRouter);
   app.use('/api/settings', requireAuth, settingsRouter);
   app.use('/api/catalog', requireAuth, catalogRouter);
+  app.use('/api/cache', requireAuth, cacheRouter);
+
+  // Static, unauthenticated API reference: GET /v1/docs (viewer) and
+  // GET /v1/openapi.json (spec). Mounted before the rate limiter so the docs
+  // are always reachable and don't draw down a caller's request budget. It only
+  // owns those two paths; everything else falls through to the routers below.
+  app.use('/v1', docsRouter);
+>>>>>>> upstream/main
 
   // OpenAI-compatible proxy. Per-IP rate limiting (#35 item #6) runs first so
   // it throttles unauthenticated brute-force / flood attempts before any

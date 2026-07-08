@@ -1,4 +1,5 @@
-import type DatabaseType from 'better-sqlite3';
+import crypto from 'crypto';
+import type { Db } from '../db/types.js';
 import { getDb, setSetting, getSetting } from '../db/index.js';
 import { hasProvider, registerFromCatalog, type CatalogPlatform } from '../providers/index.js';
 import { MEDIA_PLATFORMS } from './media.js';
@@ -163,7 +164,7 @@ function routableContextWindow(platform: string, modelId: string, contextWindow:
  *  - models that vanished from the catalog are deleted, exactly like the
  *    dead-model migrations do (fallback_config row first, FK order).
  */
-export function applyCatalog(db: DatabaseType.Database, catalog: Catalog): NonNullable<SyncResult['counts']> {
+export function applyCatalog(db: Db, catalog: Catalog): NonNullable<SyncResult['counts']> {
   const counts = { updated: 0, inserted: 0, removed: 0, skippedUnknownPlatform: 0, quirks: 0 };
 
   const selectModel = db.prepare('SELECT id, enabled FROM models WHERE platform = ? AND model_id = ?');

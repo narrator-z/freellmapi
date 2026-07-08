@@ -21,6 +21,7 @@ function getAvailablePlatforms(): Platform[] {
     .map(p => p.platform)
     .filter(p => p !== 'custom');
 }
+const ALLOWED_IMPORT_EXTENSIONS = new Set(['.env', '.json', '.jsonc', '.md', '.txt', '.csv']);
 
 const addKeySchema = z.object({
   platform: z.string().refine((p) => hasProvider(p as Platform), { message: 'Unknown platform' }),
@@ -200,6 +201,7 @@ keysRouter.get('/', (_req: Request, res: Response) => {
       baseUrl: row.base_url ?? null,
       status: row.status,
       enabled: row.enabled === 1,
+      keyless: resolveProvider(row.platform)?.keyless === true,
       createdAt: row.created_at,
       lastCheckedAt: row.last_checked_at,
       models: row.platform === 'custom' ? (modelsByKeyId.get(row.id) ?? []) : undefined,
@@ -207,6 +209,93 @@ keysRouter.get('/', (_req: Request, res: Response) => {
   });
 
   res.json(keys);
+});
+
+// Export keys — returns plaintext keys in the requested format.
+// GET /api/keys/export?format=json|env|csv&healthy=true
+// The response is the raw file download (Content-Type varies by format).
+keysRouter.get('/export', (req: Request, res: Response) => {
+  const db = getDb();
+  const format = (req.query.format as string) ?? 'json';
+  const healthyOnly = req.query.healthy === 'true';
+
+  let whereClause = '';
+  if (healthyOnly) {
+    whereClause = "WHERE status = 'healthy'";
+  }
+
+  const rows = db.prepare(`SELECT * FROM api_keys ${whereClause} ORDER BY platform, created_at ASC`).all() as any[];
+
+  // Decrypt and filter — only export keys with a real value
+  const decryptedKeys = rows
+    .map(row => {
+      let key = '';
+      try {
+        key = decrypt(row.encrypted_key, row.iv, row.auth_tag);
+      } catch {
+        key = '';
+      }
+      return {
+        platform: row.platform,
+        key,
+        label: row.label || '',
+        baseUrl: row.base_url || undefined,
+      };
+    })
+    .filter(k => {
+      const v = k.key.trim();
+      return v.length > 0 && v !== 'no-key';
+    });
+
+  if (decryptedKeys.length === 0) {
+    res.status(404).json({ error: { message: 'No keys to export' } });
+    return;
+  }
+
+  if (format === 'env') {
+    // .env format: GOOGLE_KEY=xxx\nGROQ_KEY=yyy
+    const lines = decryptedKeys.map(k => {
+      const envKey = `${k.platform.toUpperCase()}_KEY=${k.key}`;
+      return k.label ? `# ${k.label}\n${envKey}` : envKey;
+    });
+    const content = lines.join('\n\n') + '\n';
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="freellmapi-keys.env"');
+    res.send(content);
+    return;
+  }
+
+  if (format === 'csv') {
+    // CSV format: platform,key,label
+    const escCsv = (v: string) => `"${v.replace(/"/g, '""')}"`;
+    // CSV formula-injection guard: a spreadsheet treats a cell that starts with
+    // =, +, -, @, tab or CR as a live formula, so a label like `=HYPERLINK(...)`
+    // would execute on open. Prefix such cells with a single quote to force them
+    // to be read as text. Applied only to free-text fields the user controls
+    // (labels); the key value must round-trip verbatim for re-import, and the
+    // platform is one of our own fixed enum values.
+    const neutralize = (v: string) => (/^[=+\-@\t\r]/.test(v) ? `'${v}` : v);
+    const header = 'platform,key,label';
+    const lines = decryptedKeys.map(k =>
+      [escCsv(k.platform), escCsv(k.key), escCsv(neutralize(k.label))].join(',')
+    );
+    const content = [header, ...lines].join('\n') + '\n';
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="freellmapi-keys.csv"');
+    res.send(content);
+    return;
+  }
+
+  // Default: JSON format (round-trip safe — can be imported directly)
+  const jsonExport = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    source: 'freellmapi',
+    keys: decryptedKeys,
+  };
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="freellmapi-keys.json"');
+  res.json(jsonExport);
 });
 
 // Add a key
@@ -280,9 +369,19 @@ keysRouter.post('/', (req: Request, res: Response) => {
 // A model can be given as a bare id ("qwen3:4b") or as {model, displayName}.
 // `model`/`displayName` (singular) stay supported for older clients; `models`
 // (plural) lets one submit bind several model ids to the same endpoint. (#281)
+// A custom model can declare its capabilities at registration. `supportsTools`
+// defaults to 1 (modern OpenAI-compatible servers — Ollama, vLLM, LM Studio —
+// all emit tool calls), `supportsVision` defaults to 0 unless declared. Leaving
+// a flag unset keeps the DB default on insert and preserves the stored value on
+// re-registration, so a capability the user later toggled isn't clobbered. (#470)
 const modelEntrySchema = z.union([
   z.string().min(1),
-  z.object({ model: z.string().min(1), displayName: z.string().optional() }),
+  z.object({
+    model: z.string().min(1),
+    displayName: z.string().optional(),
+    supportsTools: z.boolean().optional(),
+    supportsVision: z.boolean().optional(),
+  }),
 ]);
 const customProviderSchema = z.object({
   baseUrl: z.string().url('baseUrl must be a valid URL'),
@@ -291,6 +390,10 @@ const customProviderSchema = z.object({
   displayName: z.string().optional(),
   apiKey: z.string().optional(),
   label: z.string().optional(),
+  // Top-level defaults applied to every model in this submit; a per-entry flag
+  // (object form) overrides them for that one model.
+  supportsTools: z.boolean().optional(),
+  supportsVision: z.boolean().optional(),
 }).refine(
   d => (d.model && d.model.trim().length > 0) || (d.models && d.models.length > 0),
   { message: 'model or models is required' },
@@ -320,19 +423,27 @@ keysRouter.post('/custom', async (req: Request, res: Response) => {
 
   // Flatten singular + plural inputs into one list, dedupe by model id, drop
   // blanks. The singular `displayName` only applies to a lone `model` (it can't
-  // sensibly fan out across many ids).
-  const entries: { modelId: string; displayName: string }[] = [];
+  // sensibly fan out across many ids). Capability flags resolve per-entry first,
+  // then fall back to the submit-level defaults, then to undefined (DB default).
+  const topTools = parsed.data.supportsTools;
+  const topVision = parsed.data.supportsVision;
+  const entries: { modelId: string; displayName: string; supportsTools?: boolean; supportsVision?: boolean }[] = [];
   const seen = new Set<string>();
-  const addEntry = (rawId: string, rawDisplay?: string) => {
+  const addEntry = (rawId: string, rawDisplay?: string, tools?: boolean, vision?: boolean) => {
     const modelId = rawId.trim();
     if (!modelId || seen.has(modelId)) return;
     seen.add(modelId);
-    entries.push({ modelId, displayName: (rawDisplay?.trim() || modelId) });
+    entries.push({
+      modelId,
+      displayName: (rawDisplay?.trim() || modelId),
+      supportsTools: tools ?? topTools,
+      supportsVision: vision ?? topVision,
+    });
   };
   if (parsed.data.model?.trim()) addEntry(parsed.data.model, parsed.data.displayName);
   for (const m of parsed.data.models ?? []) {
     if (typeof m === 'string') addEntry(m);
-    else addEntry(m.model, m.displayName);
+    else addEntry(m.model, m.displayName, m.supportsTools, m.supportsVision);
   }
 
   if (entries.length === 0) {
@@ -377,22 +488,34 @@ keysRouter.post('/custom', async (req: Request, res: Response) => {
       storedKeyForMask = keyToStore;
     }
 
-    const registered: { modelDbId: number; model: string; displayName: string }[] = [];
-    for (const { modelId, displayName } of entries) {
+    const registered: { modelDbId: number; model: string; displayName: string; supportsTools: boolean; supportsVision: boolean }[] = [];
+    for (const { modelId, displayName, supportsTools, supportsVision } of entries) {
       // Register each model bound to THIS endpoint's key. Custom models carry no
       // rate limits and sort last in the intelligence preset (size_label tier).
       // Re-registering an existing model id re-binds it (model ids are unique
       // per platform, so one id can't live on two endpoints at once).
+      // Capability flags: an unset flag binds NULL so COALESCE picks the insert
+      // default (tools 1, vision 0) on a new row and preserves the existing
+      // value on re-registration. (#470)
+      const toolsParam = supportsTools === undefined ? null : (supportsTools ? 1 : 0);
+      const visionParam = supportsVision === undefined ? null : (supportsVision ? 1 : 0);
       db.prepare(`
         INSERT INTO models
           (platform, model_id, display_name, intelligence_rank, speed_rank, size_label,
-           rpm_limit, rpd_limit, tpm_limit, tpd_limit, monthly_token_budget, context_window, enabled, key_id)
-        VALUES ('custom', ?, ?, 50, 50, 'Custom', NULL, NULL, NULL, NULL, '', NULL, 1, ?)
+           rpm_limit, rpd_limit, tpm_limit, tpd_limit, monthly_token_budget, context_window, enabled, key_id,
+           supports_tools, supports_vision)
+        VALUES ('custom', @modelId, @displayName, 50, 50, 'Custom', NULL, NULL, NULL, NULL, '', NULL, 1, @keyId,
+           COALESCE(@tools, 1), COALESCE(@vision, 0))
         ON CONFLICT(platform, model_id)
-        DO UPDATE SET display_name = excluded.display_name, key_id = excluded.key_id, enabled = 1
-      `).run(modelId, displayName, keyId);
+        DO UPDATE SET
+          display_name = excluded.display_name,
+          key_id = excluded.key_id,
+          enabled = 1,
+          supports_tools = COALESCE(@tools, supports_tools),
+          supports_vision = COALESCE(@vision, supports_vision)
+      `).run({ modelId, displayName, keyId, tools: toolsParam, vision: visionParam });
 
-      const modelRow = db.prepare("SELECT id FROM models WHERE platform = 'custom' AND model_id = ?").get(modelId) as { id: number };
+      const modelRow = db.prepare("SELECT id, supports_tools, supports_vision FROM models WHERE platform = 'custom' AND model_id = ?").get(modelId) as { id: number; supports_tools: number; supports_vision: number };
 
       // Append to the fallback chain if not already present.
       const inChain = db.prepare('SELECT 1 FROM fallback_config WHERE model_db_id = ?').get(modelRow.id);
@@ -401,7 +524,13 @@ keysRouter.post('/custom', async (req: Request, res: Response) => {
         db.prepare('INSERT INTO fallback_config (model_db_id, priority, enabled) VALUES (?, ?, 1)').run(modelRow.id, max.m + 1);
       }
 
-      registered.push({ modelDbId: modelRow.id, model: modelId, displayName });
+      registered.push({
+        modelDbId: modelRow.id,
+        model: modelId,
+        displayName,
+        supportsTools: modelRow.supports_tools === 1,
+        supportsVision: modelRow.supports_vision === 1,
+      });
     }
 
     return { keyId, registered, storedKeyForMask };
@@ -419,6 +548,8 @@ keysRouter.post('/custom', async (req: Request, res: Response) => {
     baseUrl,
     model: first.model,
     displayName: first.displayName,
+    supportsTools: first.supportsTools,
+    supportsVision: first.supportsVision,
     models: registered,
     maskedKey: maskKey(storedKeyForMask),
   });
@@ -485,24 +616,39 @@ keysRouter.post('/preview', (req: Request, res: Response, next: NextFunction) =>
         return;
       }
 
-      const keys: Array<{ keyName: string; keyValue: string; detectedPlatform: string | null; prefix: string }> = [];
+      const keys: Array<{ keyName: string; keyValue: string; detectedPlatform: string | null; prefix: string; isDuplicate: boolean }> = [];
       const skipped: string[] = [];
+
+      // Build a set of existing decrypted key values for duplicate detection
+      const db = getDb();
+      const existingRows = db.prepare('SELECT encrypted_key, iv, auth_tag FROM api_keys').all() as any[];
+      const existingKeys = new Set<string>();
+      for (const row of existingRows) {
+        try {
+          existingKeys.add(decrypt(row.encrypted_key, row.iv, row.auth_tag));
+        } catch { /* skip undecryptable rows */ }
+      }
+
+      let duplicateCount = 0;
 
       for (const file of files) {
         const result = parseUpload(file);
         for (const parsedKey of result.keys) {
           const { keyName, keyValue } = splitRawKey(parsedKey.rawKey);
+          const isDuplicate = existingKeys.has(keyValue.trim());
+          if (isDuplicate) duplicateCount++;
           keys.push({
             keyName,
             keyValue,
             detectedPlatform: parsedKey.platform,
             prefix: parsedKey.prefix,
+            isDuplicate,
           });
         }
         skipped.push(...result.skipped);
       }
 
-      res.json({ keys, total: keys.length, skipped });
+      res.json({ keys, total: keys.length, skipped, duplicates: duplicateCount });
     } catch (handlerErr: any) {
       res.status(handlerErr.status ?? 500).json({ error: { message: handlerErr.message } });
     }
@@ -517,7 +663,18 @@ keysRouter.post('/import-selected', (req: Request, res: Response) => {
   }
 
   let imported = 0;
+  let duplicateSkipped = 0;
   const errors: Array<{ key: string; error: string }> = [];
+
+  // Build a set of existing decrypted key values for duplicate detection
+  const db = getDb();
+  const existingRows = db.prepare('SELECT encrypted_key, iv, auth_tag FROM api_keys').all() as any[];
+  const existingKeys = new Set<string>();
+  for (const row of existingRows) {
+    try {
+      existingKeys.add(decrypt(row.encrypted_key, row.iv, row.auth_tag));
+    } catch { /* skip undecryptable rows */ }
+  }
 
   for (const key of parsed.data.keys) {
     const keyName = key.keyName?.trim() || key.platform;
@@ -526,9 +683,16 @@ keysRouter.post('/import-selected', (req: Request, res: Response) => {
       continue;
     }
 
+    if (existingKeys.has(key.keyValue.trim())) {
+      duplicateSkipped++;
+      errors.push({ key: keyName, error: 'Duplicate key — already exists' });
+      continue;
+    }
+
     try {
       insertImportedKey(key.platform, keyName, key.keyValue);
       imported++;
+      existingKeys.add(key.keyValue.trim());
     } catch (err) {
       errors.push({ key: keyName, error: (err as Error).message });
     }

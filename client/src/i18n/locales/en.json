@@ -32,7 +32,10 @@
     "newPasswordAutoComplete": "new-password",
     "currentPasswordAutoComplete": "current-password",
     "serverUnreachableBefore": "Can't reach the server. Make sure the backend is running (",
-    "serverUnreachableAfter": ")."
+    "serverUnreachableAfter": ").",
+    "setupCode": "Setup code",
+    "setupCodePlaceholder": "code from the server logs",
+    "setupCodeHint": "Setting up from another device needs the one-time code printed in the server logs at startup."
   },
   "common": {
     "save": "Save",
@@ -62,7 +65,8 @@
     "provider": "Provider",
     "success": "Success",
     "failures": "Failures",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "status": "Status"
   },
   "models": {
     "title": "Models",
@@ -222,6 +226,19 @@
     "selectPlatform": "Select a provider",
     "addKey": "Add key",
     "keyAdded": "Key added",
+    "export": "Export",
+    "exportAll": "All keys",
+    "exportHealthy": "Healthy only",
+    "exportKeys": "Export API keys",
+    "exportFormat": "Format",
+    "exportHealthyOnly": "Healthy keys only",
+    "exportHealthyOnlyDesc": "Exclude keys that are currently failing health checks",
+    "exportWillExport": "Will export",
+    "exportKey": "key",
+    "exportKeys plural": "keys",
+    "exporting": "Exporting…",
+    "exportDownload": "Download",
+    "exportSuccess": "Exported {count} keys",
     "adding": "Adding…",
     "selectProvider": "Select a provider…",
     "accountId": "Account ID",
@@ -249,6 +266,7 @@
     "customFamily": "Family",
     "customFamilyPlaceholder": "defaults to model id",
     "customApiKey": "API key",
+    "customCapabilities": "Capabilities",
     "addModel": "Add model",
     "modelAdded": "Model added",
     "addModels": "Add {count} models",
@@ -293,7 +311,7 @@
     "proxyEnvHintBefore": "Also configurable via the ",
     "proxyEnvHintAfter": " environment variable (takes precedence). Leave blank to disable. Examples:",
     "importKeys": "Import provider keys",
-    "importKeysDescription": "Upload .env, JSON, JSONC, Markdown, or text files.",
+    "importKeysDescription": "Upload .env, JSON, JSONC, CSV, Markdown, or text files.",
     "importFiles": "Files",
     "importFileCount": "{count} selected",
     "previewFiles": "Preview",
@@ -309,6 +327,8 @@
     "importSelected": "Import {count}",
     "importing": "Importing…",
     "noImportSelection": "Select at least one row with a provider.",
+    "duplicate": "Duplicate",
+    "duplicatesFound": "{count} duplicate(s) detected — already exist and will be skipped.",
     "importResult": "Imported {imported}; failed {failed}.",
     "confirmRemove": "Confirm?",
     "quotaSignalsTitle": "Quota signals",
@@ -381,7 +401,11 @@
     "keyLabelFallback": "Key #{id}",
     "errorsByProvider": "Errors by provider",
     "recentErrors": "Recent errors",
-    "noErrors": "No errors"
+    "noErrors": "No errors",
+    "recentCalls": "Recent calls",
+    "clientIp": "Client IP",
+    "clientAgent": "Client app",
+    "requestedModelHint": "Requested {model}, served by fallback"
   },
   "playground": {
     "title": "Playground",
