@@ -21,7 +21,6 @@ function getAvailablePlatforms(): Platform[] {
     .map(p => p.platform)
     .filter(p => p !== 'custom');
 }
-const ALLOWED_IMPORT_EXTENSIONS = new Set(['.env', '.json', '.jsonc', '.md', '.txt', '.csv']);
 
 const addKeySchema = z.object({
   platform: z.string().refine((p) => hasProvider(p as Platform), { message: 'Unknown platform' }),

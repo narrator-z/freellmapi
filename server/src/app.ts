@@ -86,7 +86,6 @@ export function createApp(config?: Config) {
   // are always reachable and don't draw down a caller's request budget. It only
   // owns those two paths; everything else falls through to the routers below.
   app.use('/v1', docsRouter);
->>>>>>> upstream/main
 
   // OpenAI-compatible proxy. Per-IP rate limiting (#35 item #6) runs first so
   // it throttles unauthenticated brute-force / flood attempts before any
