@@ -50,6 +50,9 @@ const FALLBACK_PLATFORMS: PlatformEntry[] = [
   { value: 'routeway', label: 'Routeway (free key)', url: 'https://routeway.ai' },
   { value: 'bazaarlink', label: 'BazaarLink (free key)', url: 'https://bazaarlink.ai' },
   { value: 'ainative', label: 'AINative Studio (free key)', url: 'https://ainative.studio' },
+  { value: 'aion', label: 'Aion Labs (free key)', url: 'https://www.aionlabs.ai' },
+  { value: 'requesty', label: 'Requesty (free key)', url: 'https://www.requesty.ai' },
+  { value: 'nara', label: 'NaraRouter (free key)', url: 'https://router.bynara.id' },
   { value: 'aihorde', label: 'AI Horde (no key needed, slow)', url: 'https://aihorde.net/register', keyless: true },
 ]
 

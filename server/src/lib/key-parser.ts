@@ -32,6 +32,13 @@ export const PREFIX_MAP: Record<string, string> = {
   ROUTEWAY_: 'routeway',
   BAZAARLINK_: 'bazaarlink',
   AINATIVE_: 'ainative',
+  AION_: 'aion',
+  AIONLABS_: 'aion',
+  AION_LABS_: 'aion',
+  REQUESTY_: 'requesty',
+  NARA_: 'nara',
+  NARAROUTER_: 'nara',
+  BYNARA_: 'nara',
   AIHORDE_: 'aihorde',
 };
 
@@ -45,6 +52,13 @@ export const AUTH_JSON_PROVIDER_MAP: Record<string, string> = {
   nvidia: 'nvidia',
   'opencode-zen': 'opencode',
   opencode: 'opencode',
+  aion: 'aion',
+  'aion-labs': 'aion',
+  aionlabs: 'aion',
+  requesty: 'requesty',
+  nara: 'nara',
+  bynara: 'nara',
+  'nara-router': 'nara',
 };
 
 export function detectPlatform(prefix: string): string | null {
