@@ -37,7 +37,8 @@ export interface ImportSelectedResponse {
 // change.  The hand-maintained platform list lives in
 // server/src/providers/index.ts (upstream-synced) and the catalog's
 // platforms[] array (CI-generated).  Any string that passes hasProvider() is
-// a valid platform.
+// a valid platform.  Using `string` (not a strict union) keeps the type
+// compatible with catalog-registered providers such as navy/requesty/nara.
 export type Platform = string;
 
 export interface Model {

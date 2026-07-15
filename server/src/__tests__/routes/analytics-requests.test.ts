@@ -28,11 +28,13 @@ function insertCall(createdAt: string, clientIp: string | null, clientUserAgent:
   `).run(status, createdAt, clientIp, clientUserAgent);
 }
 
-// Fixtures must fall inside the relative `range=7d` window, so anchor them to a
-// day that is always in the past AND within 7 days of "now" regardless of when
-// the suite runs. Using yesterday (UTC) satisfies both invariants.
-function utcDay(offsetDays = -1): string {
-  return new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
+function recentUtcTimestamp(hour: number) {
+  const day = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const hh = String(hour).padStart(2, '0');
+  return {
+    sql: `${day} ${hh}:00:00`,
+    iso: `${day}T${hh}:00:00Z`,
+  };
 }
 
 describe('GET /api/analytics/requests', () => {
@@ -50,10 +52,9 @@ describe('GET /api/analytics/requests', () => {
   });
 
   it('returns one row per call, newest first, with caller identity', async () => {
-    const day = utcDay();
-    insertCall(`${day} 10:00:00`, '192.168.0.3', 'curl/8.6.0');
-    insertCall(`${day} 11:00:00`, '192.168.0.15', 'python-httpx/0.27');
-    insertCall(`${day} 12:00:00`, null, null);
+    insertCall(recentUtcTimestamp(10).sql, '192.168.0.3', 'curl/8.6.0');
+    insertCall(recentUtcTimestamp(11).sql, '192.168.0.15', 'python-httpx/0.27');
+    insertCall(recentUtcTimestamp(12).sql, null, null);
 
     const { status, body } = await request(app, '/api/analytics/requests?range=7d');
     expect(status).toBe(200);
@@ -70,17 +71,16 @@ describe('GET /api/analytics/requests', () => {
       clientUserAgent: 'python-httpx/0.27',
     });
     // created_at is emitted as ISO-8601 UTC so the dashboard localizes it.
-    expect(body.rows[1].createdAt).toBe(`${day}T11:00:00Z`);
+    expect(body.rows[1].createdAt).toBe(recentUtcTimestamp(11).iso);
   });
 
   it('paginates with limit/offset and clamps limit to 500', async () => {
-    const day = utcDay();
-    for (let i = 0; i < 5; i++) insertCall(`${day} 0${i}:00:00`, '10.0.0.1', 'ua');
+    for (let i = 0; i < 5; i++) insertCall(recentUtcTimestamp(i).sql, '10.0.0.1', 'ua');
 
     const page = await request(app, '/api/analytics/requests?range=7d&limit=2&offset=2');
     expect(page.body.total).toBe(5);
     expect(page.body.rows).toHaveLength(2);
-    expect(page.body.rows[0].createdAt).toBe(`${day}T02:00:00Z`);
+    expect(page.body.rows[0].createdAt).toBe(recentUtcTimestamp(2).iso);
 
     const clamped = await request(app, '/api/analytics/requests?range=7d&limit=99999');
     expect(clamped.body.rows).toHaveLength(5);

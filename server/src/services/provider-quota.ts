@@ -137,6 +137,7 @@ function inferPoolForPlatform(platform: Platform, modelId?: string | null): stri
   if (platform === 'ainative') return 'ainative::account';
   if (platform === 'aion') return 'aion::free';
   if (platform === 'requesty') return 'requesty::free';
+  if (platform === 'navy') return 'navy::free';
   if (platform === 'nara') return 'nara::free';
   return normalizedModelId ? `${platform}::${normalizedModelId}` : `${platform}::account`;
 }
@@ -149,7 +150,7 @@ function isSharedPool(platform: Platform): boolean {
     'kimi', 'lepton', 'llama-cpp', 'lmstudio', 'localai', 'minimax', 'monsterapi', 'novita',
     'octoai', 'openpipe', 'parasail', 'portkey-ai',
     'qwen', 'stepfun', 'together-ai',
-    'routeway', 'bazaarlink', 'ainative', 'aion', 'requesty', 'nara', 'aihorde'
+    'routeway', 'bazaarlink', 'ainative', 'aion', 'requesty', 'navy', 'nara', 'aihorde'
   ].includes(platform);
 }
 

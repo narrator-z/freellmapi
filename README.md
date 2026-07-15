@@ -2,9 +2,9 @@
 
 # FreeLLMAPI
 
-**One OpenAI-compatible endpoint. 18 free LLM providers. 161 free models. ~1.7B tokens per month.**
+**One OpenAI-compatible endpoint. 28 free LLM providers. 339 free model endpoints. ~4B tokens per month.**
 
-Aggregate the free tiers from Google, Groq, Cerebras, NVIDIA, Mistral, OpenRouter, GitHub Models, Cohere, Cloudflare, HuggingFace, Z.ai (Zhipu), Ollama, Kilo, Pollinations, LLM7, OVH AI Endpoints, OpenCode Zen, and AI Horde, plus custom OpenAI-compatible chat, embedding, image, and audio endpoints, behind a single `/v1` API. Keys are stored encrypted. A router picks the best available model for each request, falls over to the next provider when one is rate-limited, and tracks per-key usage so you stay under every free-tier cap.
+Aggregate the free tiers from Google, Groq, Cerebras, NVIDIA, Mistral, OpenRouter, GitHub Models, Cohere, Cloudflare, HuggingFace, Z.ai (Zhipu), Ollama, Kilo, Pollinations, LLM7, OVH AI Endpoints, OpenCode Zen, AI Horde, NaraRouter, Aion Labs, Requesty, NavyAI, Agnes AI, Reka, SiliconFlow, Routeway, BazaarLink, and AINative Studio, plus custom OpenAI-compatible chat, embedding, image, and audio endpoints, behind a single `/v1` API. Keys are stored encrypted. A router picks the best available model for each request, falls over to the next provider when one is rate-limited, and tracks per-key usage so you stay under every free-tier cap.
 
 [![CI](https://github.com/tashfeenahmed/freellmapi/actions/workflows/ci.yml/badge.svg)](https://github.com/tashfeenahmed/freellmapi/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/tashfeenahmed/freellmapi?style=flat&logo=github&color=yellow)](https://github.com/tashfeenahmed/freellmapi/stargazers)
@@ -13,9 +13,9 @@ Aggregate the free tiers from Google, Groq, Cerebras, NVIDIA, Mistral, OpenRoute
 [![Docker image](https://img.shields.io/badge/ghcr.io-freellmapi-2496ED?logo=docker&logoColor=white)](https://github.com/tashfeenahmed/freellmapi/pkgs/container/freellmapi)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/tashfeenahmed/freellmapi)
 
-**[freellmapi.co](https://freellmapi.co)** · browse all 161 free models on the live catalog
+**[freellmapi.co](https://freellmapi.co/?utm_source=github&utm_medium=readme&utm_campaign=repository&utm_content=readme_top)** · browse the full catalog: 235 model families, 339 free endpoints
 
-Your router updates its own model catalog. Free installs get each new model 30 days after it ships;
+Your router updates its own model catalog from the augmented catalog maintained and hosted by narratorz — new free models, quota changes, and compatibility fixes sync automatically every 12 hours, no `git pull` required.
 
 ![Fallback chain with per-provider token budget](repo-assets/fallback-chain.png)
 
@@ -46,9 +46,9 @@ Your router updates its own model catalog. Free installs get each new model 30 d
 
 ## Why this exists
 
-Every serious AI lab now offers a free tier — a few million tokens a month, a few thousand requests a day. On its own each tier is a toy. Stacked together, they add up to roughly **1.7 billion tokens per month** of working inference capacity, across 160+ models from small-and-fast to reasonably capable.
+Every serious AI lab now offers a free tier — a few million tokens a month, a few thousand requests a day. On its own each tier is a toy. Stacked together, they add up to roughly **4 billion tokens per month** of working inference capacity, across **235 model families / 339 provider endpoints** from small-and-fast to reasonably capable.
 
-The problem is that stacking them by hand is painful: twenty-one different SDKs, twenty-one different rate limits, twenty-one places a request can fail. FreeLLMAPI collapses that into one OpenAI-compatible endpoint. Point any OpenAI client library at your local server, and it routes transparently across whichever providers you've added keys for.
+The problem is that stacking them by hand is painful: twenty-eight different SDKs, twenty-eight different rate limits, twenty-eight places a request can fail. FreeLLMAPI collapses that into one OpenAI-compatible endpoint. Point any OpenAI client library at your local server, and it routes transparently across whichever providers you've added keys for.
 
 And the free-tier landscape shifts weekly: providers launch models, retire them, and change quotas without notice. FreeLLMAPI tracks all of that for you. The router pulls a signed model catalog from [freellmapi.co](https://freellmapi.co) on its own, so your install keeps up without a `git pull`. The catalog syncs automatically every 12 hours.
 
@@ -84,13 +84,24 @@ And the free-tier landscape shifts weekly: providers launch models, retire them,
 <td align="center"><a href="https://router.bynara.id"><b>NaraRouter</b><br/>Mistral Large · Mistral Medium · Tencent Hy3</a></td>
 <td align="center"><a href="https://aihorde.net"><b>AI Horde</b><br/>Community Llama · Gemma · Cydonia (anon ok, slow)</a></td>
 <td align="center"><a href="https://aionlabs.ai"><b>Aion Labs</b><br/>Aggregator free tier (key, no card)</a></td>
+</tr>
+<tr>
 <td align="center"><a href="https://requesty.ai"><b>Requesty</b><br/>Router free tier (key, no card)</a></td>
+<td align="center"><a href="https://api.navy"><b>NavyAI</b><br/>150K tokens/day free (key, no card)</a></td>
+<td align="center"><a href="https://platform.agnes-ai.com"><b>Agnes AI</b><br/>Flash models (promo $0/token)</a></td>
+<td align="center"><a href="https://platform.reka.ai"><b>Reka</b><br/>Flash · Edge</a></td>
+</tr>
+<tr>
+<td align="center"><a href="https://siliconflow.com"><b>SiliconFlow</b><br/>Chat · image · audio routes</a></td>
+<td align="center"><a href="https://routeway.ai"><b>Routeway</b><br/>Router free tier</a></td>
+<td align="center"><a href="https://bazaarlink.ai"><b>BazaarLink</b><br/>Auto free router</a></td>
+<td align="center"><a href="https://ainative.studio"><b>AINative Studio</b><br/>Qwen · DeepSeek · Llama</a></td>
 </tr>
 </table>
 
-Plus a **custom** provider — point chat, embedding, image, or audio models at any OpenAI-compatible endpoint (llama.cpp, LM Studio, vLLM, a local Ollama, or a remote gateway) from the Keys page.
+Thanks to <a href="https://github.com/MetaMysteries8">@MetaMysteries8</a> for suggesting the NavyAI integration in <a href="https://github.com/tashfeenahmed/freellmapi/issues/532">#532</a>.
 
-Six more integrations — **Agnes AI, Reka, SiliconFlow, Routeway, BazaarLink, and AINative** — ship their models through the [live catalog](#premium-live-catalog): Premium routers serve them the day they land, free installs get them through the standard 30-day gate.
+Plus a **custom** provider — point chat, embedding, image, or audio models at any OpenAI-compatible endpoint (llama.cpp, LM Studio, vLLM, a local Ollama, or a remote gateway) from the Keys page.
 
 The full, always-current list lives at **[freellmapi.co/models](https://freellmapi.co/models.html)** with per-model rate limits, context windows, and free-token budgets.
 
@@ -179,7 +190,7 @@ docker compose up -d
 
 Open http://localhost:3001, add your provider keys on the **Keys** page, reorder the **Fallback Chain** to taste, and grab your unified API key from the **Keys** page header. That unified key is what you point your OpenAI SDK at.
 
-Your fresh install ships with the free catalog snapshot (82 models today) and keeps itself updated from there. Everything the live feed adds on top is listed at [freellmapi.co/models](https://freellmapi.co/models.html).
+Your install keeps itself updated from the signed catalog feed. The current full catalog is listed at [freellmapi.co/models](https://freellmapi.co/models.html).
 
 > **Reaching it from another machine?** By default the container is published only on `127.0.0.1`, so `http://<server-ip>:3001` won't load from another device (the page just hangs). To expose it on your LAN — e.g. a Raspberry Pi at `http://192.168.1.x:3001` — start it with `HOST_BIND=0.0.0.0`:
 >
