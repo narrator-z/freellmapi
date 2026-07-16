@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { useI18n } from '@/i18n'
+import { copyToClipboard } from '@/lib/utils'
 
 export function UnifiedKeySection() {
   const { t } = useI18n()
@@ -26,8 +27,9 @@ export function UnifiedKeySection() {
     ? `http://${window.location.hostname}:${__SERVER_PORT__}/v1`
     : `${window.location.origin}/v1`
 
-  function copy() {
-    navigator.clipboard.writeText(apiKey)
+  async function copy() {
+    const ok = await copyToClipboard(apiKey)
+    if (!ok) return
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }

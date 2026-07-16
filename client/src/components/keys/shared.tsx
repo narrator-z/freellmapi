@@ -57,6 +57,14 @@ const FALLBACK_PLATFORMS: PlatformEntry[] = [
   { value: 'aihorde', label: 'AI Horde (no key needed, slow)', url: 'https://aihorde.net/register', keyless: true },
 ]
 
+// Sort platforms alphabetically by label so long lists (Search / Add key
+// dropdown) are scannable instead of in raw provider-registry order.
+function sortPlatforms(ps: PlatformEntry[]): PlatformEntry[] {
+  return [...ps].sort((a, b) =>
+    a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
+  )
+}
+
 export function usePlatforms(): PlatformEntry[] {
   const { data } = useQuery<PlatformEntry[]>({
     queryKey: ['platforms'],
@@ -64,7 +72,7 @@ export function usePlatforms(): PlatformEntry[] {
     staleTime: 5 * 60 * 1000,
     placeholderData: FALLBACK_PLATFORMS,
   })
-  return data ?? FALLBACK_PLATFORMS
+  return sortPlatforms(data ?? FALLBACK_PLATFORMS)
 }
 
 // 'custom' is configured through its own form (base URL + model), not the
