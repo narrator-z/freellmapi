@@ -2,7 +2,7 @@
 
 # FreeLLMAPI
 
-**One OpenAI-compatible endpoint. 28 free LLM providers. 339 free model endpoints. ~4B tokens per month.**
+**One OpenAI-compatible endpoint. 28 free LLM providers. 339 free model endpoints. ~4 billion tokens per month.**
 
 Aggregate the free tiers from Google, Groq, Cerebras, NVIDIA, Mistral, OpenRouter, GitHub Models, Cohere, Cloudflare, HuggingFace, Z.ai (Zhipu), Ollama, Kilo, Pollinations, LLM7, OVH AI Endpoints, OpenCode Zen, AI Horde, NaraRouter, Aion Labs, Requesty, NavyAI, Agnes AI, Reka, SiliconFlow, Routeway, BazaarLink, and AINative Studio, plus custom OpenAI-compatible chat, embedding, image, and audio endpoints, behind a single `/v1` API. Keys are stored encrypted. A router picks the best available model for each request, falls over to the next provider when one is rate-limited, and tracks per-key usage so you stay under every free-tier cap.
 
@@ -30,7 +30,7 @@ Your router updates its own model catalog from the augmented catalog maintained 
 - [Features](#features)
 - [Not yet supported](#not-yet-supported)
 - [Quick start](#quick-start)
-- [Works with OB-1 and other clients](#works-with-ob-1-and-other-clients)
+- [Works with OpenAI-compatible clients](#works-with-openai-compatible-clients)
 - [Docker](#docker)
 - [Desktop app](#desktop-app)
 - [Languages](#languages)
@@ -396,17 +396,10 @@ flat JSON files. To add a language, copy `en.json`, translate the values, and
 register the locale in `client/src/i18n/I18nProvider.tsx` (and
 `desktop/src/i18n.ts` for the tray strings) — PRs welcome.
 
-## Works with OB-1 and other clients
+## Works with OpenAI-compatible clients
 
-FreeLLMAPI is the free tier for **[OB-1](https://github.com/Overbrilliant/ob-1)**:
-the OB-1 CLI can clone, configure, start, health-check, and wire this proxy into
-its settings automatically. A new OB-1 user can pick **Start free** and reach a
-working OpenAI-compatible endpoint before creating any hosted account.
+Any client that can target an OpenAI-compatible base URL can use FreeLLMAPI:
 
-It is also useful on its own. Any client that can target an OpenAI-compatible
-base URL can use FreeLLMAPI:
-
-- **OB-1**: managed automatically by the CLI, including anonymous providers.
 - **LangChain, LlamaIndex, official OpenAI SDKs**: set `base_url` to
   `http://localhost:3001/v1` and use the unified key from the dashboard.
 - **Local GPU boxes**: add custom OpenAI-compatible endpoints for Ollama,
@@ -443,7 +436,6 @@ unified key as a Bearer token.
 FreeLLMAPI is local-first and single-user by design. Your provider keys stay in
 your SQLite database, encrypted at rest, and requests go from your machine to the
 upstream providers you enabled.
-
 
 ## Using the API
 

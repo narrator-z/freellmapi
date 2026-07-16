@@ -267,6 +267,7 @@ export interface ChatCompletionChunk {
     delta: {
       role?: 'assistant';
       content?: string;
+      reasoning_content?: string;
       tool_calls?: ChatToolCall[];
     };
     finish_reason: string | null;
