@@ -38,7 +38,7 @@ export interface ImportSelectedResponse {
 // server/src/providers/index.ts (upstream-synced) and the catalog's
 // platforms[] array (CI-generated).  Any string that passes hasProvider() is
 // a valid platform.  Using `string` (not a strict union) keeps the type
-// compatible with catalog-registered providers such as navy/requesty/nara.
+// compatible with catalog-registered providers such as navy/requesty/nara/sealion.
 export type Platform = string;
 
 export interface Model {
@@ -109,6 +109,7 @@ export interface ApiKey {
   keyless: boolean;
   createdAt: string;
   lastCheckedAt: string | null;
+  lastHealthError: string | null;
   models?: ApiKeyModel[];
 }
 
