@@ -66,18 +66,16 @@ And the free-tier landscape shifts weekly: providers launch models, retire them,
 <tr>
 <td align="center"><a href="https://mistral.ai"><b>Mistral</b><br/>Large 3 · Medium 3.5 · Codestral · Devstral</a></td>
 <td align="center"><a href="https://openrouter.ai"><b>OpenRouter</b><br/>21 free-tier models</a></td>
-<td align="center"><a href="https://github.com/marketplace/models"><b>GitHub Models</b><br/>GPT-4.1 · GPT-4o</a></td>
 <td align="center"><a href="https://developers.cloudflare.com/workers-ai"><b>Cloudflare</b><br/>Kimi K2 · GLM-4.7 · GPT-OSS · Granite 4</a></td>
+<td align="center"><a href="https://cohere.com"><b>Cohere</b><br/>Command R+ · Command-A (trial)</a></td>
 </tr>
 <tr>
-<td align="center"><a href="https://cohere.com"><b>Cohere</b><br/>Command R+ · Command-A (trial)</a></td>
 <td align="center"><a href="https://docs.z.ai"><b>Z.ai (Zhipu)</b><br/>GLM-4.5 · GLM-4.7 Flash</a></td>
 <td align="center"><a href="https://build.nvidia.com"><b>NVIDIA</b><br/>NIM · 40 RPM free (eval-only ToS)</a></td>
 <td align="center"><a href="https://huggingface.co/docs/inference-providers"><b>HuggingFace</b><br/>Router → DeepSeek V4 · Kimi K2.6 · Qwen3</a></td>
+<td align="center"><a href="https://freellmapi.co/models.html"><b>…and many more</b><br/>full live list</a></td>
 </tr>
 </table>
-
-<p align="center"><strong>…and many more.</strong></p>
 
 Plus a **custom** provider — point chat, embedding, image, or audio models at any OpenAI-compatible endpoint (llama.cpp, LM Studio, vLLM, a local Ollama, or a remote gateway) from the Keys page.
 
@@ -108,7 +106,7 @@ The full, always-current list lives at **[freellmapi.co/models](https://freellma
 - **Unified API key** — Clients authenticate to your proxy with a single `freellmapi-…` bearer token. You never expose upstream provider keys to your apps.
 - **Dashboard login** — The admin UI and all `/api/*` routes are gated behind an email + password account (scrypt-hashed, session-token auth), set on first run. The `/v1` proxy keeps its own unified-key auth for apps.
 - **Health checks** — Periodic probes mark keys as `healthy`, `rate_limited`, `invalid`, or `error` so the router skips dead ones automatically.
-- **Admin dashboard** — React + Vite UI to manage keys, reorder the fallback chain, inspect analytics, and run prompts in a playground. Dark mode included.
+- **Admin dashboard** — React + Vite UI to manage keys, reorder the fallback chain, inspect analytics, and run prompts in a playground. Dark/light/system theme and [60 languages](#languages) included.
 - **Analytics** — Per-request logging with latency (p50 / p95 and time-to-first-token for streams), token counts, success rate, estimated cost savings, and per-provider / per-model / per-key breakdowns over 24h to 90d windows.
 - **Interactive API docs** — `GET /v1/docs` serves a dependency-free OpenAPI viewer covering every proxy endpoint; the spec itself lives at `GET /v1/openapi.json`.
 - **MCP server** — `POST /mcp` speaks the Model Context Protocol (Streamable HTTP), so MCP-capable agents can ask the router which free models are usable right now (with per-model `supported_parameters`), check provider/key health and cooldowns, read usage and cache stats, and switch the routing strategy mid-session. See [Coding agents](#coding-agents).
@@ -358,23 +356,27 @@ install. For the server (non-desktop) deployment, the equivalent state is the
 
 ## Languages
 
-The dashboard and the desktop tray ship in 6 languages. The UI auto-detects your
-browser/system language on first load and you can switch any time from the **⋯**
-menu; the choice is remembered.
+The dashboard ships in **60 languages** (the desktop tray menu in 6). The UI
+auto-detects your browser/system language on first load and you can switch any
+time from **⋯ → Settings**; the choice is remembered. Right-to-left languages
+(العربية, עברית, فارسی, اردو) flip the whole layout automatically, and only the
+active language's dictionary is loaded — the rest never touch your bandwidth.
 
-| Language | Locale |
-| --- | --- |
-| English | `en` |
-| 中文 (简体) | `zh-CN` |
-| Français | `fr` |
-| Español | `es` |
-| Português (Brasil) | `pt-BR` |
-| Italiano | `it` |
+<img src="https://flagcdn.com/24x18/us.png" srcset="https://flagcdn.com/48x36/us.png 2x" width="24" height="18" alt="United States" title="United States"> <img src="https://flagcdn.com/24x18/cn.png" srcset="https://flagcdn.com/48x36/cn.png 2x" width="24" height="18" alt="China" title="China"> <img src="https://flagcdn.com/24x18/es.png" srcset="https://flagcdn.com/48x36/es.png 2x" width="24" height="18" alt="Spain" title="Spain"> <img src="https://flagcdn.com/24x18/fr.png" srcset="https://flagcdn.com/48x36/fr.png 2x" width="24" height="18" alt="France" title="France"> <img src="https://flagcdn.com/24x18/br.png" srcset="https://flagcdn.com/48x36/br.png 2x" width="24" height="18" alt="Brazil" title="Brazil"> <img src="https://flagcdn.com/24x18/it.png" srcset="https://flagcdn.com/48x36/it.png 2x" width="24" height="18" alt="Italy" title="Italy"> <img src="https://flagcdn.com/24x18/in.png" srcset="https://flagcdn.com/48x36/in.png 2x" width="24" height="18" alt="India" title="India"> <img src="https://flagcdn.com/24x18/sa.png" srcset="https://flagcdn.com/48x36/sa.png 2x" width="24" height="18" alt="Saudi Arabia" title="Saudi Arabia"> <img src="https://flagcdn.com/24x18/bd.png" srcset="https://flagcdn.com/48x36/bd.png 2x" width="24" height="18" alt="Bangladesh" title="Bangladesh"> <img src="https://flagcdn.com/24x18/ru.png" srcset="https://flagcdn.com/48x36/ru.png 2x" width="24" height="18" alt="Russia" title="Russia"> <img src="https://flagcdn.com/24x18/pk.png" srcset="https://flagcdn.com/48x36/pk.png 2x" width="24" height="18" alt="Pakistan" title="Pakistan"> <img src="https://flagcdn.com/24x18/id.png" srcset="https://flagcdn.com/48x36/id.png 2x" width="24" height="18" alt="Indonesia" title="Indonesia"> <img src="https://flagcdn.com/24x18/de.png" srcset="https://flagcdn.com/48x36/de.png 2x" width="24" height="18" alt="Germany" title="Germany"> <img src="https://flagcdn.com/24x18/jp.png" srcset="https://flagcdn.com/48x36/jp.png 2x" width="24" height="18" alt="Japan" title="Japan"> <img src="https://flagcdn.com/24x18/ke.png" srcset="https://flagcdn.com/48x36/ke.png 2x" width="24" height="18" alt="Kenya" title="Kenya"> <img src="https://flagcdn.com/24x18/tr.png" srcset="https://flagcdn.com/48x36/tr.png 2x" width="24" height="18" alt="Türkiye" title="Türkiye"> <img src="https://flagcdn.com/24x18/vn.png" srcset="https://flagcdn.com/48x36/vn.png 2x" width="24" height="18" alt="Vietnam" title="Vietnam"> <img src="https://flagcdn.com/24x18/kr.png" srcset="https://flagcdn.com/48x36/kr.png 2x" width="24" height="18" alt="South Korea" title="South Korea"> <img src="https://flagcdn.com/24x18/ir.png" srcset="https://flagcdn.com/48x36/ir.png 2x" width="24" height="18" alt="Iran" title="Iran"> <img src="https://flagcdn.com/24x18/th.png" srcset="https://flagcdn.com/48x36/th.png 2x" width="24" height="18" alt="Thailand" title="Thailand"> <img src="https://flagcdn.com/24x18/pl.png" srcset="https://flagcdn.com/48x36/pl.png 2x" width="24" height="18" alt="Poland" title="Poland"> <img src="https://flagcdn.com/24x18/ua.png" srcset="https://flagcdn.com/48x36/ua.png 2x" width="24" height="18" alt="Ukraine" title="Ukraine"> <img src="https://flagcdn.com/24x18/mm.png" srcset="https://flagcdn.com/48x36/mm.png 2x" width="24" height="18" alt="Myanmar" title="Myanmar"> <img src="https://flagcdn.com/24x18/ro.png" srcset="https://flagcdn.com/48x36/ro.png 2x" width="24" height="18" alt="Romania" title="Romania"> <img src="https://flagcdn.com/24x18/nl.png" srcset="https://flagcdn.com/48x36/nl.png 2x" width="24" height="18" alt="Netherlands" title="Netherlands"> <img src="https://flagcdn.com/24x18/my.png" srcset="https://flagcdn.com/48x36/my.png 2x" width="24" height="18" alt="Malaysia" title="Malaysia"> <img src="https://flagcdn.com/24x18/ph.png" srcset="https://flagcdn.com/48x36/ph.png 2x" width="24" height="18" alt="Philippines" title="Philippines"> <img src="https://flagcdn.com/24x18/ng.png" srcset="https://flagcdn.com/48x36/ng.png 2x" width="24" height="18" alt="Nigeria" title="Nigeria"> <img src="https://flagcdn.com/24x18/et.png" srcset="https://flagcdn.com/48x36/et.png 2x" width="24" height="18" alt="Ethiopia" title="Ethiopia"> <img src="https://flagcdn.com/24x18/uz.png" srcset="https://flagcdn.com/48x36/uz.png 2x" width="24" height="18" alt="Uzbekistan" title="Uzbekistan"> <img src="https://flagcdn.com/24x18/az.png" srcset="https://flagcdn.com/48x36/az.png 2x" width="24" height="18" alt="Azerbaijan" title="Azerbaijan"> <img src="https://flagcdn.com/24x18/lk.png" srcset="https://flagcdn.com/48x36/lk.png 2x" width="24" height="18" alt="Sri Lanka" title="Sri Lanka"> <img src="https://flagcdn.com/24x18/np.png" srcset="https://flagcdn.com/48x36/np.png 2x" width="24" height="18" alt="Nepal" title="Nepal"> <img src="https://flagcdn.com/24x18/kh.png" srcset="https://flagcdn.com/48x36/kh.png 2x" width="24" height="18" alt="Cambodia" title="Cambodia"> <img src="https://flagcdn.com/24x18/gr.png" srcset="https://flagcdn.com/48x36/gr.png 2x" width="24" height="18" alt="Greece" title="Greece"> <img src="https://flagcdn.com/24x18/cz.png" srcset="https://flagcdn.com/48x36/cz.png 2x" width="24" height="18" alt="Czechia" title="Czechia"> <img src="https://flagcdn.com/24x18/hu.png" srcset="https://flagcdn.com/48x36/hu.png 2x" width="24" height="18" alt="Hungary" title="Hungary"> <img src="https://flagcdn.com/24x18/se.png" srcset="https://flagcdn.com/48x36/se.png 2x" width="24" height="18" alt="Sweden" title="Sweden"> <img src="https://flagcdn.com/24x18/il.png" srcset="https://flagcdn.com/48x36/il.png 2x" width="24" height="18" alt="Israel" title="Israel"> <img src="https://flagcdn.com/24x18/dk.png" srcset="https://flagcdn.com/48x36/dk.png 2x" width="24" height="18" alt="Denmark" title="Denmark"> <img src="https://flagcdn.com/24x18/fi.png" srcset="https://flagcdn.com/48x36/fi.png 2x" width="24" height="18" alt="Finland" title="Finland"> <img src="https://flagcdn.com/24x18/no.png" srcset="https://flagcdn.com/48x36/no.png 2x" width="24" height="18" alt="Norway" title="Norway"> <img src="https://flagcdn.com/24x18/sk.png" srcset="https://flagcdn.com/48x36/sk.png 2x" width="24" height="18" alt="Slovakia" title="Slovakia"> <img src="https://flagcdn.com/24x18/bg.png" srcset="https://flagcdn.com/48x36/bg.png 2x" width="24" height="18" alt="Bulgaria" title="Bulgaria"> <img src="https://flagcdn.com/24x18/hr.png" srcset="https://flagcdn.com/48x36/hr.png 2x" width="24" height="18" alt="Croatia" title="Croatia"> <img src="https://flagcdn.com/24x18/rs.png" srcset="https://flagcdn.com/48x36/rs.png 2x" width="24" height="18" alt="Serbia" title="Serbia"> <img src="https://flagcdn.com/24x18/lt.png" srcset="https://flagcdn.com/48x36/lt.png 2x" width="24" height="18" alt="Lithuania" title="Lithuania"> <img src="https://flagcdn.com/24x18/tw.png" srcset="https://flagcdn.com/48x36/tw.png 2x" width="24" height="18" alt="Taiwan" title="Taiwan"> <img src="https://flagcdn.com/24x18/pt.png" srcset="https://flagcdn.com/48x36/pt.png 2x" width="24" height="18" alt="Portugal" title="Portugal"> <img src="https://flagcdn.com/24x18/ge.png" srcset="https://flagcdn.com/48x36/ge.png 2x" width="24" height="18" alt="Georgia" title="Georgia">
+
+The full list of locales lives in
+[`client/src/i18n/locale-config.ts`](./client/src/i18n/locale-config.ts).
+
+The original six locales are human-reviewed; the newer ones are machine-
+translated and improve as native speakers send corrections — a one-string PR is
+a great first contribution.
 
 Translations live in [`client/src/i18n/locales/`](./client/src/i18n/locales) as
-flat JSON files. To add a language, copy `en.json`, translate the values, and
-register the locale in `client/src/i18n/I18nProvider.tsx` (and
-`desktop/src/i18n.ts` for the tray strings) — PRs welcome.
+flat JSON files. To fix a string, edit the value in the locale's JSON file. To
+add a language, copy `en.json`, translate the values, and register the locale in
+`client/src/i18n/locale-config.ts` (and `desktop/src/i18n.ts` for the tray
+strings); `npm test` checks every locale for key/placeholder parity — PRs
+welcome.
 
 ## Works with OpenAI-compatible clients
 
@@ -450,6 +452,42 @@ curl http://localhost:3001/v1/chat/completions \
     "messages": [{"role": "user", "content": "hi"}]
   }'
 ```
+
+**Routing strategies (`auto:*`)**
+
+Plain `auto` follows your active fallback chain. Add a suffix to steer a single request instead — no dashboard changes needed:
+
+- `auto:smart` — favor the highest-intelligence models
+- `auto:fast` — favor measured speed (throughput and time-to-first-byte)
+- `auto:cheap` — budget-leaning; currently the same blend as `balanced` (everything in the pool is already free)
+- `auto:reliable` — favor recent success rate
+- `auto:balanced` — the default blend (reliability first, speed and intelligence split the rest)
+
+These rank **every enabled model**, ignoring your chain order. Common synonyms resolve too (`auto:fastest`, `auto:speed`, `auto:smartest`, `auto:cheapest`, `auto:budget`, …), and the whole model string is case-insensitive.
+
+```bash
+curl http://localhost:3001/v1/chat/completions \
+  -H "Authorization: Bearer freellmapi-your-unified-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "auto:fast",
+    "messages": [{"role": "user", "content": "hi"}]
+  }'
+```
+
+`auto:<profile-name>` routes through a named profile's chain instead of the active one, so different tools can use different chains through the same key:
+
+```bash
+curl http://localhost:3001/v1/chat/completions \
+  -H "Authorization: Bearer freellmapi-your-unified-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "auto:coding",
+    "messages": [{"role": "user", "content": "Write a binary search in Rust."}]
+  }'
+```
+
+An unknown profile name returns a clear `400` rather than silently falling back. Profiles are the named fallback chains from **Model profiles** (see [Features](#features)) — create and switch them from the dashboard; whichever is active is what plain `auto` uses.
 
 **Streaming**
 
@@ -836,6 +874,14 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full migration CLI and workflow
 <a href="https://github.com/noobix"><img src="https://images.weserv.nl/?url=github.com/noobix.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@noobix" /></a>
 <a href="https://github.com/nandukmelath"><img src="https://images.weserv.nl/?url=github.com/nandukmelath.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@nandukmelath" /></a>
 <a href="https://github.com/coffcoe"><img src="https://images.weserv.nl/?url=github.com/coffcoe.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@coffcoe" /></a>
+<a href="https://github.com/NirvanaCh7"><img src="https://images.weserv.nl/?url=github.com/NirvanaCh7.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@NirvanaCh7" /></a>
+<a href="https://github.com/Mohamed3nan"><img src="https://images.weserv.nl/?url=github.com/Mohamed3nan.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@Mohamed3nan" /></a>
+<a href="https://github.com/Arman-Espiar"><img src="https://images.weserv.nl/?url=github.com/Arman-Espiar.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@Arman-Espiar" /></a>
+<a href="https://github.com/MetaMysteries8"><img src="https://images.weserv.nl/?url=github.com/MetaMysteries8.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@MetaMysteries8" /></a>
+<a href="https://github.com/lujun880726"><img src="https://images.weserv.nl/?url=github.com/lujun880726.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@lujun880726" /></a>
+<a href="https://github.com/qq97693453"><img src="https://images.weserv.nl/?url=github.com/qq97693453.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@qq97693453" /></a>
+<a href="https://github.com/emv33"><img src="https://images.weserv.nl/?url=github.com/emv33.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@emv33" /></a>
+<a href="https://github.com/ousamabenyounes"><img src="https://images.weserv.nl/?url=github.com/ousamabenyounes.png&w=60&h=60&fit=cover&mask=circle" width="60" alt="@ousamabenyounes" /></a>
 
 ## Terms of Service review
 
