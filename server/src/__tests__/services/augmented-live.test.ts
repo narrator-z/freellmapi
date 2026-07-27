@@ -109,6 +109,26 @@ describe.skipIf(!AUG_PATH || !fs.existsSync(AUG_PATH))('live augmented catalog a
         .get('mistral-la-plateforme', 'Open and Proprietary Mistral models');
       expect(junk).toBeUndefined();
 
+      // groq display-name entries must merge into the baseline rows with the
+      // real API ids — never insert unroutable display-name duplicates.
+      for (const [display, apiId] of [
+        ['Llama 3.3 70B', 'llama-3.3-70b-versatile'],
+        ['Llama 3.1 8B', 'llama-3.1-8b-instant'],
+        ['Whisper Large v3', 'whisper-large-v3'],
+        ['Whisper Large v3 Turbo', 'whisper-large-v3-turbo'],
+        ['Allam 2 7B', 'allam-2-7b'],
+      ]) {
+        const row = db
+          .prepare('SELECT source FROM models WHERE platform = ? AND model_id = ?')
+          .get('groq', apiId) as { source: string } | undefined;
+        expect(row, `groq:${apiId}`).toBeDefined();
+        expect(row!.source).toBe('catalog');
+        const dup = db
+          .prepare('SELECT id FROM models WHERE platform = ? AND model_id = ?')
+          .get('groq', display);
+        expect(dup, `groq display-name row "${display}" inserted`).toBeUndefined();
+      }
+
       // Re-applying must be idempotent: no inserts, no removals.
       const second = applyCatalog(db as never, catalog);
       expect(second.inserted).toBe(0);

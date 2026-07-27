@@ -216,12 +216,30 @@ const CATALOG_MODEL_JUNK = new Set([
   'mistral-la-plateforme:Open and Proprietary Mistral models',
 ]);
 
+// Per-platform display-name -> API-id overrides for catalog entries whose
+// modelId is a human label rather than the id the provider expects. Without
+// these, the catalog would insert unroutable duplicate rows AND the prune
+// pass would delete the working baseline rows (not listed in the catalog
+// under their real ids). groq naming verified against the provider's docs
+// (llama-3.3-70b-versatile, llama-3.1-8b-instant, whisper-large-v3(-turbo),
+// allam-2-7b). Keep in sync with the copy in db/migrations/20260726_000003.
+const DISPLAY_NAME_ID_OVERRIDES: Record<string, Record<string, string>> = {
+  groq: {
+    'Allam 2 7B': 'allam-2-7b',
+    'Llama 3.1 8B': 'llama-3.1-8b-instant',
+    'Llama 3.3 70B': 'llama-3.3-70b-versatile',
+    'Whisper Large v3': 'whisper-large-v3',
+    'Whisper Large v3 Turbo': 'whisper-large-v3-turbo',
+  },
+};
+
 // Model ids the provider can actually call. The v1-lineage google-ai-studio
 // catalog lists human display names ("Gemini 2.5 Flash") while the native
-// Gemini API requires the slugged id in the URL path.
+// Gemini API requires the slugged id in the URL path; a few groq entries
+// have the same problem and use the explicit override table above.
 function routableModelId(platform: string, modelId: string): string {
   if (platform === 'google-ai-studio') return googleStudioApiModelId(modelId);
-  return modelId;
+  return DISPLAY_NAME_ID_OVERRIDES[platform]?.[modelId] ?? modelId;
 }
 
 // ---- applyCatalog (unchanged write path) ----

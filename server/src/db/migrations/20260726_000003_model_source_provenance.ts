@@ -63,6 +63,19 @@ function googleStudioApiModelId(displayName: string): string {
     .replace(/-{2,}/g, '-');
 }
 
+// groq catalog entries with display-name ids — catalog-sync maps these to
+// the real API ids (DISPLAY_NAME_ID_OVERRIDES in services/catalog-sync.ts),
+// so the backfill must match on the transformed id too.
+const DISPLAY_NAME_ID_OVERRIDES: Record<string, Record<string, string>> = {
+  groq: {
+    'Allam 2 7B': 'allam-2-7b',
+    'Llama 3.1 8B': 'llama-3.1-8b-instant',
+    'Llama 3.3 70B': 'llama-3.3-70b-versatile',
+    'Whisper Large v3': 'whisper-large-v3',
+    'Whisper Large v3 Turbo': 'whisper-large-v3-turbo',
+  },
+};
+
 export function up(db: Db): void {
   if (!hasColumn(db, 'models', 'source')) {
     db.prepare("ALTER TABLE models ADD COLUMN source TEXT NOT NULL DEFAULT 'catalog'").run();
@@ -97,9 +110,11 @@ export function up(db: Db): void {
     for (const m of parsed.models as { platform?: unknown; modelId?: unknown }[]) {
       if (typeof m?.platform === 'string' && typeof m?.modelId === 'string') {
         // Apply the same remaps catalog-sync uses when writing rows, so DB
-        // rows stored under the aliased platform / slugged model id match.
+        // rows stored under the aliased platform / routable model id match.
         const platform = YANGMAO_PLATFORM_ALIASES[m.platform] ?? m.platform;
-        const modelId = platform === 'google-ai-studio' ? googleStudioApiModelId(m.modelId) : m.modelId;
+        const modelId = platform === 'google-ai-studio'
+          ? googleStudioApiModelId(m.modelId)
+          : (DISPLAY_NAME_ID_OVERRIDES[platform]?.[m.modelId] ?? m.modelId);
         inCatalog.add(`${platform}:${modelId}`);
       }
     }

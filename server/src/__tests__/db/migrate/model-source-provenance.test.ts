@@ -149,6 +149,27 @@ describe('20260726_000003_model_source_provenance backfill', () => {
     }
   });
 
+  it('keeps groq baseline rows as catalog when the cache lists display names', () => {
+    const db = seededDb();
+    try {
+      // Baseline seeds use the real API id; the catalog lists the display
+      // name. Without the groq override in the backfill, the baseline row is
+      // misclassified as 'user' and frozen out of catalog updates.
+      setAppliedCatalog(db, JSON.stringify({
+        version: '2099.01.01',
+        tier: 'live',
+        models: [{ platform: 'groq', modelId: 'Llama 3.3 70B' }],
+        quirks: [],
+      }));
+
+      up(db);
+
+      expect(sourceOf(db, 'groq', 'llama-3.3-70b-versatile')).toBe('catalog');
+    } finally {
+      db.close();
+    }
+  });
+
   it('survives a corrupt cached catalog and still applies the heuristics', () => {
     const db = seededDb();
     try {
