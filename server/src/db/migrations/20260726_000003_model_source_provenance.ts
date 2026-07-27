@@ -25,6 +25,24 @@ function hasColumn(db: Db, table: string, column: string): boolean {
   return columns.some((candidate) => candidate.name === column);
 }
 
+// Fork note (freellmapi-augmented): catalog-sync stores yangmao-* wrapper
+// platforms under their real provider names (YANGMAO_PLATFORM_ALIASES), but
+// the cached catalog_applied_json keeps the raw yangmao-* names. The backfill
+// below must apply the same remap or every remapped row is misclassified as
+// 'user' — frozen out of future catalog updates by the collision rule and
+// immune to pruning. Keep in sync with services/catalog-sync.ts; duplicated
+// here because migrations cannot import the service layer (circular via
+// db/index).
+const YANGMAO_PLATFORM_ALIASES: Record<string, string> = {
+  'yangmao-anyscale': 'anyscale',
+  'yangmao-baichuan': 'baichuan',
+  'yangmao-huggingface': 'huggingface',
+  'yangmao-moonshot': 'kimi',
+  'yangmao-siliconcloud': 'siliconflow',
+  'yangmao-baidu': 'ernie',
+  'yangmao-alibaba': 'qwen',
+};
+
 export function up(db: Db): void {
   if (!hasColumn(db, 'models', 'source')) {
     db.prepare("ALTER TABLE models ADD COLUMN source TEXT NOT NULL DEFAULT 'catalog'").run();
@@ -58,7 +76,10 @@ export function up(db: Db): void {
     const inCatalog = new Set<string>();
     for (const m of parsed.models as { platform?: unknown; modelId?: unknown }[]) {
       if (typeof m?.platform === 'string' && typeof m?.modelId === 'string') {
-        inCatalog.add(`${m.platform}:${m.modelId}`);
+        // Apply the same yangmao-* remap catalog-sync uses when writing rows,
+        // so DB rows stored under the real provider name match the catalog.
+        const platform = YANGMAO_PLATFORM_ALIASES[m.platform] ?? m.platform;
+        inCatalog.add(`${platform}:${m.modelId}`);
       }
     }
     const rows = db

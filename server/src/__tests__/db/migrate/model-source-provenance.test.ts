@@ -104,6 +104,30 @@ describe('20260726_000003_model_source_provenance backfill', () => {
     }
   });
 
+  it('keeps yangmao-remapped rows as catalog when the cached catalog lists the wrapper platform', () => {
+    const db = seededDb();
+    try {
+      // Fork scenario: catalog-sync stored a yangmao-moonshot model under the
+      // real provider name 'kimi', while the cached applied catalog still
+      // lists the raw wrapper platform 'yangmao-moonshot'. Without the alias
+      // remap in the backfill, this row is misclassified as 'user' and frozen
+      // out of every future catalog update.
+      insertModel(db, 'kimi', 'kimi-k2', { sizeLabel: 'Large' });
+      setAppliedCatalog(db, JSON.stringify({
+        version: '2099.01.01',
+        tier: 'live',
+        models: [{ platform: 'yangmao-moonshot', modelId: 'kimi-k2' }],
+        quirks: [],
+      }));
+
+      up(db);
+
+      expect(sourceOf(db, 'kimi', 'kimi-k2')).toBe('catalog');
+    } finally {
+      db.close();
+    }
+  });
+
   it('survives a corrupt cached catalog and still applies the heuristics', () => {
     const db = seededDb();
     try {
