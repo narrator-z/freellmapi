@@ -370,6 +370,23 @@ const CUSTOM_PROVIDER_TIMEOUT_MS = 120000;
 
 // ── Catalog-driven auto-registration ──────────────────────────────────────
 
+// yangmao-* platforms in the augmented catalog are passthrough wrappers that
+// describe real third-party providers (the wrapper carries the real apiBaseUrl
+// and adapter). Models are aliased to these target ids during application, so
+// the target provider must exist for the models to pass the hasProvider gate.
+// registerFromCatalog registers the TARGET from the wrapper's connection data.
+// Keep in sync with the copy in db/migrations/20260726_000003 (the migration
+// cannot import this module).
+export const YANGMAO_PLATFORM_ALIASES: Record<string, string> = {
+  'yangmao-anyscale': 'anyscale',
+  'yangmao-baichuan': 'baichuan',
+  'yangmao-huggingface': 'huggingface',
+  'yangmao-moonshot': 'kimi',
+  'yangmao-siliconcloud': 'siliconflow',
+  'yangmao-baidu': 'ernie',
+  'yangmao-alibaba': 'qwen',
+};
+
 /**
  * Register providers from the augmented catalog.
  *
@@ -379,6 +396,12 @@ const CUSTOM_PROVIDER_TIMEOUT_MS = 120000;
  * apiBaseUrl and adapter choice; everything else uses the default values
  * from OpenAICompatProvider / GoogleProvider / etc.
  *
+ * yangmao-* wrappers register their aliased target (e.g. yangmao-alibaba
+ * registers 'qwen') so the wrapper's models land somewhere usable; wrappers
+ * without an alias mapping (yangmao-anthropic, yangmao-openai) describe
+ * providers that need non-openai-compat adapters or paid tiers and are
+ * skipped entirely.
+ *
  * Called by catalog-sync.ts after fetching the augmented catalog.
  */
 export function registerFromCatalog(platforms: CatalogPlatform[]): { added: string[]; conflicts: string[] } {
@@ -386,12 +409,15 @@ export function registerFromCatalog(platforms: CatalogPlatform[]): { added: stri
   const conflicts: string[] = [];
 
   for (const p of platforms) {
-    if (p.id === 'custom' || providers.has(p.id as Platform)) {
-      continue;
+    // Resolve yangmao-* wrappers to their real provider id; skip wrappers
+    // with no alias mapping.
+    let id = p.id;
+    if (id.startsWith('yangmao-')) {
+      const target = YANGMAO_PLATFORM_ALIASES[id];
+      if (!target) continue;
+      id = target;
     }
-    // yangmao-* wrappers are aliased during model application and should
-    // never be registered as standalone providers.
-    if (p.id.startsWith('yangmao-')) {
+    if (id === 'custom' || providers.has(id as Platform)) {
       continue;
     }
     if (!p.apiBaseUrl) {
@@ -416,7 +442,7 @@ export function registerFromCatalog(platforms: CatalogPlatform[]): { added: stri
         case 'openai-compat':
         default:
           register(new OpenAICompatProvider({
-            platform: p.id as Platform,
+            platform: id as Platform,
             name: p.name,
             baseUrl: p.apiBaseUrl,
             keyless: p.keyless,
@@ -425,8 +451,8 @@ export function registerFromCatalog(platforms: CatalogPlatform[]): { added: stri
             extraHeaders: p.extraHeaders ?? undefined,
           }));
       }
-      console.log(`[catalog] auto-registered provider: ${p.id}`);
-      added.push(p.id);
+      console.log(`[catalog] auto-registered provider: ${id}${id !== p.id ? ` (from ${p.id})` : ''}`);
+      added.push(id);
     } catch (err: any) {
       conflicts.push(p.id);
       console.warn(`[catalog] failed to register ${p.id}: ${err.message}`);

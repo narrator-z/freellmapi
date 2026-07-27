@@ -30,9 +30,9 @@ function hasColumn(db: Db, table: string, column: string): boolean {
 // the cached catalog_applied_json keeps the raw yangmao-* names. The backfill
 // below must apply the same remap or every remapped row is misclassified as
 // 'user' — frozen out of future catalog updates by the collision rule and
-// immune to pruning. Keep in sync with services/catalog-sync.ts; duplicated
-// here because migrations cannot import the service layer (circular via
-// db/index).
+// immune to pruning. Keep in sync with YANGMAO_PLATFORM_ALIASES in
+// providers/index.ts; duplicated here because migrations cannot import the
+// provider layer (circular via db/index).
 const YANGMAO_PLATFORM_ALIASES: Record<string, string> = {
   'yangmao-anyscale': 'anyscale',
   'yangmao-baichuan': 'baichuan',

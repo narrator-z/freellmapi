@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import type { Db } from '../db/types.js';
 import { getDb, setSetting, getSetting } from '../db/index.js';
-import { hasProvider, registerFromCatalog, type CatalogPlatform } from '../providers/index.js';
+import { hasProvider, registerFromCatalog, YANGMAO_PLATFORM_ALIASES, type CatalogPlatform } from '../providers/index.js';
 import { MEDIA_PLATFORMS, TRANSCRIPTION_PLATFORMS } from './media.js';
 import { EMBEDDING_PLATFORMS } from './embeddings.js';
 import type { Platform } from '@freellmapi/shared/types.js';
@@ -35,17 +35,10 @@ const BOOT_DELAY_MS = 10 * 1000;
 const FETCH_TIMEOUT_MS = 20 * 1000;
 
 // yangmao-* platforms in the augmented catalog are passthrough wrappers that
-// map to existing registered providers. Remap them so models get stored under
-// the correct platform and pass the hasProvider() check.
-const YANGMAO_PLATFORM_ALIASES: Record<string, string> = {
-  'yangmao-anyscale': 'anyscale',
-  'yangmao-baichuan': 'baichuan',
-  'yangmao-huggingface': 'huggingface',
-  'yangmao-moonshot': 'kimi',
-  'yangmao-siliconcloud': 'siliconflow',
-  'yangmao-baidu': 'ernie',
-  'yangmao-alibaba': 'qwen',
-};
+// map to real providers. YANGMAO_PLATFORM_ALIASES (imported from
+// providers/index.ts) remaps them so models get stored under the correct
+// platform and pass the hasProvider() check; registerFromCatalog uses the
+// same map to auto-register the targets.
 
 // Generative-media modalities are routed into the separate media_models table
 // (see services/media.ts), never into the chat `models` table.

@@ -882,6 +882,12 @@ keysRouter.get('/platforms', (_req: Request, res: Response) => {
     'agnes': 'https://platform.agnes-ai.com',
     'reka': 'https://platform.reka.ai',
     'siliconflow': 'https://siliconflow.com',
+    // yangmao wrapper targets (auto-registered from the augmented catalog)
+    'qwen': 'https://dashscope.aliyun.com/',
+    'kimi': 'https://platform.moonshot.cn/',
+    'anyscale': 'https://www.anyscale.com/',
+    'baichuan': 'https://platform.baichuan-ai.com/',
+    'ernie': 'https://console.bce.baidu.com/qianfan/ais/console/application',
     'routeway': 'https://routeway.ai/dashboard',
     'bazaarlink': 'https://bazaarlink.ai/api/v1/agents/register',
     'ainative': 'https://ainative.studio/signup',
