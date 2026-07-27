@@ -61,73 +61,62 @@ describe.skipIf(!AUG_PATH || !fs.existsSync(AUG_PATH))('live augmented catalog a
       }
 
       // Aliased yangmao models must be stored under the REAL provider name
-      // with source='catalog', never under the wrapper name.
+      // with source='catalog', never under the wrapper name. The routable id
+      // is apiModelId when the pipeline emits one, else the raw modelId.
       const aliased = catalog.models.filter((m: { platform: string }) => YANGMAO_PLATFORM_ALIASES[m.platform]);
       expect(aliased.length).toBeGreaterThan(0);
       let landed = 0;
       for (const m of aliased) {
         const real = YANGMAO_PLATFORM_ALIASES[m.platform]!;
+        const apiId = m.apiModelId ?? m.modelId;
         const wrapper = db
           .prepare('SELECT id FROM models WHERE platform = ? AND model_id = ?')
           .get(m.platform, m.modelId);
         expect(wrapper, `${m.platform}:${m.modelId} stored under wrapper name`).toBeUndefined();
         const row = db
           .prepare('SELECT source FROM models WHERE platform = ? AND model_id = ?')
-          .get(real, m.modelId) as { source: string } | undefined;
-        expect(row, `${m.platform} -> ${real}:${m.modelId}`).toBeDefined();
+          .get(real, apiId) as { source: string } | undefined;
+        expect(row, `${m.platform} -> ${real}:${apiId}`).toBeDefined();
         expect(row!.source).toBe('catalog');
         landed++;
       }
       expect(landed).toBe(aliased.length);
 
-      // v1-lineage duplicates are statically registered (NOT sync-registered)
-      // and their models land with routable ids: google-ai-studio display
-      // names slugify to native Gemini ids; the mistral label row is junk and
-      // must never become a model.
+      // The v1-lineage shadow platforms were retired upstream (contract
+      // 2026-07-27): google-ai-studio models moved to 'google' with
+      // apiModelId, the mistral label row is filtered at parse time.
       expect(hasProvider('google-ai-studio' as Platform)).toBe(true);
       expect(hasProvider('mistral-la-plateforme' as Platform)).toBe(true);
-      const studioModels = catalog.models.filter(
-        (m: { platform: string }) => m.platform === 'google-ai-studio',
-      );
-      expect(studioModels.length).toBeGreaterThan(0);
-      for (const m of studioModels) {
-        const apiId = googleStudioApiModelId(m.modelId);
-        const row = db
-          .prepare('SELECT source FROM models WHERE platform = ? AND model_id = ?')
-          .get('google-ai-studio', apiId) as { source: string } | undefined;
-        expect(row, `google-ai-studio:${apiId} (from "${m.modelId}")`).toBeDefined();
-        expect(row!.source).toBe('catalog');
-        if (apiId !== m.modelId) {
-          const raw = db
-            .prepare('SELECT id FROM models WHERE platform = ? AND model_id = ?')
-            .get('google-ai-studio', m.modelId);
-          expect(raw, `display-name id "${m.modelId}" stored verbatim`).toBeUndefined();
-        }
-      }
       const junk = db
-        .prepare('SELECT id FROM models WHERE platform = ? AND model_id = ?')
-        .get('mistral-la-plateforme', 'Open and Proprietary Mistral models');
+        .prepare('SELECT id FROM models WHERE model_id = ?')
+        .get('Open and Proprietary Mistral models');
       expect(junk).toBeUndefined();
 
-      // groq display-name entries must merge into the baseline rows with the
-      // real API ids — never insert unroutable display-name duplicates.
-      for (const [display, apiId] of [
-        ['Llama 3.3 70B', 'llama-3.3-70b-versatile'],
-        ['Llama 3.1 8B', 'llama-3.1-8b-instant'],
-        ['Whisper Large v3', 'whisper-large-v3'],
-        ['Whisper Large v3 Turbo', 'whisper-large-v3-turbo'],
-        ['Allam 2 7B', 'allam-2-7b'],
-      ]) {
+      // Every display-name entry (space in modelId) must land under its
+      // apiModelId — never as an unroutable verbatim row, on any platform.
+      const displayEntries = catalog.models.filter((m: { modelId: string }) => m.modelId.includes(' '));
+      expect(displayEntries.length).toBeGreaterThan(0);
+      for (const m of displayEntries) {
+        const platform = YANGMAO_PLATFORM_ALIASES[m.platform] ?? m.platform;
+        if (!m.apiModelId) continue; // contract: pipeline guarantees coverage
         const row = db
           .prepare('SELECT source FROM models WHERE platform = ? AND model_id = ?')
-          .get('groq', apiId) as { source: string } | undefined;
-        expect(row, `groq:${apiId}`).toBeDefined();
-        expect(row!.source).toBe('catalog');
-        const dup = db
+          .get(platform, m.apiModelId) as { source: string } | undefined;
+        if (hasProvider(platform as Platform)) {
+          expect(row, `${platform}:${m.apiModelId} (from "${m.modelId}")`).toBeDefined();
+          expect(row!.source).toBe('catalog');
+        }
+        const raw = db
           .prepare('SELECT id FROM models WHERE platform = ? AND model_id = ?')
-          .get('groq', display);
-        expect(dup, `groq display-name row "${display}" inserted`).toBeUndefined();
+          .get(platform, m.modelId);
+        expect(raw, `display-name id "${m.modelId}" stored verbatim`).toBeUndefined();
       }
+
+      // Global invariant: after apply, no chat row carries a display-name id.
+      const spaced = db
+        .prepare("SELECT platform, model_id FROM models WHERE model_id LIKE '% %'")
+        .all() as { platform: string; model_id: string }[];
+      expect(spaced, `display-name rows survived: ${JSON.stringify(spaced)}`).toHaveLength(0);
 
       // Re-applying must be idempotent: no inserts, no removals.
       const second = applyCatalog(db as never, catalog);

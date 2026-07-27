@@ -43,10 +43,15 @@ const YANGMAO_PLATFORM_ALIASES: Record<string, string> = {
   'yangmao-alibaba': 'qwen',
 };
 
-// catalog-sync also stores google-ai-studio models under the slugged API id
-// (googleStudioApiModelId in providers/google.ts), while the cached catalog
-// keeps the raw display names. Same remap requirement as the yangmao aliases
-// above; duplicated for the same import-layering reason.
+// catalog-sync resolves each catalog entry to the id the provider can call
+// (routableModelId): since 2026-07-27 the pipeline emits `apiModelId` for
+// display-name entries and the client prefers it; for older cached catalogs
+// the google/google-ai-studio display names fall back to a slugger. The
+// backfill below must mirror that exact resolution or rows stored under the
+// routable id are misclassified as 'user' — frozen out of future catalog
+// updates by the collision rule and immune to pruning. Duplicated here
+// because migrations cannot import the service/provider layers (circular
+// via db/index).
 const GOOGLE_STUDIO_ID_OVERRIDES: Record<string, string> = {
   'Gemini 2.5 Flash TTS': 'gemini-2.5-flash-preview-tts',
 };
@@ -63,18 +68,13 @@ function googleStudioApiModelId(displayName: string): string {
     .replace(/-{2,}/g, '-');
 }
 
-// groq catalog entries with display-name ids — catalog-sync maps these to
-// the real API ids (DISPLAY_NAME_ID_OVERRIDES in services/catalog-sync.ts),
-// so the backfill must match on the transformed id too.
-const DISPLAY_NAME_ID_OVERRIDES: Record<string, Record<string, string>> = {
-  groq: {
-    'Allam 2 7B': 'allam-2-7b',
-    'Llama 3.1 8B': 'llama-3.1-8b-instant',
-    'Llama 3.3 70B': 'llama-3.3-70b-versatile',
-    'Whisper Large v3': 'whisper-large-v3',
-    'Whisper Large v3 Turbo': 'whisper-large-v3-turbo',
-  },
-};
+// Mirrors routableModelId in services/catalog-sync.ts: apiModelId first,
+// then the google display-name slug fallback, then the raw modelId.
+function routableModelId(platform: string, m: { modelId: string; apiModelId?: unknown }): string {
+  if (typeof m.apiModelId === 'string' && m.apiModelId.length > 0) return m.apiModelId;
+  if (platform === 'google-ai-studio' || platform === 'google') return googleStudioApiModelId(m.modelId);
+  return m.modelId;
+}
 
 export function up(db: Db): void {
   if (!hasColumn(db, 'models', 'source')) {
@@ -107,15 +107,12 @@ export function up(db: Db): void {
     const parsed = JSON.parse(setting.value) as { models?: unknown };
     if (!parsed || !Array.isArray(parsed.models)) return;
     const inCatalog = new Set<string>();
-    for (const m of parsed.models as { platform?: unknown; modelId?: unknown }[]) {
+    for (const m of parsed.models as { platform?: unknown; modelId?: unknown; apiModelId?: unknown }[]) {
       if (typeof m?.platform === 'string' && typeof m?.modelId === 'string') {
         // Apply the same remaps catalog-sync uses when writing rows, so DB
         // rows stored under the aliased platform / routable model id match.
         const platform = YANGMAO_PLATFORM_ALIASES[m.platform] ?? m.platform;
-        const modelId = platform === 'google-ai-studio'
-          ? googleStudioApiModelId(m.modelId)
-          : (DISPLAY_NAME_ID_OVERRIDES[platform]?.[m.modelId] ?? m.modelId);
-        inCatalog.add(`${platform}:${modelId}`);
+        inCatalog.add(`${platform}:${routableModelId(platform, m as { modelId: string; apiModelId?: unknown })}`);
       }
     }
     const rows = db

@@ -149,16 +149,16 @@ describe('20260726_000003_model_source_provenance backfill', () => {
     }
   });
 
-  it('keeps groq baseline rows as catalog when the cache lists display names', () => {
+  it('keeps groq baseline rows as catalog when the cache maps display names via apiModelId', () => {
     const db = seededDb();
     try {
-      // Baseline seeds use the real API id; the catalog lists the display
-      // name. Without the groq override in the backfill, the baseline row is
-      // misclassified as 'user' and frozen out of catalog updates.
+      // New contract (2026-07-27): the pipeline emits apiModelId for
+      // display-name entries; the backfill must prefer it so the baseline row
+      // (stored under the real API id) stays catalog-owned.
       setAppliedCatalog(db, JSON.stringify({
         version: '2099.01.01',
         tier: 'live',
-        models: [{ platform: 'groq', modelId: 'Llama 3.3 70B' }],
+        models: [{ platform: 'groq', modelId: 'Llama 3.3 70B', apiModelId: 'llama-3.3-70b-versatile' }],
         quirks: [],
       }));
 
