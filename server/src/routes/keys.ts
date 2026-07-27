@@ -888,6 +888,9 @@ keysRouter.get('/platforms', (_req: Request, res: Response) => {
     'anyscale': 'https://www.anyscale.com/',
     'baichuan': 'https://platform.baichuan-ai.com/',
     'ernie': 'https://console.bce.baidu.com/qianfan/ais/console/application',
+    // v1-lineage duplicates, statically registered in providers/index.ts
+    'google-ai-studio': 'https://aistudio.google.com/apikey',
+    'mistral-la-plateforme': 'https://console.mistral.ai/api-keys/',
     'routeway': 'https://routeway.ai/dashboard',
     'bazaarlink': 'https://bazaarlink.ai/api/v1/agents/register',
     'ainative': 'https://ainative.studio/signup',

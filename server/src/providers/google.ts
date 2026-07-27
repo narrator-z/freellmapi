@@ -6,6 +6,7 @@ import type {
   ChatToolChoice,
   ChatToolDefinition,
   TokenUsage,
+  Platform,
 } from '@freellmapi/shared/types.js';
 import { BaseProvider, providerHttpError, type CompletionOptions, type KeyValidationResult } from './base.js';
 import { contentToString } from '../lib/content.js';
@@ -538,17 +539,47 @@ export interface GoogleProviderOptions {
    *  Gemma reasoning variants) take 20-60s on cold start; the OpenAI-compat
    *  default of 15s false-flags them as broken. Mirrors OpenAICompatProvider. */
   timeoutMs?: number;
+  /** Platform id this instance registers under. The canonical AI Studio
+   *  provider is 'google'; the augmented catalog's v1-lineage platform
+   *  'google-ai-studio' reuses the same native Gemini API logic. */
+  platform?: Platform;
+  /** Display name override for non-canonical registrations. */
+  name?: string;
+}
+
+// The v1-lineage catalog (source: cheahjs) lists google-ai-studio models by
+// human display name ("Gemini 2.5 Flash", "Gemma 3 27B Instruct") rather than
+// the API model id the native Gemini endpoint requires in the URL path.
+// Explicit overrides cover the cases where the API id is not a mechanical
+// slug of the display name; everything else slugifies (verified against the
+// canonical 'google' platform ids: gemini-2.5-flash, gemma-3-27b-it, ...).
+const GOOGLE_STUDIO_ID_OVERRIDES: Record<string, string> = {
+  'Gemini 2.5 Flash TTS': 'gemini-2.5-flash-preview-tts',
+};
+
+export function googleStudioApiModelId(displayName: string): string {
+  const override = GOOGLE_STUDIO_ID_OVERRIDES[displayName];
+  if (override) return override;
+  return displayName
+    .trim()
+    .toLowerCase()
+    .replace(/\binstruct\b/g, 'it')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9.-]/g, '')
+    .replace(/-{2,}/g, '-');
 }
 
 export class GoogleProvider extends BaseProvider {
-  readonly platform = 'google' as const;
-  readonly name = 'Google AI Studio';
+  readonly platform: Platform;
+  readonly name: string;
   private readonly timeoutMs: number;
 
   constructor(opts: GoogleProviderOptions = {}) {
     super();
+    this.platform = opts.platform ?? 'google';
+    this.name = opts.name ?? 'Google AI Studio';
     // PROVIDER_TIMEOUT_GOOGLE wins over the registration default (#547).
-    this.timeoutMs = providerTimeoutMs('google', opts.timeoutMs ?? 15000);
+    this.timeoutMs = providerTimeoutMs(this.platform, opts.timeoutMs ?? 15000);
   }
 
   async chatCompletion(
@@ -630,7 +661,7 @@ export class GoogleProvider extends BaseProvider {
         finish_reason: toolCalls.length > 0 ? 'tool_calls' : toGeminiFinishReason(candidate?.finishReason),
       }],
       usage,
-      _routed_via: { platform: 'google', model: modelId },
+      _routed_via: { platform: this.platform, model: modelId },
     };
   }
 

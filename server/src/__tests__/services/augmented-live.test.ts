@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { runMigrationsSync } from '../../db/migrate/runner.js';
 import { applyCatalog } from '../../services/catalog-sync.js';
+import { googleStudioApiModelId } from '../../providers/google.js';
 import {
   hasProvider,
   registerFromCatalog,
@@ -10,6 +11,20 @@ import {
   type CatalogPlatform,
 } from '../../providers/index.js';
 import type { Platform } from '@freellmapi/shared/types.js';
+
+describe('googleStudioApiModelId', () => {
+  it('slugifies v1-lineage display names to native Gemini API ids', () => {
+    expect(googleStudioApiModelId('Gemini 2.5 Flash')).toBe('gemini-2.5-flash');
+    expect(googleStudioApiModelId('Gemini 2.5 Flash-Lite')).toBe('gemini-2.5-flash-lite');
+    expect(googleStudioApiModelId('Gemma 3 27B Instruct')).toBe('gemma-3-27b-it');
+    expect(googleStudioApiModelId('Gemma 4 26B A4B Instruct')).toBe('gemma-4-26b-a4b-it');
+    expect(googleStudioApiModelId('Gemini Robotics-ER 1.5')).toBe('gemini-robotics-er-1.5');
+  });
+
+  it('uses explicit overrides where the API id is not a mechanical slug', () => {
+    expect(googleStudioApiModelId('Gemini 2.5 Flash TTS')).toBe('gemini-2.5-flash-preview-tts');
+  });
+});
 
 // Merge-regression check against the REAL augmented catalog (fetched to a
 // local file, no network here): proves the fork's augmented-sync path works
@@ -64,6 +79,35 @@ describe.skipIf(!AUG_PATH || !fs.existsSync(AUG_PATH))('live augmented catalog a
         landed++;
       }
       expect(landed).toBe(aliased.length);
+
+      // v1-lineage duplicates are statically registered (NOT sync-registered)
+      // and their models land with routable ids: google-ai-studio display
+      // names slugify to native Gemini ids; the mistral label row is junk and
+      // must never become a model.
+      expect(hasProvider('google-ai-studio' as Platform)).toBe(true);
+      expect(hasProvider('mistral-la-plateforme' as Platform)).toBe(true);
+      const studioModels = catalog.models.filter(
+        (m: { platform: string }) => m.platform === 'google-ai-studio',
+      );
+      expect(studioModels.length).toBeGreaterThan(0);
+      for (const m of studioModels) {
+        const apiId = googleStudioApiModelId(m.modelId);
+        const row = db
+          .prepare('SELECT source FROM models WHERE platform = ? AND model_id = ?')
+          .get('google-ai-studio', apiId) as { source: string } | undefined;
+        expect(row, `google-ai-studio:${apiId} (from "${m.modelId}")`).toBeDefined();
+        expect(row!.source).toBe('catalog');
+        if (apiId !== m.modelId) {
+          const raw = db
+            .prepare('SELECT id FROM models WHERE platform = ? AND model_id = ?')
+            .get('google-ai-studio', m.modelId);
+          expect(raw, `display-name id "${m.modelId}" stored verbatim`).toBeUndefined();
+        }
+      }
+      const junk = db
+        .prepare('SELECT id FROM models WHERE platform = ? AND model_id = ?')
+        .get('mistral-la-plateforme', 'Open and Proprietary Mistral models');
+      expect(junk).toBeUndefined();
 
       // Re-applying must be idempotent: no inserts, no removals.
       const second = applyCatalog(db as never, catalog);

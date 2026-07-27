@@ -41,6 +41,29 @@ function register(provider: BaseProvider) {
 // (#461).
 register(new GoogleProvider({ timeoutMs: 60_000 }));
 
+// google-ai-studio — the augmented catalog's v1-lineage platform (source:
+// cheahjs) with broader Gemini/Gemma coverage than the canonical 'google'
+// list. Same AI Studio keys, same native Gemini API: NOT OpenAI Chat
+// Completions compatible, so it reuses the dedicated GoogleProvider logic.
+// Registered statically (hand-maintained) on purpose: the catalog entry
+// carries no apiBaseUrl and claims adapter 'openai-compat', so sync-driven
+// registration would produce a broken provider. catalog-sync slugifies its
+// display-name model ids to API ids at apply time (googleStudioApiModelId).
+register(new GoogleProvider({
+  platform: 'google-ai-studio',
+  name: 'Google AI Studio (Extended)',
+  timeoutMs: 60_000,
+}));
+
+// mistral-la-plateforme — same v1-lineage duplicate of 'mistral'. Mistral IS
+// OpenAI-compatible, so this is a plain compat registration sharing the
+// canonical base URL; also static because the catalog entry has no apiBaseUrl.
+register(new OpenAICompatProvider({
+  platform: 'mistral-la-plateforme',
+  name: 'Mistral (La Plateforme)',
+  baseUrl: 'https://api.mistral.ai/v1',
+}));
+
 // Groq - OpenAI-compatible
 register(new OpenAICompatProvider({
   platform: 'groq',

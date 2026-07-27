@@ -43,6 +43,26 @@ const YANGMAO_PLATFORM_ALIASES: Record<string, string> = {
   'yangmao-alibaba': 'qwen',
 };
 
+// catalog-sync also stores google-ai-studio models under the slugged API id
+// (googleStudioApiModelId in providers/google.ts), while the cached catalog
+// keeps the raw display names. Same remap requirement as the yangmao aliases
+// above; duplicated for the same import-layering reason.
+const GOOGLE_STUDIO_ID_OVERRIDES: Record<string, string> = {
+  'Gemini 2.5 Flash TTS': 'gemini-2.5-flash-preview-tts',
+};
+
+function googleStudioApiModelId(displayName: string): string {
+  const override = GOOGLE_STUDIO_ID_OVERRIDES[displayName];
+  if (override) return override;
+  return displayName
+    .trim()
+    .toLowerCase()
+    .replace(/\binstruct\b/g, 'it')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9.-]/g, '')
+    .replace(/-{2,}/g, '-');
+}
+
 export function up(db: Db): void {
   if (!hasColumn(db, 'models', 'source')) {
     db.prepare("ALTER TABLE models ADD COLUMN source TEXT NOT NULL DEFAULT 'catalog'").run();
@@ -76,10 +96,11 @@ export function up(db: Db): void {
     const inCatalog = new Set<string>();
     for (const m of parsed.models as { platform?: unknown; modelId?: unknown }[]) {
       if (typeof m?.platform === 'string' && typeof m?.modelId === 'string') {
-        // Apply the same yangmao-* remap catalog-sync uses when writing rows,
-        // so DB rows stored under the real provider name match the catalog.
+        // Apply the same remaps catalog-sync uses when writing rows, so DB
+        // rows stored under the aliased platform / slugged model id match.
         const platform = YANGMAO_PLATFORM_ALIASES[m.platform] ?? m.platform;
-        inCatalog.add(`${platform}:${m.modelId}`);
+        const modelId = platform === 'google-ai-studio' ? googleStudioApiModelId(m.modelId) : m.modelId;
+        inCatalog.add(`${platform}:${modelId}`);
       }
     }
     const rows = db

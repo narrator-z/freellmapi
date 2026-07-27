@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import type { Db } from '../db/types.js';
 import { getDb, setSetting, getSetting } from '../db/index.js';
 import { hasProvider, registerFromCatalog, YANGMAO_PLATFORM_ALIASES, type CatalogPlatform } from '../providers/index.js';
+import { googleStudioApiModelId } from '../providers/google.js';
 import { MEDIA_PLATFORMS, TRANSCRIPTION_PLATFORMS } from './media.js';
 import { EMBEDDING_PLATFORMS } from './embeddings.js';
 import type { Platform } from '@freellmapi/shared/types.js';
@@ -209,6 +210,20 @@ function routableContextWindow(platform: string, modelId: string, contextWindow:
   return contextWindow;
 }
 
+// Known junk rows from the v1 (cheahjs) source: section headers and label
+// lines that ended up in the models array but are not callable models.
+const CATALOG_MODEL_JUNK = new Set([
+  'mistral-la-plateforme:Open and Proprietary Mistral models',
+]);
+
+// Model ids the provider can actually call. The v1-lineage google-ai-studio
+// catalog lists human display names ("Gemini 2.5 Flash") while the native
+// Gemini API requires the slugged id in the URL path.
+function routableModelId(platform: string, modelId: string): string {
+  if (platform === 'google-ai-studio') return googleStudioApiModelId(modelId);
+  return modelId;
+}
+
 // ---- applyCatalog (unchanged write path) ----
 /**
  * Apply a catalog to the local DB inside one transaction.
@@ -305,6 +320,12 @@ export function applyCatalog(db: Db, catalog: Catalog): NonNullable<SyncResult['
     for (const m of catalog.models) {
       // Remap yangmao-* wrapper platforms to their real provider.
       const platform = YANGMAO_PLATFORM_ALIASES[m.platform] ?? m.platform;
+      // Known junk rows from the v1 (cheahjs) source: section headers and
+      // label lines that are not callable models.
+      if (CATALOG_MODEL_JUNK.has(`${platform}:${m.modelId}`)) {
+        counts.skippedUnknownPlatform++;
+        continue;
+      }
       const modality = m.modality ?? 'text';
       if (MEDIA_MODALITIES.has(modality)) {
         if (!MEDIA_PLATFORMS.has(platform)) {
@@ -335,10 +356,14 @@ export function applyCatalog(db: Db, catalog: Catalog): NonNullable<SyncResult['
         counts.skippedUnknownPlatform++;
         continue;
       }
-      if (isCatalogModelTombstoned(db, 'chat', platform, m.modelId)) continue;
-      inCatalog.add(`${platform}:${m.modelId}`);
+      // The v1-lineage google-ai-studio catalog lists display names ("Gemini
+      // 2.5 Flash"); the native Gemini API needs the slugged id. Transform
+      // once and use the routable id for every DB key below.
+      const modelId = routableModelId(platform, m.modelId);
+      if (isCatalogModelTombstoned(db, 'chat', platform, modelId)) continue;
+      inCatalog.add(`${platform}:${modelId}`);
 
-      const row = selectModel.get(platform, m.modelId) as
+      const row = selectModel.get(platform, modelId) as
         | { id: number; enabled: number; source: string }
         | undefined;
       // Collision rule: if the user hand-added a model and the catalog later
@@ -364,11 +389,11 @@ export function applyCatalog(db: Db, catalog: Catalog): NonNullable<SyncResult['
       if (row) {
         const enabled = m.enabled ? row.enabled : 0;
         updateModel.run({ ...fields, id: row.id, enabled });
-        applyModelOverrides(db, platform, m.modelId);
+        applyModelOverrides(db, platform, modelId);
         counts.updated++;
       } else {
-        insertModel.run({ ...fields, platform, modelId: m.modelId, enabled: m.enabled ? 1 : 0 });
-        applyModelOverrides(db, platform, m.modelId);
+        insertModel.run({ ...fields, platform, modelId, enabled: m.enabled ? 1 : 0 });
+        applyModelOverrides(db, platform, modelId);
         counts.inserted++;
       }
     }

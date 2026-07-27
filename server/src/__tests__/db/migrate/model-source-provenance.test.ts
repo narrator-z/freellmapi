@@ -128,6 +128,27 @@ describe('20260726_000003_model_source_provenance backfill', () => {
     }
   });
 
+  it('keeps google-ai-studio slugged rows as catalog when the cache lists display names', () => {
+    const db = seededDb();
+    try {
+      // Same class of remap as the yangmao aliases: catalog-sync stores the
+      // slugged API id, the cached catalog keeps the raw display name.
+      insertModel(db, 'google-ai-studio', 'gemini-2.5-flash', { sizeLabel: 'Large' });
+      setAppliedCatalog(db, JSON.stringify({
+        version: '2099.01.01',
+        tier: 'live',
+        models: [{ platform: 'google-ai-studio', modelId: 'Gemini 2.5 Flash' }],
+        quirks: [],
+      }));
+
+      up(db);
+
+      expect(sourceOf(db, 'google-ai-studio', 'gemini-2.5-flash')).toBe('catalog');
+    } finally {
+      db.close();
+    }
+  });
+
   it('survives a corrupt cached catalog and still applies the heuristics', () => {
     const db = seededDb();
     try {
