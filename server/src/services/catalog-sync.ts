@@ -56,6 +56,10 @@ const SETTING_LAST_ERROR = 'catalog_last_error';
 export interface AugmentedCatalogModel {
   platform: string;
   modelId: string;
+  /** Provider-API-callable id, present when modelId is a human display name.
+   * Preferred over modelId when set (contract: pipeline emits this since
+   * 2026-07-27); absent = fall back to modelId (backward compatible). */
+  apiModelId?: string;
   displayName: string;
   intelligenceRank: number | null;
   speedRank: number | null;
@@ -183,6 +187,7 @@ function isCatalog(value: unknown): value is Catalog {
       (m) =>
         typeof m?.platform === 'string' &&
         typeof m?.modelId === 'string' &&
+        (m.apiModelId === undefined || typeof m.apiModelId === 'string') &&
         typeof m?.displayName === 'string' &&
         typeof m?.enabled === 'boolean' &&
         !!m?.limits &&
@@ -212,34 +217,25 @@ function routableContextWindow(platform: string, modelId: string, contextWindow:
 
 // Known junk rows from the v1 (cheahjs) source: section headers and label
 // lines that ended up in the models array but are not callable models.
+// The pipeline now filters these at parse time (contract §8.2); this set is
+// only a last-resort fallback for older published/cached catalogs. Both the
+// legacy shadow-platform key and the canonical-platform key are listed.
 const CATALOG_MODEL_JUNK = new Set([
   'mistral-la-plateforme:Open and Proprietary Mistral models',
+  'mistral:Open and Proprietary Mistral models',
 ]);
 
-// Per-platform display-name -> API-id overrides for catalog entries whose
-// modelId is a human label rather than the id the provider expects. Without
-// these, the catalog would insert unroutable duplicate rows AND the prune
-// pass would delete the working baseline rows (not listed in the catalog
-// under their real ids). groq naming verified against the provider's docs
-// (llama-3.3-70b-versatile, llama-3.1-8b-instant, whisper-large-v3(-turbo),
-// allam-2-7b). Keep in sync with the copy in db/migrations/20260726_000003.
-const DISPLAY_NAME_ID_OVERRIDES: Record<string, Record<string, string>> = {
-  groq: {
-    'Allam 2 7B': 'allam-2-7b',
-    'Llama 3.1 8B': 'llama-3.1-8b-instant',
-    'Llama 3.3 70B': 'llama-3.3-70b-versatile',
-    'Whisper Large v3': 'whisper-large-v3',
-    'Whisper Large v3 Turbo': 'whisper-large-v3-turbo',
-  },
-};
-
-// Model ids the provider can actually call. The v1-lineage google-ai-studio
-// catalog lists human display names ("Gemini 2.5 Flash") while the native
-// Gemini API requires the slugged id in the URL path; a few groq entries
-// have the same problem and use the explicit override table above.
-function routableModelId(platform: string, modelId: string): string {
-  if (platform === 'google-ai-studio') return googleStudioApiModelId(modelId);
-  return DISPLAY_NAME_ID_OVERRIDES[platform]?.[modelId] ?? modelId;
+// Model ids the provider can actually call. Since 2026-07-27 the pipeline
+// emits `apiModelId` for every catalog entry whose modelId is a human display
+// name (contract §8.1: groq/google/openrouter/yangmao mappings now live
+// upstream in reference/api_model_map.json) — prefer it. The old hardcoded
+// groq DISPLAY_NAME_ID_OVERRIDES table is removed; for catalogs published
+// before the field existed, fall back to the generic google slugger (the
+// Gemini API needs the slugged id in the URL path) and finally to modelId.
+function routableModelId(platform: string, m: AugmentedCatalogModel): string {
+  if (typeof m.apiModelId === 'string' && m.apiModelId.length > 0) return m.apiModelId;
+  if (platform === 'google-ai-studio' || platform === 'google') return googleStudioApiModelId(m.modelId);
+  return m.modelId;
 }
 
 // ---- applyCatalog (unchanged write path) ----
@@ -374,10 +370,10 @@ export function applyCatalog(db: Db, catalog: Catalog): NonNullable<SyncResult['
         counts.skippedUnknownPlatform++;
         continue;
       }
-      // The v1-lineage google-ai-studio catalog lists display names ("Gemini
-      // 2.5 Flash"); the native Gemini API needs the slugged id. Transform
-      // once and use the routable id for every DB key below.
-      const modelId = routableModelId(platform, m.modelId);
+      // The pipeline emits apiModelId for display-name entries; resolve the
+      // routable id once (apiModelId > google slug fallback > modelId) and
+      // use it for every DB key below.
+      const modelId = routableModelId(platform, m);
       if (isCatalogModelTombstoned(db, 'chat', platform, modelId)) continue;
       inCatalog.add(`${platform}:${modelId}`);
 
