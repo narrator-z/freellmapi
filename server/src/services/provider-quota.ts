@@ -140,8 +140,6 @@ function inferPoolForPlatform(platform: Platform, modelId?: string | null): stri
   if (platform === 'navy') return 'navy::free';
   if (platform === 'nara') return 'nara::free';
   if (platform === 'sealion') return 'sealion::free';
-  // ModelScope: one 2000-requests/day quota across the whole account.
-  if (platform === 'modelscope') return 'modelscope::account';
   return normalizedModelId ? `${platform}::${normalizedModelId}` : `${platform}::account`;
 }
 
@@ -171,17 +169,6 @@ const HEADER_SPECS: Partial<Record<Platform, HeaderSpec[]>> = {
   openrouter: [
     { metric: 'requests', limit: 'x-ratelimit-limit-requests', remaining: 'x-ratelimit-remaining-requests', reset: 'x-ratelimit-reset-requests', strategy: 'provider_reported' },
     { metric: 'tokens', limit: 'x-ratelimit-limit-tokens', remaining: 'x-ratelimit-remaining-tokens', reset: 'x-ratelimit-reset-tokens', strategy: 'provider_reported' },
-  ],
-  // ModelScope reportedly returns `modelscope-ratelimit-*`-style headers on
-  // authenticated responses. UNCONFIRMED: no real token exists for this
-  // platform yet (auth needs an Alibaba Cloud cn-site binding, #581), and the
-  // keyless probes we could run (401s, unauthenticated /v1/models) carry no
-  // ratelimit headers at all. Absent headers are a no-op in
-  // maybeAddObservation, so a wrong guess here costs nothing; community
-  // testers should dump response headers (see the #581 tester guide) and
-  // correct these names.
-  modelscope: [
-    { metric: 'requests', limit: 'modelscope-ratelimit-requests-limit', remaining: 'modelscope-ratelimit-requests-remaining', reset: 'modelscope-ratelimit-requests-reset', strategy: 'provider_reported' },
   ],
 };
 

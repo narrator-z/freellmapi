@@ -30,7 +30,6 @@ import { enforceJsonContent } from '../lib/structured-output.js';
 import { sanitizeProviderErrorMessage } from '../lib/error-redaction.js';
 import { isClientAbortError, newClientAbortError } from '../lib/error-classify.js';
 import { inferQuotaPoolKey, type QuotaObservationContext } from '../services/provider-quota.js';
-import { compressRequest, formatCompressionHeader } from '../services/compression/pipeline.js';
 
 export const responsesRouter = Router();
 
@@ -337,7 +336,7 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
   }
 
   const stream = reqData.stream ?? false;
-  let messages = toChatMessages(reqData);
+  const messages = toChatMessages(reqData);
   const tools = toChatTools(reqData.tools);
   // name → parameter schema, for repairing double-encoded tool arguments on
   // the way back out (see lib/tool-args.ts).
@@ -364,19 +363,6 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
     ...samplingParams,
   };
 
-  const hasCacheControl = typeof reqData.input !== 'string' && reqData.input.some(item => {
-    const content = (item as { content?: unknown }).content;
-    return Array.isArray(content)
-      && content.some(block => block && typeof block === 'object' && 'cache_control' in block);
-  });
-  const compressionResult = compressRequest(messages, {
-    header: req.headers['x-freellm-compress'],
-    tools,
-    cacheControlPrefixLength: hasCacheControl ? messages.length : 0,
-  });
-  messages = compressionResult.messages;
-  res.setHeader('X-FreeLLM-Compress', formatCompressionHeader(compressionResult));
-
   const estimatedInputTokens = messages.reduce(
     (sum, m) => sum + Math.ceil(contentToString(m.content).length / 4),
     0,
@@ -397,9 +383,7 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
   }
   completionOpts.max_tokens = budgetCheck.maxTokens;
   // Optional client-managed session affinity (mirrors /chat/completions).
-  const rawSessionId = req.headers['x-codex-session-id']
-    ?? req.headers['session-id']
-    ?? req.headers['x-session-id'];
+  const rawSessionId = req.headers['x-session-id'];
   const sessionIdHeader = Array.isArray(rawSessionId) ? rawSessionId[0] : rawSessionId;
   const preferredModel = getStickyModel(messages, sessionIdHeader);
   const requestedModelLabel = reqData.model ?? 'auto';

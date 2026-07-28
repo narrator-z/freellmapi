@@ -10,7 +10,7 @@ import type {
   ChatContentBlock,
 } from '@freellmapi/shared/types.js';
 import { routeRequest, routingReserveTokens, type RouteResult } from '../services/router.js';
-import { getSetting, getUnifiedApiKey } from '../db/index.js';
+import { getUnifiedApiKey } from '../db/index.js';
 import { contentToString } from '../lib/content.js';
 import { repairToolArguments, toolSchemaMap } from '../lib/tool-args.js';
 import { rescueInlineToolCalls, startsWithDialectMarker, couldBecomeDialectMarker, containsDialectMarker } from '../lib/tool-call-rescue.js';
@@ -23,7 +23,6 @@ import { applyTokenBudget, tokenBudgetMessage } from '../lib/guardrails.js';
 import { resolveAnthropicModel } from '../services/anthropic-map.js';
 import type { ReasoningEffort } from '../lib/sampling-params.js';
 import { buildModelListing } from '../services/model-listing.js';
-import { compressRequest, formatCompressionHeader } from '../services/compression/pipeline.js';
 
 // Anthropic-compatible Messages API (`POST /v1/messages`). This is a thin
 // translation layer over the SAME router/fallback/analytics machinery the
@@ -426,9 +425,6 @@ anthropicRouter.post('/messages', async (req: Request, res: Response) => {
 
   const body = parsed.data;
   const requestedModel = body.model ?? 'auto';
-  const routedModel = body.model?.startsWith('claude/')
-    ? body.model.slice('claude/'.length)
-    : body.model;
   // The Anthropic wire format requires max_tokens, but OUR default injection
   // must not change the budget gate's verdict: gating AFTER defaulting made a
   // no-max_tokens request 413 here (input + 1024 over budget) where the chat
@@ -437,24 +433,7 @@ anthropicRouter.post('/messages', async (req: Request, res: Response) => {
   const clientMaxTokens = body.max_tokens != null && body.max_tokens > 0 ? body.max_tokens : undefined;
   const { temperature, top_p, stream } = body;
 
-  const converted = convertRequest(body);
-  let { messages } = converted;
-  const { tools, tool_choice, hasImage, wantsTools } = converted;
-  const systemHasCacheControl = Array.isArray(body.system)
-    && body.system.some(block => block && typeof block === 'object' && 'cache_control' in block);
-  const messageHasCacheControl = body.messages.some(message =>
-    Array.isArray(message.content)
-    && message.content.some(block => block && typeof block === 'object' && 'cache_control' in block));
-  const compressionResult = compressRequest(messages, {
-    header: req.headers['x-freellm-compress'],
-    tools,
-    // Claude Code normally marks the system prefix. If a later native message
-    // carries a breakpoint, conservatively cap the translated prefix at
-    // lossless rather than risk invalidating upstream prompt-cache semantics.
-    cacheControlPrefixLength: messageHasCacheControl ? messages.length : (systemHasCacheControl ? 1 : 0),
-  });
-  messages = compressionResult.messages;
-  res.setHeader('X-FreeLLM-Compress', formatCompressionHeader(compressionResult));
+  const { messages, tools, tool_choice, hasImage, wantsTools } = convertRequest(body);
 
   const estimatedInputTokens = estimateTokens(messages);
   const imageCount = messages.reduce((n, m) =>
@@ -484,7 +463,7 @@ anthropicRouter.post('/messages', async (req: Request, res: Response) => {
   // Resolve the model through the operator's Claude-family map (opus/sonnet/
   // haiku/default → auto | a pinned catalog model). A concrete catalog id pins
   // directly. `pinned` drives the analytics requested-model label.
-  const resolved = resolveAnthropicModel(routedModel);
+  const resolved = resolveAnthropicModel(body.model);
   const pinnedModelId = resolved.pinned ? (body.model ?? null) : null;
 
   // Session affinity: Claude Code stamps every request in a session with
@@ -916,14 +895,8 @@ anthropicRouter.post('/messages/count_tokens', (req: Request, res: Response) => 
     sendError(res, 400, 'invalid_request_error', 'Invalid request');
     return;
   }
-  const { messages, tools } = convertRequest(parsed.data);
-  const compressionResult = compressRequest(messages, {
-    header: req.headers['x-freellm-compress'],
-    tools,
-    recordStats: false,
-  });
-  res.setHeader('X-FreeLLM-Compress', formatCompressionHeader(compressionResult));
-  res.json({ input_tokens: estimateTokens(compressionResult.messages) });
+  const { messages } = convertRequest(parsed.data);
+  res.json({ input_tokens: estimateTokens(messages) });
 });
 
 // Anthropic-compatible GET /v1/models. Content-negotiated: only answers when
@@ -933,26 +906,21 @@ anthropicRouter.post('/messages/count_tokens', (req: Request, res: Response) => 
 // endpoint (real free models that can serve a request right now, plus "auto") —
 // no fake Claude cloud models.
 //
-// Optional `claude/<real-id>` aliases let Claude Code's gateway picker discover
-// the full catalog; /messages strips the synthetic prefix before routing.
+// Heads-up: Claude Code's gateway model picker (enabled via
+// CLAUDE_CODE_ENABLE_GATEWAY_MODEL_DISCOVERY=1) only surfaces ids beginning
+// with `claude`/`anthropic`, so our ids won't populate its picker by design.
+// Routing still works because Claude Code keeps its built-in `claude-*` names,
+// which the model map sends to "auto" (or a pinned model).
 anthropicRouter.get('/models', (req: Request, res: Response, next: NextFunction) => {
   if (!req.headers['anthropic-version']) return next(); // OpenAI client → proxyRouter
   if (!authenticate(req, res)) return;
 
   const { models } = buildModelListing();
-  const available = models.filter(m => m.available === 1);
-  const aliasesEnabled = getSetting('expose_cc_discovery_aliases') === '1';
   const data = [
     { type: 'model' as const, id: 'auto', display_name: 'Auto (router picks the best available model)', created_at: MODEL_CREATED_AT },
-    ...available.map(m => ({ type: 'model' as const, id: m.id, display_name: m.name, created_at: MODEL_CREATED_AT })),
-    ...(aliasesEnabled
-      ? available.map(m => ({
-        type: 'model' as const,
-        id: `claude/${m.id}`,
-        display_name: `${m.name} (Claude Code)`,
-        created_at: MODEL_CREATED_AT,
-      }))
-      : []),
+    ...models
+      .filter(m => m.available === 1)
+      .map(m => ({ type: 'model' as const, id: m.id, display_name: m.name, created_at: MODEL_CREATED_AT })),
   ];
   res.json({ data, has_more: false, first_id: data[0]?.id ?? null, last_id: data[data.length - 1]?.id ?? null });
 });

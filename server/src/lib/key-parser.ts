@@ -44,8 +44,6 @@ export const PREFIX_MAP: Record<string, string> = {
   BYNARA_: 'nara',
   SEALION_: 'sealion',
   SEA_LION_: 'sealion',
-  MODELSCOPE_: 'modelscope',
-  MODEL_SCOPE_: 'modelscope',
   AIHORDE_: 'aihorde',
 };
 
@@ -71,8 +69,6 @@ export const AUTH_JSON_PROVIDER_MAP: Record<string, string> = {
   'nara-router': 'nara',
   sealion: 'sealion',
   'sea-lion': 'sealion',
-  modelscope: 'modelscope',
-  'model-scope': 'modelscope',
 };
 
 export function detectPlatform(prefix: string): string | null {
