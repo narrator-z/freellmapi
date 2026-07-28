@@ -15,7 +15,7 @@ import { isOnCooldown, setCooldown } from './ratelimit.js';
 
 /** Platforms with a media adapter below. catalog-sync gates media rows on this
  *  (decoupled from the chat provider registry — e.g. SiliconFlow is media-only). */
-export const MEDIA_PLATFORMS = new Set(['nvidia', 'pollinations', 'cloudflare', 'siliconflow']);
+export const MEDIA_PLATFORMS = new Set(['nvidia', 'pollinations', 'cloudflare', 'siliconflow', 'google']);
 
 /** Platforms whose free media path needs no API key (anonymous). */
 const KEYLESS_CAPABLE = new Set(['pollinations']);
@@ -485,9 +485,9 @@ function logMedia(row: Pick<MediaModelRow, 'platform' | 'model_id' | 'modality'>
   try {
     const client = getClientContext();
     getDb()
-      .prepare(`INSERT INTO requests (platform, model_id, key_id, status, input_tokens, output_tokens, latency_ms, error, request_type, client_ip, client_user_agent)
-                VALUES (?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?)`)
-      .run(row.platform, row.model_id, keyId, status, latencyMs, error, row.modality, client.ip, client.userAgent);
+      .prepare(`INSERT INTO requests (platform, model_id, key_id, status, input_tokens, output_tokens, latency_ms, error, request_type, client_ip, client_user_agent, client_agent)
+                VALUES (?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ?, ?)`)
+      .run(row.platform, row.model_id, keyId, status, latencyMs, error, row.modality, client.ip, client.userAgent, client.agent);
   } catch (e) {
     console.error('Failed to log media request:', e);
   }

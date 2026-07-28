@@ -83,7 +83,11 @@ export function createApp(config?: Config) {
 
   // Ollama emulation owns only its exact fixed /api/* paths. Mount it before
   // the dashboard session gate because real Ollama clients do not use that
-  // auth scheme. The same per-IP limiter as /v1 runs first.
+  // auth scheme. Its legacy /api/embeddings handler explicitly falls through
+  // when it sees a valid dashboard session.
+  // The same per-IP limiter as /v1 runs first: key-required mode is a
+  // brute-forceable credential check without it. Dashboard traffic on the
+  // shared /api/embeddings path shares the (generous, configurable) budget.
   app.use(
     ['/api/tags', '/api/version', '/api/show', '/api/chat', '/api/generate', '/api/embed', '/api/embeddings'],
     createProxyRateLimiter(cfg.proxyRateLimitRpm),

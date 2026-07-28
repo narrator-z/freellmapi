@@ -188,8 +188,12 @@ export function computeCacheKey(input: CacheKeyInput): string {
     temperature: input.temperature,
     top_p: input.top_p,
     max_tokens: input.max_tokens,
+    // tools/tool_choice are part of the key so a request with a different tool
+    // set never collides with (or is served) another's cached answer.
     tools: input.tools,
     tool_choice: input.tool_choice,
+    // Remaining knobs (see CacheKeyInput). Absent/undefined fields are dropped
+    // by stableStringify, so requests without them keep hashing identically.
     stop: input.stop,
     response_format: input.response_format,
     n: input.n,
@@ -199,6 +203,8 @@ export function computeCacheKey(input: CacheKeyInput): string {
     logit_bias: input.logit_bias,
     logprobs: input.logprobs,
     top_logprobs: input.top_logprobs,
+    // Absent for requests without the knob (stableStringify drops undefined),
+    // so pre-existing cache keys are unaffected.
     reasoning_effort: input.reasoning_effort,
     compression: input.compression,
   });

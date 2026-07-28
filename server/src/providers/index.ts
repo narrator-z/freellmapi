@@ -5,24 +5,7 @@ import { OpenAICompatProvider } from './openai-compat.js';
 import { CohereProvider } from './cohere.js';
 import { CloudflareProvider } from './cloudflare.js';
 import { AIHordeProvider } from './aihorde.js';
-
-// Shape of platform entries in the augmented catalog's platforms[] array.
-// Kept here so catalog-sync can type its call to registerFromCatalog.
-export interface CatalogPlatform {
-  id: string;
-  name: string;
-  url: string;
-  keyless: boolean;
-  apiBaseUrl: string;
-  adapter: string;
-  timeoutMs?: number | null;
-  forceSingleToolCall?: boolean;
-  extraHeaders?: Record<string, string>;
-  quota?: {
-    poolKey?: string;
-    headerSpecs?: unknown;
-  } | null;
-}
+import { ModelScopeProvider } from './modelscope.js';
 
 const providers = new Map<Platform, BaseProvider>();
 
@@ -34,29 +17,6 @@ function register(provider: BaseProvider) {
 // cold start; the default 15s false-flags them as broken. 60s covers the
 // bulk; per-call overrides via CompletionOptions.timeoutMs still win.
 register(new GoogleProvider({ timeoutMs: 60_000 }));
-
-// google-ai-studio — the augmented catalog's v1-lineage platform (source:
-// cheahjs) with broader Gemini/Gemma coverage than the canonical 'google'
-// list. Same AI Studio keys, same native Gemini API: NOT OpenAI Chat
-// Completions compatible, so it reuses the dedicated GoogleProvider logic.
-// Registered statically (hand-maintained) on purpose: the catalog entry
-// carries no apiBaseUrl and claims adapter 'openai-compat', so sync-driven
-// registration would produce a broken provider. catalog-sync slugifies its
-// display-name model ids to API ids at apply time (googleStudioApiModelId).
-register(new GoogleProvider({
-  platform: 'google-ai-studio',
-  name: 'Google AI Studio (Extended)',
-  timeoutMs: 60_000,
-}));
-
-// mistral-la-plateforme — same v1-lineage duplicate of 'mistral'. Mistral IS
-// OpenAI-compatible, so this is a plain compat registration sharing the
-// canonical base URL; also static because the catalog entry has no apiBaseUrl.
-register(new OpenAICompatProvider({
-  platform: 'mistral-la-plateforme',
-  name: 'Mistral (La Plateforme)',
-  baseUrl: 'https://api.mistral.ai/v1',
-}));
 
 // Groq - OpenAI-compatible
 register(new OpenAICompatProvider({
@@ -71,6 +31,11 @@ register(new OpenAICompatProvider({
   name: 'Cerebras',
   baseUrl: 'https://api.cerebras.ai/v1',
 }));
+
+// SambaNova was dropped in V23 (June 2026): the free tier is permanently gone.
+// The always-free tier was retired in early 2025 for a one-time $5 trial
+// credit (expires in 3 months); once it lapses, every chat call 402s
+// "payment method required" with no recurring no-card path back.
 
 // NVIDIA NIM - OpenAI-compatible. Several NIM models reject parallel tool calls
 // ("This model only supports single tool-calls at once!"), so pin
@@ -145,6 +110,9 @@ register(new OpenAICompatProvider({
   name: 'HuggingFace Router',
   baseUrl: 'https://router.huggingface.co/v1',
 }));
+
+// Moonshot direct integration was dropped in V4 (paid-only); MiniMax direct
+// was dropped in V4 (superseded by the OpenRouter route).
 
 // Ollama Cloud — OpenAI-compatible. Free plan: 1 concurrent model, 5h session
 // caps, GPU-time-based quota (not per-token). Many catalog models on the
@@ -245,6 +213,11 @@ register(new OpenAICompatProvider({
   baseUrl: 'https://apihub.agnes-ai.com/v1',
   timeoutMs: 60_000,
 }));
+
+// Chutes was evaluated for V11 and dropped: probe with a free-tier key
+// returned 402 on every model — "Quota exceeded and account balance is
+// $0.0, please pay with fiat or send tao". The "free" tier requires a
+// non-zero balance, which conflicts with the project's no-card criterion.
 
 // Reka — OpenAI-compatible (api.reka.ai/v1). Live-probed 2026-06-17: free via a
 // recurring monthly credit grant (no card; key from platform.reka.ai), billed
@@ -360,6 +333,25 @@ register(new OpenAICompatProvider({
   baseUrl: 'https://api.sea-lion.ai/v1',
 }));
 
+// ModelScope (魔搭社区, Alibaba) — OpenAI-compatible inference API
+// (api-inference.modelscope.cn/v1, Bearer auth). Free tier: 2000 requests/day
+// account-wide. Token from modelscope.cn/my/myaccesstoken, BUT calls only work
+// after binding the ModelScope account to an Alibaba Cloud CHINA-site (cn)
+// account with Chinese real-name verification — unbound tokens 401 on every
+// call ("please bind your alibaba cloud account before use"). Dedicated
+// ModelScopeProvider (not plain OpenAICompatProvider) because GET /v1/models
+// answers 200 even for garbage tokens, so key validation needs a 1-token chat
+// probe instead — see providers/modelscope.ts.
+//
+// RETIRED-model gotcha (#581): ModelScope answers requests for retired models
+// with `429 insufficient balance (1008)`. isPaymentRequiredError
+// (lib/error-classify.ts) reads "insufficient balance" as out-of-credits and
+// benches the key ~24h — intentionally NOT special-cased in the shared
+// classifier (the string is a genuine payment marker everywhere else). Keep
+// retired ids out of the catalog instead; the quota-header path in
+// provider-quota.ts keys on response headers, never on that message text.
+register(new ModelScopeProvider());
+
 // AI Horde — free, community-powered inference (volunteer workers) via an
 // OpenAI-compatible proxy. Dedicated AIHordeProvider (not OpenAICompatProvider)
 // because the proxy is queue-based and diverges from the OpenAI contract:
@@ -369,8 +361,6 @@ register(new OpenAICompatProvider({
 // auto-configures and works anonymously (key 0000000000, lowest queue
 // priority); a registered aihorde.net key raises priority. See issue #345.
 register(new AIHordeProvider());
-
-// ── Custom (always present) ───────────────────────────────────────────────
 
 // Placeholder so getProvider('custom')/hasProvider('custom')/getAllProviders()
 // behave — but the real instance is built per-key by resolveProvider(), since
@@ -384,102 +374,6 @@ register(new OpenAICompatProvider({
 // Locally-hosted inference (llama.cpp / vLLM / Ollama on CPU) can be slow, so
 // custom providers get the same extended timeout as Ollama Cloud.
 const CUSTOM_PROVIDER_TIMEOUT_MS = 120000;
-
-// ── Catalog-driven auto-registration ──────────────────────────────────────
-
-// yangmao-* platforms in the augmented catalog are passthrough wrappers that
-// describe real third-party providers (the wrapper carries the real apiBaseUrl
-// and adapter). Models are aliased to these target ids during application, so
-// the target provider must exist for the models to pass the hasProvider gate.
-// registerFromCatalog registers the TARGET from the wrapper's connection data.
-// Keep in sync with the copy in db/migrations/20260726_000003 (the migration
-// cannot import this module).
-export const YANGMAO_PLATFORM_ALIASES: Record<string, string> = {
-  'yangmao-anyscale': 'anyscale',
-  'yangmao-baichuan': 'baichuan',
-  'yangmao-huggingface': 'huggingface',
-  'yangmao-moonshot': 'kimi',
-  'yangmao-siliconcloud': 'siliconflow',
-  'yangmao-baidu': 'ernie',
-  'yangmao-alibaba': 'qwen',
-};
-
-/**
- * Register providers from the augmented catalog.
- *
- * Only platforms that do NOT already have a hand-maintained provider are
- * created, preserving manually tuned params (timeout, extraHeaders, etc.)
- * that the catalog cannot supply.  The catalog provides the canonical
- * apiBaseUrl and adapter choice; everything else uses the default values
- * from OpenAICompatProvider / GoogleProvider / etc.
- *
- * yangmao-* wrappers register their aliased target (e.g. yangmao-alibaba
- * registers 'qwen') so the wrapper's models land somewhere usable; wrappers
- * without an alias mapping (yangmao-anthropic, yangmao-openai) describe
- * providers that need non-openai-compat adapters or paid tiers and are
- * skipped entirely.
- *
- * Called by catalog-sync.ts after fetching the augmented catalog.
- */
-export function registerFromCatalog(platforms: CatalogPlatform[]): { added: string[]; conflicts: string[] } {
-  const added: string[] = [];
-  const conflicts: string[] = [];
-
-  for (const p of platforms) {
-    // Resolve yangmao-* wrappers to their real provider id; skip wrappers
-    // with no alias mapping.
-    let id = p.id;
-    if (id.startsWith('yangmao-')) {
-      const target = YANGMAO_PLATFORM_ALIASES[id];
-      if (!target) continue;
-      id = target;
-    }
-    if (id === 'custom' || providers.has(id as Platform)) {
-      continue;
-    }
-    if (!p.apiBaseUrl) {
-      console.warn(`[catalog] skipping ${p.id}: no apiBaseUrl`);
-      continue;
-    }
-
-    try {
-      switch (p.adapter) {
-        case 'google':
-          register(new GoogleProvider());
-          break;
-        case 'cohere':
-          register(new CohereProvider());
-          break;
-        case 'cloudflare':
-          register(new CloudflareProvider());
-          break;
-        case 'aihorde':
-          register(new AIHordeProvider());
-          break;
-        case 'openai-compat':
-        default:
-          register(new OpenAICompatProvider({
-            platform: id as Platform,
-            name: p.name,
-            baseUrl: p.apiBaseUrl,
-            keyless: p.keyless,
-            timeoutMs: p.timeoutMs ?? undefined,
-            forceSingleToolCall: p.forceSingleToolCall ?? false,
-            extraHeaders: p.extraHeaders ?? undefined,
-          }));
-      }
-      console.log(`[catalog] auto-registered provider: ${id}${id !== p.id ? ` (from ${p.id})` : ''}`);
-      added.push(id);
-    } catch (err: any) {
-      conflicts.push(p.id);
-      console.warn(`[catalog] failed to register ${p.id}: ${err.message}`);
-    }
-  }
-
-  return { added, conflicts };
-}
-
-// ── Exports ───────────────────────────────────────────────────────────────
 
 export function getProvider(platform: Platform): BaseProvider | undefined {
   return providers.get(platform);

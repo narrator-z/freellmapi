@@ -3,8 +3,8 @@ import type { NextFunction, Request, Response } from 'express';
 import { z } from 'zod';
 import multer from 'multer';
 import path from 'path';
-import { getDb, getSetting } from '../db/index.js';
-import { resolveProvider, getAllProviders, hasProvider } from '../providers/index.js';
+import { getDb } from '../db/index.js';
+import { resolveProvider } from '../providers/index.js';
 import { encrypt, decrypt, maskKey } from '../lib/crypto.js';
 import { parseKeysFromFile, stripJsoncComments, stripTrailingCommas } from '../lib/key-parser.js';
 import { assessProviderUrl } from '../lib/url-guard.js';
@@ -13,19 +13,36 @@ import { getActiveCooldownsForKeys, clearCooldownsForKey } from '../services/rat
 
 export const keysRouter = Router();
 
-// Platform list — now driven by the provider registry (hand-maintained from
-// upstream plus catalog auto-registration), not a hardcoded enum.
-// Use getAllProviders() to list available platforms at runtime.
-import type { Platform } from '@freellmapi/shared/types.js';
+// Active providers — must match providers/index.ts registrations + shared/types.ts Platform.
+// Moonshot and MiniMax direct integrations were dropped in V4. HuggingFace
+// was dropped in V4 and re-added in V13 via the router.huggingface.co route.
+// SambaNova was dropped in V23 (free tier permanently retired).
+const PLATFORMS = [
+  'google', 'groq', 'cerebras', 'nvidia', 'mistral',
+  'openrouter', 'github', 'cohere', 'cloudflare', 'zhipu', 'ollama',
+  'kilo', 'pollinations', 'llm7', 'huggingface', 'opencode', 'ovh', 'agnes', 'reka', 'siliconflow',
+  'routeway', 'bazaarlink', 'ainative', 'aion', 'requesty', 'navy', 'nara', 'sealion', 'modelscope', 'aihorde', 'custom',
+] as const;
 
-function getAvailablePlatforms(): Platform[] {
-  return getAllProviders()
-    .map(p => p.platform)
-    .filter(p => p !== 'custom');
-}
+const ALLOWED_IMPORT_EXTENSIONS = new Set(['.env', '.json', '.jsonc', '.md', '.txt', '.csv']);
 
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024, files: 10 },
+  fileFilter: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!ALLOWED_IMPORT_EXTENSIONS.has(ext)) {
+      cb(new Error('Unsupported file type'));
+      return;
+    }
+    cb(null, true);
+  },
+});
+
+// `key` is optional so keyless providers (Kilo's anonymous gateway) can be added
+// without one; the handler enforces a non-empty key for everyone else.
 const addKeySchema = z.object({
-  platform: z.string().refine((p) => hasProvider(p as Platform), { message: 'Unknown platform' }),
+  platform: z.enum(PLATFORMS),
   key: z.string().optional(),
   label: z.string().optional(),
 });
@@ -40,22 +57,7 @@ const updateKeySchema = z.object({
 const importKeySchema = z.object({
   keyName: z.string().optional(),
   keyValue: z.string().min(1),
-  platform: z.string().refine((p) => hasProvider(p as Platform), { message: 'Unknown platform' }),
-});
-
-const ALLOWED_IMPORT_EXTENSIONS = new Set(['.env', '.json', '.jsonc', '.md', '.txt']);
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024, files: 10 },
-  fileFilter: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (!ALLOWED_IMPORT_EXTENSIONS.has(ext)) {
-      cb(new Error('Unsupported file type'));
-      return;
-    }
-    cb(null, true);
-  },
+  platform: z.enum(PLATFORMS),
 });
 
 function handleUploadError(err: any, res: Response, next: NextFunction): boolean {
@@ -101,7 +103,7 @@ function splitRawKey(rawKey: string) {
   };
 }
 
-function insertImportedKey(platform: Platform, keyName: string, keyValue: string) {
+function insertImportedKey(platform: (typeof PLATFORMS)[number], keyName: string, keyValue: string) {
   if (platform === 'custom') {
     throw new Error('Custom providers must be added with a base URL');
   }
@@ -118,10 +120,11 @@ function insertImportedKey(platform: Platform, keyName: string, keyValue: string
 }
 
 // Count enabled catalog models for a platform. Used to warn when a key is
-// added for a provider that has zero models in the current augmented catalog
-// yet — the provider is registered and selectable, but models arrive via
-// the 12-hourly catalog sync, so a fresh install adds the key and silently
-// sees nothing until the next sync finishes.
+// added for a provider that has zero models in the operator's current catalog
+// tier — the Agnes case (#438): the provider is registered and selectable, but
+// its models ship in the premium/live catalog and only appear for free-tier
+// installs once they age into the monthly catalog, so a fresh install adds the
+// key and silently sees nothing.
 function enabledModelCount(platform: string): number {
   const db = getDb();
   const row = db.prepare(
@@ -136,8 +139,9 @@ function noModelsNotice(platform: string): string | undefined {
   if (enabledModelCount(platform) > 0) return undefined;
   return (
     `Key saved, but no ${platform} models are in your current catalog yet. ` +
-    `Newer providers may take up to 12 hours to appear after the next ` +
-    `catalog sync. Add ${platform} as a custom ` +
+    `Newer providers are published to the premium catalog first and appear ` +
+    `for free-tier installs once they age into the monthly catalog. Add a ` +
+    `Premium license key to use them now, or add ${platform} as a custom ` +
     `OpenAI-compatible provider with its base URL.`
   );
 }
@@ -610,7 +614,8 @@ keysRouter.post('/import', (req: Request, res: Response, next: NextFunction) => 
           skipped.push(keyName);
           continue;
         }
-        if (!hasProvider(parsedKey.platform as Platform) || parsedKey.platform === 'custom') {
+        const platformParse = z.enum(PLATFORMS).safeParse(parsedKey.platform);
+        if (!platformParse.success || platformParse.data === 'custom') {
           skipped.push(keyName);
           continue;
         }
@@ -620,8 +625,8 @@ keysRouter.post('/import', (req: Request, res: Response, next: NextFunction) => 
         }
 
         try {
-          insertImportedKey(parsedKey.platform as Platform, keyName, keyValue);
-          imported.push({ keyName, platform: parsedKey.platform });
+          insertImportedKey(platformParse.data, keyName, keyValue);
+          imported.push({ keyName, platform: platformParse.data });
         } catch (insertErr) {
           errors.push({ key: keyName, error: (insertErr as Error).message });
         }
@@ -794,7 +799,7 @@ keysRouter.delete('/:id', (req: Request, res: Response) => {
 // Toggle all keys for a platform
 keysRouter.patch('/platform/:platform', (req: Request, res: Response) => {
   const platform = req.params.platform as string;
-  if (!hasProvider(platform as Platform)) {
+  if (!(PLATFORMS as readonly string[]).includes(platform)) {
     res.status(400).json({ error: { message: `Invalid platform '${platform}'` } });
     return;
   }
@@ -852,71 +857,4 @@ keysRouter.patch('/:id', (req: Request, res: Response) => {
   if (enabled !== undefined) response.enabled = enabled;
   if (label !== undefined) response.label = label;
   res.json(response);
-});
-
-// Get available platforms for the frontend /keys page dropdown.
-// Uses urls from the cached catalog if available; falls back to known URLs.
-keysRouter.get('/platforms', (_req: Request, res: Response) => {
-  const providers = getAllProviders();
-  const providersArr = providers.filter(p => p.platform !== 'custom');
-
-  // Fallback URLs for well-known providers (used until catalog syncs)
-  const FALLBACK_URLS: Record<string, string> = {
-    'google': 'https://aistudio.google.com/apikey',
-    'groq': 'https://console.groq.com/keys',
-    'cerebras': 'https://cloud.cerebras.ai',
-    'nvidia': 'https://build.nvidia.com/settings/api-keys',
-    'mistral': 'https://console.mistral.ai/api-keys/',
-    'openrouter': 'https://openrouter.ai/keys',
-    'github': 'https://github.com/settings/tokens',
-    'cohere': 'https://dashboard.cohere.com/api-keys',
-    'cloudflare': 'https://dash.cloudflare.com',
-    'zhipu': 'https://z.ai/manage-apikey/apikey-list',
-    'ollama': 'https://ollama.com/settings/keys',
-    'kilo': 'https://app.kilo.ai',
-    'pollinations': 'https://pollinations.ai',
-    'ovh': 'https://endpoints.ai.cloud.ovh.net',
-    'llm7': 'https://llm7.io',
-    'huggingface': 'https://huggingface.co/settings/tokens',
-    'opencode': 'https://opencode.ai/auth',
-    'agnes': 'https://platform.agnes-ai.com',
-    'reka': 'https://platform.reka.ai',
-    'siliconflow': 'https://siliconflow.com',
-    // yangmao wrapper targets (auto-registered from the augmented catalog)
-    'qwen': 'https://dashscope.aliyun.com/',
-    'kimi': 'https://platform.moonshot.cn/',
-    'anyscale': 'https://www.anyscale.com/',
-    'baichuan': 'https://platform.baichuan-ai.com/',
-    'ernie': 'https://console.bce.baidu.com/qianfan/ais/console/application',
-    // v1-lineage duplicates, statically registered in providers/index.ts
-    'google-ai-studio': 'https://aistudio.google.com/apikey',
-    'mistral-la-plateforme': 'https://console.mistral.ai/api-keys/',
-    'routeway': 'https://routeway.ai/dashboard',
-    'bazaarlink': 'https://bazaarlink.ai/api/v1/agents/register',
-    'ainative': 'https://ainative.studio/signup',
-    'aihorde': 'https://aihorde.net/register',
-  };
-
-  // Enrich with catalog platform URLs when available
-  let catalogUrls: Record<string, string> = {};
-  try {
-    const raw = getSetting('catalog_applied_json');
-    if (raw) {
-      const catalog = JSON.parse(raw);
-      if (catalog.platforms) {
-        for (const p of catalog.platforms) {
-          if (p.url) catalogUrls[p.id] = p.url;
-        }
-      }
-    }
-  } catch { /* catalog not synced yet — fine */ }
-
-  const platforms = providersArr.map(p => ({
-    value: p.platform,
-    label: p.name,
-    // Hardcoded known URLs preferred (more reliable); catalog supplements unknown ones.
-    url: FALLBACK_URLS[p.platform] ?? catalogUrls[p.platform] ?? '',
-    keyless: p.keyless,
-  }));
-  res.json(platforms);
 });
