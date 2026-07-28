@@ -12,7 +12,8 @@
     "switchToChinese": "Перейти на китайську",
     "switchToEnglish": "Переключитися на англійську",
     "modelsMenu": "Перегляньте типи моделей",
-    "catalog": "Catalog"
+    "catalog": "Catalog",
+    "agents": "Agents"
   },
   "auth": {
     "createYourAccount": "Створіть свій акаунт",
@@ -672,5 +673,15 @@
     "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
     "lastSyncProblem": "Last sync problem: {error}",
     "bundled": "bundled"
+  },
+  "agents": {
+    "title": "Coding agents",
+    "description": "Connect coding tools to one free-model gateway with generated, backup-safe configuration.",
+    "apiKey": "API key",
+    "quickstart": "Fastest path: configure Claude Code from the live catalog.",
+    "currentKey": "Current unified key:",
+    "seenRecently": "Seen recently",
+    "endpoint": "Endpoint",
+    "documentation": "Documentation"
   }
 }

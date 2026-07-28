@@ -12,7 +12,8 @@
     "switchToChinese": "轉用中文",
     "switchToEnglish": "轉用英語",
     "modelsMenu": "瀏覽模型類型",
-    "catalog": "目錄同步"
+    "catalog": "目錄同步",
+    "agents": "Agents"
   },
   "auth": {
     "createYourAccount": "建立您的帳號",
@@ -672,5 +673,15 @@
     "syncDescription": "Augmented catalog 由 narratorz 維護和託管。本伺服器每 12 小時自動同步一次。",
     "lastSyncProblem": "上次同步問題:{error}",
     "bundled": "內建"
+  },
+  "agents": {
+    "title": "Coding agents",
+    "description": "Connect coding tools to one free-model gateway with generated, backup-safe configuration.",
+    "apiKey": "API key",
+    "quickstart": "Fastest path: configure Claude Code from the live catalog.",
+    "currentKey": "Current unified key:",
+    "seenRecently": "Seen recently",
+    "endpoint": "Endpoint",
+    "documentation": "Documentation"
   }
 }
