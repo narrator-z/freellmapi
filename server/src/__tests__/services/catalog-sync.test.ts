@@ -1,9 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { initDb, getDb, setSetting, getSetting } from '../../db/index.js';
-import {
-  applyCatalog,
-  reapplyCachedCatalog,
-} from '../../services/catalog-sync.js';
+import { applyCatalog, reapplyCachedCatalog, MIN_CATALOG_VERSION } from '../../services/catalog-sync.js';
 import { runMigrationsSync } from '../../db/migrate/runner.js';
 import { recordCatalogModelTombstone, upsertModelOverrides } from '../../services/model-state.js';
 
@@ -316,7 +313,6 @@ describe('reapplyCachedCatalog', () => {
     setSetting('catalog_applied_version', catalog.version);
     setSetting('catalog_applied_tier', catalog.tier);
     setSetting('catalog_applied_json', JSON.stringify(catalog));
-    setSetting('catalog_yangma_version', catalog.version);
   }
 
   it('restores catalog state over a re-run of the baseline migrations', () => {
@@ -357,36 +353,25 @@ describe('reapplyCachedCatalog', () => {
     ).toBeUndefined();
   });
 
+  it('clears the applied version when an older install has no cached document', () => {
+    getDb().prepare("DELETE FROM settings WHERE key = 'catalog_applied_json'").run();
+    setSetting('catalog_applied_version', '2099.01.01');
+    const result = reapplyCachedCatalog();
+    expect(result.reapplied).toBe(false);
+    expect(getSetting('catalog_applied_version')).toBeUndefined();
+  });
+
   it('is a no-op without throwing on a corrupt cache', () => {
     setSetting('catalog_applied_json', 'not json at all {');
     expect(reapplyCachedCatalog().reapplied).toBe(false);
   });
 
-  it('discards old-format caches (schemaVersion < 3)', () => {
-    const oldCache = JSON.stringify({
-      ...catalogOf(existingAsCatalogModels()),
-      schemaVersion: 2,
-    });
-    setSetting('catalog_applied_version', 'v1.99');
-    setSetting('catalog_applied_json', oldCache);
-    const result = reapplyCachedCatalog();
-    expect(result.reapplied).toBe(false);
-    expect(getSetting('catalog_applied_version')).toBeUndefined();
-    expect(getSetting('catalog_applied_json')).toBeUndefined();
-  });
-
-  it('re-applies when cached version matches', () => {
-    const models = existingAsCatalogModels();
-    // Pick any existing model as the removal target
-    const victim = models[0];
-    const catalog = catalogOf(models.filter((m) => m !== victim));
-    applyCatalog(getDb(), catalog);
-    cacheCatalog(catalog);
-    setSetting('catalog_yangma_version', catalog.version);
-    runMigrationsSync(getDb(), 'up'); // re-insert baseline model
-    const result = reapplyCachedCatalog();
-    expect(result.reapplied).toBe(true);
-    expect(result.version).toBe(catalog.version);
+  it('refuses a cached catalog older than the bundled baseline', () => {
+    const catalog = catalogOf(existingAsCatalogModels());
+    catalog.version = '2000.01.01';
+    expect(catalog.version < MIN_CATALOG_VERSION).toBe(true);
+    setSetting('catalog_applied_json', JSON.stringify(catalog));
+    expect(reapplyCachedCatalog().reapplied).toBe(false);
   });
 });
 

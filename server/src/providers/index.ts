@@ -6,6 +6,8 @@ import { CohereProvider } from './cohere.js';
 import { CloudflareProvider } from './cloudflare.js';
 import { AIHordeProvider } from './aihorde.js';
 
+// Shape of platform entries in the augmented catalog's platforms[] array.
+// Kept here so catalog-sync can type its call to registerFromCatalog.
 export interface CatalogPlatform {
   id: string;
   name: string;
@@ -28,17 +30,9 @@ function register(provider: BaseProvider) {
   providers.set(provider.platform, provider);
 }
 
-// ── Hand-maintained providers (synced from upstream) ──────────────────────
-// These carry hand-verified base URLs and special tuning values that the
-// augmented catalog cannot provide.  Do NOT remove entries here without
-// upstream buy-in — custom headers, timeouts, and validate URLs are often
-// the result of live-probed edge cases.
-
 // Google - unique Gemini API format. Gemma reasoning variants take 20-60s on
 // cold start; the default 15s false-flags them as broken. 60s covers the
 // bulk; per-call overrides via CompletionOptions.timeoutMs still win.
-// Custom per-account timeouts via options.timeoutMs also provide a multiplier
-// (#461).
 register(new GoogleProvider({ timeoutMs: 60_000 }));
 
 // google-ai-studio — the augmented catalog's v1-lineage platform (source:

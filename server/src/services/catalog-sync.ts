@@ -24,8 +24,8 @@ import { ensureAllModelsInProfiles } from './profile-models.js';
 //   speed rankings, quirks, and metadata.
 //   Refreshed by the upstream CI; synced here every 12 hours.
 //
-// The augmented catalog is a static JSON file — no signature verification.
-// Model data, quirks, and rankings are applied directly to the local DB.
+// Optional: set CATALOG_BASE_URL to a signed catalog API endpoint for
+// Ed25519-verified fetches (no license key required).
 // ========================================================================
 
 const AUGMENTED_CATALOG_URL =
@@ -47,6 +47,7 @@ const MEDIA_MODALITIES = new Set(['image', 'audio']);
 
 // settings table keys
 const SETTING_APPLIED_VERSION = 'catalog_applied_version';
+const SETTING_APPLIED_TIER = 'catalog_applied_tier';
 const SETTING_APPLIED_JSON = 'catalog_applied_json';
 const SETTING_LAST_SYNC_MS = 'catalog_last_sync_ms';
 const SETTING_LAST_ERROR = 'catalog_last_error';
@@ -115,8 +116,8 @@ interface CatalogTranscriptionModel {
 interface Catalog {
   version: string;
   generatedAt: string;
-  tier: 'live' | 'monthly';
-  platforms: CatalogPlatform[];
+  tier?: string;
+  platforms?: CatalogPlatform[];
   models: AugmentedCatalogModel[];
   /** Optional for backward compatibility with catalogs published before the
    * embedding registry joined the signed freshness feed. */
@@ -133,8 +134,9 @@ interface Catalog {
 
 export interface SyncResult {
   ok: boolean;
-  action: 'applied' | 'up_to_date' | 'error';
+  action: 'applied' | 'up_to_date' | 'skipped_older' | 'error';
   version?: string;
+  tier?: string;
   detail?: string;
   counts?: { updated: number; inserted: number; removed: number; skippedUnknownPlatform: number; quirks: number };
 }
@@ -142,6 +144,7 @@ export interface SyncResult {
 export interface CatalogSyncState {
   baseUrl: string;
   appliedVersion: string | null;
+  appliedTier: string | null;
   lastSyncMs: number | null;
   lastError: string | null;
 }
@@ -597,6 +600,8 @@ export function applyCatalog(db: Db, catalog: Catalog): NonNullable<SyncResult['
 
 // ---- Sync orchestration (single source) ----
 
+export const MIN_CATALOG_VERSION = '2026.06.07';
+
 /**
  * Main sync: fetch the augmented catalog and apply it.
  *
@@ -613,7 +618,7 @@ export async function syncCatalog(): Promise<SyncResult> {
     // Register any new providers from the catalog before applying models,
     // so their models can pass the hasProvider() gate in applyCatalog().
     // Hand-maintained providers are never overwritten.
-    const regResult = registerFromCatalog(catalog.platforms);
+    const regResult = registerFromCatalog(catalog.platforms ?? []);
     if (regResult.added.length > 0) {
       console.log(`[catalog-sync] auto-registered ${regResult.added.length} new provider(s): ${regResult.added.join(', ')}`);
     }
@@ -624,6 +629,9 @@ export async function syncCatalog(): Promise<SyncResult> {
     const counts = applyCatalog(db, catalog);
     setSetting(SETTING_APPLIED_VERSION, catalog.version);
     setSetting(SETTING_APPLIED_JSON, JSON.stringify(catalog));
+    if (catalog.tier) {
+      setSetting(SETTING_APPLIED_TIER, catalog.tier);
+    }
 
     console.log(
       `[catalog-sync] applied augmented v${catalog.version}: ` +
@@ -634,7 +642,7 @@ export async function syncCatalog(): Promise<SyncResult> {
 
     setSetting(SETTING_LAST_SYNC_MS, String(Date.now()));
     setSetting(SETTING_LAST_ERROR, '');
-    return { ok: true, action: 'applied', version: catalog.version, counts };
+    return { ok: true, action: 'applied', version: catalog.version, tier: catalog.tier, counts };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.warn(`[catalog-sync] ${message}`);
@@ -649,12 +657,11 @@ export function getSyncState(): CatalogSyncState {
   return {
     baseUrl: AUGMENTED_CATALOG_URL,
     appliedVersion: getSetting(SETTING_APPLIED_VERSION) ?? null,
+    appliedTier: getSetting(SETTING_APPLIED_TIER) ?? null,
     lastSyncMs: Number(getSetting(SETTING_LAST_SYNC_MS)) || null,
     lastError: getSetting(SETTING_LAST_ERROR) || null,
   };
 }
-
-const CATALOG_SCHEMA_VERSION = 3; // bumped for new augmented catalog format
 
 /**
  * Re-apply the cached (already applied) catalog after boot.
@@ -670,9 +677,18 @@ const CATALOG_SCHEMA_VERSION = 3; // bumped for new augmented catalog format
 export function reapplyCachedCatalog(): { reapplied: boolean; version?: string } {
   try {
     const raw = getSetting(SETTING_APPLIED_JSON);
-    if (!raw) return { reapplied: false };
+    if (!raw) {
+      if (getSetting(SETTING_APPLIED_VERSION)) {
+        getDb().prepare('DELETE FROM settings WHERE key = ?').run(SETTING_APPLIED_VERSION);
+      }
+      return { reapplied: false };
+    }
     const parsed: unknown = JSON.parse(raw);
     if (!isCatalog(parsed)) return { reapplied: false };
+    // Reject cached catalogs older than the bundled baseline — applying an
+    // old snapshot would roll back models that a newer app version added via
+    // migrations.
+    if (parsed.version < MIN_CATALOG_VERSION) return { reapplied: false };
     // Old caches (schemaVersion < 3) have a different structure — discard.
     const record = parsed as unknown as Record<string, unknown>;
     if (record.schemaVersion && (record.schemaVersion as number) < 3) {
@@ -710,7 +726,7 @@ export function startCatalogSync(scheduler: Scheduler): void {
   };
   cancelBootTimer = scheduler.after(BOOT_DELAY_MS, run);
   cancelInterval = scheduler.every(SYNC_INTERVAL_MS, run);
-  console.log(`[catalog-sync] polling augmented catalog every ${SYNC_INTERVAL_MS / 3600000}h`);
+  console.log(`[catalog-sync] polling ${AUGMENTED_CATALOG_URL} every ${SYNC_INTERVAL_MS / 3600000}h`);
 }
 
 export function stopCatalogSync(): void {

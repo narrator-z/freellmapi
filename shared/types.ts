@@ -124,8 +124,8 @@ export interface ApiKey {
 
 export interface ApiKeyCreate {
   platform: Platform;
-  label: string;
   key: string;
+  label?: string;
 }
 
 // ---- Fallback Config ----
