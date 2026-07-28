@@ -37,6 +37,7 @@ import EmbeddingDetailPage from '@/pages/EmbeddingDetailPage'
 import AnalyticsPage from '@/pages/AnalyticsPage'
 import CatalogPage from '@/pages/CatalogPage'
 import NotFoundPage from '@/pages/NotFoundPage'
+import AgentsPage from '@/pages/AgentsPage'
 
 // Every failed mutation surfaces as an error toast, so no action fails
 // silently. A page that already shows the failure inline can opt out with
@@ -54,6 +55,7 @@ const navItems = [
   { to: '/models', labelKey: 'nav.models' },
   { to: '/playground', labelKey: 'nav.playground' },
   { to: '/keys', labelKey: 'nav.keys' },
+  { to: '/agents', labelKey: 'nav.agents' },
   { to: '/analytics', labelKey: 'nav.analytics' },
   { to: '/catalog', labelKey: 'nav.catalog' },
 ]
@@ -308,6 +310,7 @@ function App() {
                       <Route path="/models/transcription/:id" element={<MediaDetailPage modality="transcription" />} />
                       <Route path="/playground" element={<PlaygroundPage />} />
                       <Route path="/keys" element={<KeysPage />} />
+                      <Route path="/agents" element={<AgentsPage />} />
                       <Route path="/fallback" element={<Navigate to="/models/chat" replace />} />
                       <Route path="/analytics" element={<AnalyticsPage />} />
                       <Route path="/catalog" element={<CatalogPage />} />
