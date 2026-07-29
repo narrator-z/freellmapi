@@ -146,3 +146,20 @@ augmented catalog 里有两个 fork 历史平台：`google-ai-studio`、`mistral
 - `augmented-live.test.ts` 仅在设了 `AUG_PATH` 时运行（CI 不跑）；它断言 `hasProvider('google-ai-studio')` / `hasProvider('mistral-la-plateforme')` 为 `true`。
 - 本地 `vitest` 因 `better-sqlite3` 原生绑定未编译跑不了，测试以 CI（Linux）为准。
 - `server/dist/` 是 gitignore 的构建缓存；里面若残留旧静态注册是脏产物，从源码重新构建即覆盖，不影响 git/CI。
+
+## 6. 与上游同步（重合并到 upstream）
+
+当前采用 **merge 而非 rebase**：`git merge -X ours --no-commit upstream/main`，冲突取 fork 版本，再手动收尾、commit、快进推送。
+（早先用 `git checkout upstream/main -- server/ shared/types.ts` 整树替换，merge 更稳、且不会污染工作树。）
+
+收尾清单（每次重合并都走一遍）：
+
+1. **premium 自动剥离**：fork 之前已 `git rm server/src/routes/premium.ts` 并去掉 `app.ts` 注册。上游若又把 premium 加回来，`-X ours` 会因「我们删过、上游保留」的冲突**按我们的删除保留**，premium 自然消失，无需手动 strip。合并后 `grep premiumRouter app.ts` 应为空。
+2. **i18n 键同步（最易漏的 CI 门禁）**：上游新提交常在 `en.json` 加键但**未同步到 58 个非 en 语言**；merge 的 `-X ours` 还可能在 agents 等冲突区块把上游新增键丢掉。合并后必跑 `node client/scripts/check-i18n.mjs`：
+   - 若有 `missing keys`，用 `en.json` 的英文值回填到所有非 en 语言文件（`agents.*` 等）。本 fork 惯例是**英文回退值**，不删 `en.json` 的键。
+   - 已验证回填脚本：遍历 `client/src/i18n/locales/*.json`（除 `en.json`），对缺失键 `d.agents[k] = en.agents[k]` 后写回。
+3. **roundtrip 测试迁移清单**：上游新增迁移会进 `DEFAULT_MIGRATIONS`，且上游**自带**更新它的 `roundtrip.test.ts` 期望数组；merge 正常带入即无需改。若顺序/数量对不上，`server/src/__tests__/db/migrate/roundtrip.test.ts` 的 `toEqual([...])` 要补 `TOMBSTONE_PROVENANCE_FILENAME` 之类的常量（与 `defaults.ts` 顺序一致）。
+4. **编译校验**：`cd server && npx tsc --noEmit` 与 `cd client && npx tsc -b`（client 本地若有 `baseUrl` 弃用告警，是 tsc 版本比 CI 新，临时 `ignoreDeprecations` 验证后还原，不提交）。
+5. **保留项确认**：augmented 模块（`augmented-catalog-sync.ts`）、`providers/index.ts` 的三处导出与两个静态注册、`shared/types.ts` 的 `Platform` 扩展、`catalog-sync.ts` 的 `syncAugmentedCatalog()` 接线 —— 合并后 `grep` 确认都还在、无 `<<<<<<<` 冲突标记。
+
+最近一次重合并：upstream/main @ `3630a43`（v0.6.3，24 个提交），fork 领先 84、落后 24 → 合并后全部吸收。CI 门禁（迁移校验 + vitest + tsc + Docker）应全绿。

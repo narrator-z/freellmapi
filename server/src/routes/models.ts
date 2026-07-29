@@ -6,10 +6,12 @@ import { hasProvider } from '../providers/index.js';
 import { deleteUnusedCustomEndpointKey } from '../lib/custom-provider-cleanup.js';
 import {
   isCatalogManagedModel,
+  overriddenFieldNames,
   recordCatalogModelTombstone,
   upsertModelOverrides,
   type ModelOverridePatch,
 } from '../services/model-state.js';
+import { pruneUnavailableSavedFusionConfig } from '../services/fusion.js';
 import { getActiveProfileId } from '../services/profile-models.js';
 
 export const modelsRouter = Router();
@@ -118,6 +120,8 @@ modelsRouter.patch('/:id', (req: Request, res: Response) => {
   }
 
   const applyUpdate = db.transaction(() => {
+    const disablesModel = modelPatch.enabled === false;
+
     if (modelKeys.length > 0) {
       const assignments: string[] = [];
       const values: unknown[] = [];
@@ -141,10 +145,15 @@ modelsRouter.patch('/:id', (req: Request, res: Response) => {
         }
         upsertModelOverrides(db, row.platform, row.model_id, overridePatch);
       }
+
+      if (disablesModel) {
+        db.prepare('UPDATE profile_models SET enabled = 0 WHERE model_db_id = ?').run(id);
+        pruneUnavailableSavedFusionConfig();
+      }
     }
 
-    if (parsed.data.fallbackEnabled !== undefined) {
-      const next = parsed.data.fallbackEnabled ? 1 : 0;
+    if (disablesModel || parsed.data.fallbackEnabled !== undefined) {
+      const next = disablesModel ? 0 : parsed.data.fallbackEnabled ? 1 : 0;
       db.prepare('UPDATE fallback_config SET enabled = ? WHERE model_db_id = ?')
         .run(next, id);
       const activeProfileId = getActiveProfileId(db);
@@ -192,7 +201,7 @@ modelsRouter.get('/', (_req: Request, res: Response) => {
   const activeProfileId = getActiveProfileId(db);
   const models = activeProfileId == null ? db.prepare(`
     SELECT m.*, fc.priority, fc.enabled as fallback_enabled,
-           mo.overrides_json IS NOT NULL AS has_overrides,
+           mo.overrides_json IS NOT NULL AS has_overrides, mo.overrides_json,
            ak.label AS key_label
     FROM models m
     LEFT JOIN fallback_config fc ON fc.model_db_id = m.id
@@ -202,7 +211,7 @@ modelsRouter.get('/', (_req: Request, res: Response) => {
   `).all() as any[] : db.prepare(`
     SELECT m.*, COALESCE(pm.priority, fc.priority) AS priority,
            COALESCE(pm.enabled, fc.enabled) AS fallback_enabled,
-           mo.overrides_json IS NOT NULL AS has_overrides,
+           mo.overrides_json IS NOT NULL AS has_overrides, mo.overrides_json,
            ak.label AS key_label
     FROM models m
     LEFT JOIN fallback_config fc ON fc.model_db_id = m.id
@@ -249,6 +258,7 @@ modelsRouter.get('/', (_req: Request, res: Response) => {
     keyId: m.key_id ?? null,
     keyLabel: m.key_label ?? null,
     hasOverrides: Boolean(m.has_overrides),
+    overrideFields: overriddenFieldNames(m.overrides_json),
     hasProvider: hasProvider(m.platform),
     keyCount: keyCountMap.get(m.platform) ?? 0,
   }));
