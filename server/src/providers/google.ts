@@ -6,6 +6,7 @@ import type {
   ChatToolChoice,
   ChatToolDefinition,
   TokenUsage,
+  Platform,
 } from '@freellmapi/shared/types.js';
 import { BaseProvider, providerHttpError, type CompletionOptions, type KeyValidationResult } from './base.js';
 import { contentToString } from '../lib/content.js';
@@ -497,17 +498,27 @@ export interface GoogleProviderOptions {
    *  Gemma reasoning variants) take 20-60s on cold start; the OpenAI-compat
    *  default of 15s false-flags them as broken. Mirrors OpenAICompatProvider. */
   timeoutMs?: number;
+  /** Platform id to register under. Defaults to 'google'. Fork v1-lineage
+   *  platforms (e.g. google-ai-studio) reuse GoogleProvider logic under their
+   *  own platform id instead of the canonical 'google'. */
+  platform?: Platform;
+  /** Display name for the provider. Defaults to 'Google AI Studio'. */
+  name?: string;
 }
 
 export class GoogleProvider extends BaseProvider {
-  readonly platform = 'google' as const;
-  readonly name = 'Google AI Studio';
+  readonly platform: Platform;
+  readonly name: string;
   private readonly timeoutMs: number;
 
   constructor(opts: GoogleProviderOptions = {}) {
     super();
-    // PROVIDER_TIMEOUT_GOOGLE wins over the registration default (#547).
-    this.timeoutMs = providerTimeoutMs('google', opts.timeoutMs ?? 15000);
+    // Allow fork v1-lineage platforms (google-ai-studio) to reuse GoogleProvider
+    // logic under their own platform id; defaults keep the canonical 'google'.
+    this.platform = opts.platform ?? 'google';
+    this.name = opts.name ?? 'Google AI Studio';
+    // PROVIDER_TIMEOUT_<PLATFORM> wins over the registration default (#547).
+    this.timeoutMs = providerTimeoutMs(this.platform, opts.timeoutMs ?? 15000);
   }
 
   async chatCompletion(

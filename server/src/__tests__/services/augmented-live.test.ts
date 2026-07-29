@@ -82,12 +82,10 @@ describe.skipIf(!AUG_PATH || !fs.existsSync(AUG_PATH))('live augmented catalog a
       }
       expect(landed).toBe(aliased.length);
 
-      // The v1-lineage shadow platforms are retired: their models are remapped
-      // onto the canonical 'google' / 'mistral' providers during apply (see
-      // augmented-catalog-sync.ts), so the wrappers themselves are never
-      // registered as separate providers.
-      expect(hasProvider('google-ai-studio' as Platform)).toBe(false);
-      expect(hasProvider('mistral-la-plateforme' as Platform)).toBe(false);
+      // The v1-lineage fork platforms are statically registered (see
+      // providers/index.ts) so their models route under their own platform ids.
+      expect(hasProvider('google-ai-studio' as Platform)).toBe(true);
+      expect(hasProvider('mistral-la-plateforme' as Platform)).toBe(true);
       const junk = db
         .prepare('SELECT id FROM models WHERE model_id = ?')
         .get('Open and Proprietary Mistral models');

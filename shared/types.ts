@@ -116,6 +116,14 @@ export type Platform =
   // aihorde.net key raises queue priority. Has a dedicated AIHordeProvider that
   // normalizes the proxy's OpenAI divergences. See issue #345.
   | 'aihorde'
+  // google-ai-studio — v1-lineage fork platform (source: cheahjs) with broader
+  // Gemini/Gemma coverage than the canonical 'google' list. Same native Gemini
+  // (Google AI Studio) backend and keys; registered statically so its models
+  // route through GoogleProvider logic under their own platform id.
+  | 'google-ai-studio'
+  // mistral-la-plateforme — v1-lineage fork label for Mistral's first-party
+  // (La Plateforme) API. OpenAI-compatible; same endpoint as 'mistral'.
+  | 'mistral-la-plateforme'
   // User-configured OpenAI-compatible endpoint (llama.cpp, LM Studio, vLLM,
   // Ollama, any base_url). The endpoint URL lives on the api_keys row; see #117.
   | 'custom';

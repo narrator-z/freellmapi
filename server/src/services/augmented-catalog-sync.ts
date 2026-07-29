@@ -336,14 +336,7 @@ export function applyAugmentedCatalog(db: Db, catalog: AugmentedCatalog): NonNul
 
     for (const m of catalog.models) {
       // Remap yangmao-* wrapper platforms to their real provider.
-      let platform = YANGMAO_PLATFORM_ALIASES[m.platform] ?? m.platform;
-      // v1-lineage shadow platforms retired upstream (contract 2026-07-27):
-      // google-ai-studio is the same native Gemini backend as 'google', and
-      // mistral-la-plateforme is the same OpenAI-compatible endpoint as
-      // 'mistral'. Remap so their models stay routable without registering a
-      // separate provider (and without diverging the shared Platform union).
-      if (platform === 'google-ai-studio') platform = 'google';
-      if (platform === 'mistral-la-plateforme') platform = 'mistral';
+      const platform = YANGMAO_PLATFORM_ALIASES[m.platform] ?? m.platform;
       // Known junk rows from the v1 (cheahjs) source: section headers and
       // label lines that are not callable models.
       if (CATALOG_MODEL_JUNK.has(`${platform}:${m.modelId}`)) {

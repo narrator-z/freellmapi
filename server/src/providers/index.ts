@@ -37,6 +37,30 @@ function register(provider: BaseProvider) {
 // bulk; per-call overrides via CompletionOptions.timeoutMs still win.
 register(new GoogleProvider({ timeoutMs: 60_000 }));
 
+// google-ai-studio — v1-lineage fork platform (source: cheahjs) with broader
+// Gemini/Gemma coverage than the canonical 'google' list. Same native Gemini
+// (Google AI Studio) backend and keys; NOT OpenAI Chat Completions compatible,
+// so it reuses GoogleProvider logic under its own platform id. Registered
+// statically on purpose: the augmented catalog entry carries no apiBaseUrl and
+// claims adapter 'openai-compat', so sync-driven registration would produce a
+// broken provider. catalog-sync slugifies its display-name model ids to API
+// ids at apply time (googleStudioApiModelId).
+register(new GoogleProvider({
+  platform: 'google-ai-studio',
+  name: 'Google AI Studio (Extended)',
+  timeoutMs: 60_000,
+}));
+
+// mistral-la-plateforme — same v1-lineage fork label for Mistral's first-party
+// (La Plateforme) API. Mistral IS OpenAI-compatible, so this is a plain compat
+// registration sharing the canonical base URL; also static because the catalog
+// entry has no apiBaseUrl.
+register(new OpenAICompatProvider({
+  platform: 'mistral-la-plateforme',
+  name: 'Mistral (La Plateforme)',
+  baseUrl: 'https://api.mistral.ai/v1',
+}));
+
 // Groq - OpenAI-compatible
 register(new OpenAICompatProvider({
   platform: 'groq',
