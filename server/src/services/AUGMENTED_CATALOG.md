@@ -57,22 +57,76 @@ augmented catalog 里有两个 fork 历史平台：`google-ai-studio`、`mistral
 - 设环境变量 `AUGMENTED_CATALOG_URL` 指向你自己的 augmented catalog JSON。
 - 想回退到上游签名 catalog：设 `CATALOG_BASE_URL`（上游 `syncCatalog()` 仍在，可二选一）。
 
-### augmented catalog JSON 形状（数据源侧）
-顶层需满足 `isAugmentedCatalog()`：
-```
-{
-  "version": "2026.xx.xx",
-  "tier": "free" | "premium",
-  "generatedAt": "<iso datetime>",
-  "counts": { ... },
-  "platforms": [ { "id", "name", "url", "keyless", "apiBaseUrl", "adapter", ... } ],
-  "models": [ { "platform", "modelId", "displayName", "apiModelId"?, "modality"? , ... } ],
-  "quirks": [ ... ]
-}
-```
-- `models[].platform` 为上面的 platform id（如 `google-ai-studio`）。
-- `google-ai-studio` 的展示名模型（含空格）会在 apply 时经 `googleStudioApiModelId()` slug 成 API id；
-  若 catalog 已给 `apiModelId` 则优先用。
+### augmented catalog JSON 形状（数据源侧，精确规格）
+
+顶层对象须通过 `isAugmentedCatalog()` 形状校验，否则整包被丢弃、沿用上次缓存。
+
+**顶层字段（来源 `AugmentedCatalog` + `isAugmentedCatalog`）**
+
+| 字段 | 必填 | 说明 |
+|------|------|------|
+| `version` | ✅ | 字符串。**必须 `>= '2026.06.07'`（字典序）**，否则 reapply 缓存时被丢弃。⚠️ 用 `YYYY.MM.DD` 且**月份/日期补零**（`2026.07.29` 而非 `2026.7.9`）——字典序比较下 `2026.7.9` 会被误判大于 `2026.10.01`。 |
+| `generatedAt` | ✅ | ISO 时间字符串，如 `2026-07-29T00:00:00Z`。 |
+| `models` | ✅ | `AugmentedCatalogModel[]`，非空。 |
+| `quirks` | ✅ | `CatalogQuirk[]`，非空；每项 `{ slug: string, targets: {platform: string\|null, modelGlob: string\|null}[], title, body, severity }`。 |
+| `tier` | ⬜ | 推荐填（`free`/`premium`），会写入 `augmented_catalog_applied_tier`。 |
+| `platforms` | ⬜ | **仅当要让 catalog 自动注册「新」provider 时才需要**。那两个静态平台无需条目（即便有也会被 `providers.has(id)` 跳过）。 |
+| `embeddings` / `transcriptionModels` / `counts` | ⬜ | 可选。 |
+| `schemaVersion` | ⬜ | apply 不校验；reapply 缓存时 `< 3` 会被丢弃，缺失自动回填 `3`。建议直接写 `3`。 |
+
+**`models[]` 每项字段（`AugmentedCatalogModel`）**
+
+| 字段 | 必填 | 类型 / 说明 |
+|------|------|------|
+| `platform` | ✅ | 已注册 platform id（如 `google-ai-studio` / `mistral-la-plateforme`）。**未知 platform → 计 `skippedUnknownPlatform` 跳过，不进 DB、不报错。** |
+| `modelId` | ✅ | 模型标识。`google-ai-studio` 多为人类展示名（带空格，如 `Gemini 2.5 Pro`），apply 时会 slug。 |
+| `displayName` | ✅ | 展示名。 |
+| `enabled` | ✅ | `false` = 上游标记死模型，强制禁用。 |
+| `limits` | ✅ | 对象，**4 个键都要有**：`{ rpm, rpd, tpm, tpd }`，值可为 `null`。 |
+| `supportsVision` / `supportsTools` | ✅ | 布尔。 |
+| `intelligenceRank` / `speedRank` | ✅ | `number \| null`。 |
+| `sizeLabel` | ✅ | `string \| null`。 |
+| `monthlyTokenBudget` | ✅ | `string \| null`。 |
+| `contextWindow` | ✅ | `number \| null`。 |
+| `apiModelId` | ⬜ | **强烈建议**。真正可调用的 API id（如 `gemini-2.5-pro`、`mistral-large-latest`）。缺失时：`google-ai-studio`/`google` → 回退 `googleStudioApiModelId(modelId)` slug；其他 → 回退 `modelId`。 |
+| `modality` / `mediaNote` | ⬜ | 可选。 |
+
+**`platforms[]` 每项字段（`CatalogPlatform`，仅自注册新 provider 时需要）**
+
+| 字段 | 必填 | 说明 |
+|------|------|------|
+| `id` / `name` / `url` / `keyless` / `apiBaseUrl` / `adapter` | ✅ | 基础字段。 |
+| `adapter` | ✅ | 取值 `google`/`cohere`/`cloudflare`/`aihorde`/`openai-compat`（其他或缺失 → `openai-compat`）。 |
+| `apiBaseUrl` | ✅ | 缺失则该平台被跳过（`[catalog] skipping <id>: no apiBaseUrl`）。 |
+| `timeoutMs` / `forceSingleToolCall` / `extraHeaders` / `quota` | ⬜ | 可选。 |
+
+### 两个 v1-lineage 平台的数据源要求（本次重点）
+
+- **`platforms[]` 无需加这两个条目**——已在 `providers/index.ts` 静态注册；catalog 里有也会被跳过，不会冲突。
+- **`google-ai-studio`**
+  - 走原生 Gemini API。最稳妥：给 `apiModelId` 填真正的 Gemini 模型 id（如 `gemini-2.5-pro`、`gemini-2.5-flash-latest`）。
+  - 若只给 `modelId` 展示名（如 `Gemini 2.5 Pro`），apply 会 slug 成 `gemini-2.5-pro`；但 slug 规则不保证覆盖所有命名，建议**显式 `apiModelId`** 更可靠。
+  - 把比规范 `google` 更广的 Gemini/Gemma 模型放这个 platform。
+- **`mistral-la-plateforme`**
+  - 走 `OpenAICompatProvider` @ `https://api.mistral.ai/v1`。直接给 Mistral API 模型 id（如 `mistral-large-latest`、`codestral-latest`）到 `modelId`（或 `apiModelId`）。
+- **剔除 junk 行**：section header / 标签行（如 `mistral-la-plateforme:Open and Proprietary Mistral models`）不要进 `models[]`（`CATALOG_MODEL_JUNK` 有兜底，但数据源侧应直接过滤）。
+
+### 生效与失败表现
+
+- 端点：`AUGMENTED_CATALOG_URL`（默认 git.260123.xyz 那份，可 env 覆盖）。须返回 HTTP 2xx + 合法 JSON（fetch 20s 超时）。
+- 启动 10s 后首次拉取，之后**每 12 小时**轮询一次；重启立即拉；`CATALOG_SYNC_DISABLED=1` 可关。改完数据源最多 12h 生效（重启即立即生效）。
+- 拉取/形状失败只写 `augmented_catalog_last_error` 设置，不崩，沿用上次缓存。
+
+### 数据源修改要求清单（改之前自查）
+
+1. `version` 用 `YYYY.MM.DD` 且**月份/日期补零**，且 `>= 2026.06.07`。
+2. `generatedAt`、`models[]`、`quirks[]` 三个必填顶层字段都在且非空。
+3. 每个 `models[]` 项：`platform`/`modelId`/`displayName`/`enabled`/`limits`(4 键)/`supportsVision`/`supportsTools` 齐全；`limits` 4 个键都存在（值可 null）。
+4. `google-ai-studio` 的展示名模型显式给 `apiModelId`（真正 Gemini id）；`mistral-la-plateforme` 给 Mistral API id。
+5. 所有 `models[].platform` 都是**已注册** id；未知 id 会被静默跳过。
+6. `platforms[]` 里**不要**放 `google-ai-studio` / `mistral-la-plateforme`（已静态注册）；要自注册新 provider 才放，且必须有 `apiBaseUrl` + 合法 `adapter`。
+7. 过滤掉 junk / 标签行，保证纯模型条目。
+8. JSON 可被公网以 2xx 拉到（注意 git raw 的 redirect / MIME）。
 
 ### 加一个新平台
 1. 在 `shared/types.ts` 的 `Platform` 联合追加 id（记得两端 tsc 校验）。
