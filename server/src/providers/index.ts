@@ -7,6 +7,25 @@ import { CloudflareProvider } from './cloudflare.js';
 import { AIHordeProvider } from './aihorde.js';
 import { ModelScopeProvider } from './modelscope.js';
 
+// Shape of platform entries in the augmented catalog's platforms[] array.
+// Kept here so the augmented-catalog sync can type its call to
+// registerFromCatalog.
+export interface CatalogPlatform {
+  id: string;
+  name: string;
+  url: string;
+  keyless: boolean;
+  apiBaseUrl: string;
+  adapter: string;
+  timeoutMs?: number | null;
+  forceSingleToolCall?: boolean;
+  extraHeaders?: Record<string, string>;
+  quota?: {
+    poolKey?: string;
+    headerSpecs?: unknown;
+  } | null;
+}
+
 const providers = new Map<Platform, BaseProvider>();
 
 function register(provider: BaseProvider) {
@@ -374,6 +393,99 @@ register(new OpenAICompatProvider({
 // Locally-hosted inference (llama.cpp / vLLM / Ollama on CPU) can be slow, so
 // custom providers get the same extended timeout as Ollama Cloud.
 const CUSTOM_PROVIDER_TIMEOUT_MS = 120000;
+
+// ── Catalog-driven auto-registration ──────────────────────────────────────
+
+// yangmao-* platforms in the augmented catalog are passthrough wrappers that
+// describe real third-party providers (the wrapper carries the real apiBaseUrl
+// and adapter). Models are aliased to these target ids during application, so
+// the target provider must exist for the models to pass the hasProvider gate.
+// registerFromCatalog registers the TARGET from the wrapper's connection data.
+// Keep in sync with the copy in db/migrations/20260726_000003 (the migration
+// cannot import this module).
+export const YANGMAO_PLATFORM_ALIASES: Record<string, string> = {
+  'yangmao-anyscale': 'anyscale',
+  'yangmao-baichuan': 'baichuan',
+  'yangmao-huggingface': 'huggingface',
+  'yangmao-moonshot': 'kimi',
+  'yangmao-siliconcloud': 'siliconflow',
+  'yangmao-baidu': 'ernie',
+  'yangmao-alibaba': 'qwen',
+};
+
+/**
+ * Register providers from the augmented catalog.
+ *
+ * Only platforms that do NOT already have a hand-maintained provider are
+ * created, preserving manually tuned params (timeout, extraHeaders, etc.)
+ * that the catalog cannot supply.  The catalog provides the canonical
+ * apiBaseUrl and adapter choice; everything else uses the default values
+ * from OpenAICompatProvider / GoogleProvider / etc.
+ *
+ * yangmao-* wrappers register their aliased target (e.g. yangmao-alibaba
+ * registers 'qwen') so the wrapper's models land somewhere usable; wrappers
+ * without an alias mapping describe providers that need non-openai-compat
+ * adapters or paid tiers and are skipped entirely.
+ *
+ * Called by the augmented-catalog sync after fetching the augmented catalog.
+ */
+export function registerFromCatalog(platforms: CatalogPlatform[]): { added: string[]; conflicts: string[] } {
+  const added: string[] = [];
+  const conflicts: string[] = [];
+
+  for (const p of platforms) {
+    // Resolve yangmao-* wrappers to their real provider id; skip wrappers
+    // with no alias mapping.
+    let id = p.id;
+    if (id.startsWith('yangmao-')) {
+      const target = YANGMAO_PLATFORM_ALIASES[id];
+      if (!target) continue;
+      id = target;
+    }
+    if (id === 'custom' || providers.has(id as Platform)) {
+      continue;
+    }
+    if (!p.apiBaseUrl) {
+      console.warn(`[catalog] skipping ${p.id}: no apiBaseUrl`);
+      continue;
+    }
+
+    try {
+      switch (p.adapter) {
+        case 'google':
+          register(new GoogleProvider());
+          break;
+        case 'cohere':
+          register(new CohereProvider());
+          break;
+        case 'cloudflare':
+          register(new CloudflareProvider());
+          break;
+        case 'aihorde':
+          register(new AIHordeProvider());
+          break;
+        case 'openai-compat':
+        default:
+          register(new OpenAICompatProvider({
+            platform: id as Platform,
+            name: p.name,
+            baseUrl: p.apiBaseUrl,
+            keyless: p.keyless,
+            timeoutMs: p.timeoutMs ?? undefined,
+            forceSingleToolCall: p.forceSingleToolCall ?? false,
+            extraHeaders: p.extraHeaders ?? undefined,
+          }));
+      }
+      console.log(`[catalog] auto-registered provider: ${id}${id !== p.id ? ` (from ${p.id})` : ''}`);
+      added.push(id);
+    } catch (err: any) {
+      conflicts.push(p.id);
+      console.warn(`[catalog] failed to register ${p.id}: ${err.message}`);
+    }
+  }
+
+  return { added, conflicts };
+}
 
 export function getProvider(platform: Platform): BaseProvider | undefined {
   return providers.get(platform);

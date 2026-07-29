@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { runMigrationsSync } from '../../db/migrate/runner.js';
-import { applyCatalog } from '../../services/catalog-sync.js';
+import { applyAugmentedCatalog } from '../../services/augmented-catalog-sync.js';
 import { googleStudioApiModelId } from '../../providers/google.js';
 import {
   hasProvider,
@@ -43,9 +43,9 @@ describe.skipIf(!AUG_PATH || !fs.existsSync(AUG_PATH))('live augmented catalog a
     try {
       runMigrationsSync(db as never, 'up');
 
-      // Same order as syncCatalog(): auto-register, then apply.
+      // Same order as the augmented sync: auto-register, then apply.
       registerFromCatalog(catalog.platforms as CatalogPlatform[]);
-      const counts = applyCatalog(db as never, catalog);
+      const counts = applyAugmentedCatalog(db as never, catalog);
       console.log('apply counts:', counts);
       expect(counts.inserted + counts.updated).toBeGreaterThan(0);
 
@@ -82,11 +82,12 @@ describe.skipIf(!AUG_PATH || !fs.existsSync(AUG_PATH))('live augmented catalog a
       }
       expect(landed).toBe(aliased.length);
 
-      // The v1-lineage shadow platforms were retired upstream (contract
-      // 2026-07-27): google-ai-studio models moved to 'google' with
-      // apiModelId, the mistral label row is filtered at parse time.
-      expect(hasProvider('google-ai-studio' as Platform)).toBe(true);
-      expect(hasProvider('mistral-la-plateforme' as Platform)).toBe(true);
+      // The v1-lineage shadow platforms are retired: their models are remapped
+      // onto the canonical 'google' / 'mistral' providers during apply (see
+      // augmented-catalog-sync.ts), so the wrappers themselves are never
+      // registered as separate providers.
+      expect(hasProvider('google-ai-studio' as Platform)).toBe(false);
+      expect(hasProvider('mistral-la-plateforme' as Platform)).toBe(false);
       const junk = db
         .prepare('SELECT id FROM models WHERE model_id = ?')
         .get('Open and Proprietary Mistral models');
@@ -119,7 +120,7 @@ describe.skipIf(!AUG_PATH || !fs.existsSync(AUG_PATH))('live augmented catalog a
       expect(spaced, `display-name rows survived: ${JSON.stringify(spaced)}`).toHaveLength(0);
 
       // Re-applying must be idempotent: no inserts, no removals.
-      const second = applyCatalog(db as never, catalog);
+      const second = applyAugmentedCatalog(db as never, catalog);
       expect(second.inserted).toBe(0);
       expect(second.removed).toBe(0);
     } finally {
