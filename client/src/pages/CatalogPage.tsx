@@ -26,9 +26,10 @@ export default function CatalogPage() {
   const { t } = useI18n()
   const queryClient = useQueryClient()
 
-  const { data, isLoading } = useQuery<CatalogStatus>({
+  const { data, isLoading, isError, error, refetch } = useQuery<CatalogStatus>({
     queryKey: ['catalog'],
     queryFn: () => apiFetch('/api/catalog'),
+    retry: 1,
   })
 
   const invalidate = () => {
@@ -41,11 +42,25 @@ export default function CatalogPage() {
     onSuccess: invalidate,
   })
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <div>
         <PageHeader title={t('catalog.title')} description={t('catalog.description')} />
         <p className="text-sm text-muted-foreground">{t('catalog.loading')}</p>
+      </div>
+    )
+  }
+
+  if (isError || !data) {
+    return (
+      <div>
+        <PageHeader title={t('catalog.title')} description={t('catalog.description')} />
+        <p className="text-destructive text-sm">
+          {error instanceof Error ? error.message : t('catalog.loading')}
+        </p>
+        <Button variant="outline" size="sm" className="mt-3" onClick={() => refetch()}>
+          {t('common.tryAgain')}
+        </Button>
       </div>
     )
   }
