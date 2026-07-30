@@ -587,10 +587,24 @@ export function applyAugmentedCatalog(db: Db, catalog: AugmentedCatalog): NonNul
       `INSERT INTO quirk_targets (quirk_id, platform, model_glob) VALUES (?, ?, ?)`,
     );
     const now = Date.now();
+    // De-duplicate by slug so a malformed catalog that lists the same slug
+    // twice (e.g. pollinations-degraded) does not trip UNIQUE(slug) and roll
+    // back the entire apply — including the models update. Keep the first
+    // occurrence and warn so the source-side duplication is still visible.
+    const seenSlugs = new Set<string>();
+    let droppedDupes = 0;
     for (const q of catalog.quirks) {
+      if (seenSlugs.has(q.slug)) {
+        droppedDupes++;
+        continue;
+      }
+      seenSlugs.add(q.slug);
       const info = insertQuirk.run(q.slug, q.title, q.body, q.severity, now, now);
       for (const t of q.targets) insertTarget.run(info.lastInsertRowid, t.platform ?? null, t.modelGlob ?? null);
       counts.quirks++;
+    }
+    if (droppedDupes > 0) {
+      console.warn(`[augmented-catalog-sync] dropped ${droppedDupes} duplicate quirk slug(s) from catalog (source data has duplicate slugs)`);
     }
   });
 
