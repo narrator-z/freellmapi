@@ -702,6 +702,13 @@ export function reapplyCachedAugmentedCatalog(): { reapplied: boolean; version?:
       record.schemaVersion = 3;
       setSetting(SETTING_APPLIED_JSON, JSON.stringify(record));
     }
+    // Re-register catalog-derived providers (e.g. yangmao-* wrappers remapped
+    // to their real targets like qwen/anyscale) so they survive a restart
+    // without waiting for the next full sync. Models reference these platforms
+    // via hasProvider(), so the providers must exist before applyAugmentedCatalog
+    // writes them. registerFromCatalog is a no-op for already-registered or
+    // built-in providers, so this is safe to call on every boot.
+    registerFromCatalog((parsed as AugmentedCatalog).platforms ?? []);
     applyAugmentedCatalog(getDb(), parsed as AugmentedCatalog);
     console.log(`[augmented-catalog-sync] re-applied cached augmented catalog v${(parsed as AugmentedCatalog).version} after boot`);
     return { reapplied: true, version: (parsed as AugmentedCatalog).version };
