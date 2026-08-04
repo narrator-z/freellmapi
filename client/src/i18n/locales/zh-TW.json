@@ -35,7 +35,27 @@
     "serverUnreachableAfter": ").",
     "setupCode": "設定程式碼",
     "setupCodePlaceholder": "伺服器日誌中的程式碼",
-    "setupCodeHint": "從其他裝置設定時，啟動時伺服器日誌中需要列印一次性驗證碼。"
+    "setupCodeHint": "從其他裝置設定時，啟動時伺服器日誌中需要列印一次性驗證碼。",
+    "changePassword": "變更密碼",
+    "changeEmail": "變更電子郵件",
+    "forgotPassword": "忘記密碼？",
+    "currentPassword": "目前密碼",
+    "newPassword": "新密碼",
+    "newEmail": "新電子郵件",
+    "resetCode": "重設驗證碼",
+    "resetCodePlaceholder": "來自伺服器日誌的驗證碼",
+    "resetCodeHint": "請查看伺服器日誌以取得密碼重設驗證碼。",
+    "forgotPasswordDescription": "點擊下方按鈕以產生重設驗證碼。驗證碼會顯示在伺服器日誌中——請在此輸入以設定新密碼。",
+    "requestResetCode": "傳送重設驗證碼",
+    "requestingResetCode": "傳送中…",
+    "resetPassword": "重設密碼",
+    "resettingPassword": "重設中…",
+    "changingPassword": "變更中…",
+    "changingEmail": "變更中…",
+    "backToLogin": "返回登入",
+    "passwordChanged": "密碼已成功變更。",
+    "emailChanged": "電子郵件已成功變更。",
+    "passwordReset": "密碼已成功重設。請登入。"
   },
   "common": {
     "save": "存檔",
@@ -132,8 +152,6 @@
     "embeddingsTab": "嵌入",
     "imageTab": "圖片",
     "audioTab": "音效",
-    "imageTitle": "影像模型",
-    "audioTitle": "音響機型",
     "imageDesc": "文字轉影像生成模型。",
     "audioDesc": "文字轉語音與語音轉文字模型。",
     "mediaHint": "生成方式如下",
@@ -218,7 +236,10 @@
     "limitRpd": "RPD",
     "limitTpm": "TPM",
     "limitTpd": "TPD",
-    "limitHint": "留空表示不限制。"
+    "limitHint": "留空表示不限制。",
+    "usageThisMonth": "本月用量",
+    "usageEmpty": "本月尚無請求。",
+    "usageRequestsMonth": "{count} 次請求（本月）"
   },
   "strategies": {
     "title": "路由策略",
@@ -445,7 +466,10 @@
     "createUrlToken": "建立權杖",
     "urlTokenOnce": "請立即複製此權杖，之後將不會再顯示。",
     "revoked": "已撤銷",
-    "revoke": "撤銷"
+    "revoke": "撤銷",
+    "copyFullKey": "複製完整金鑰",
+    "endpointKeysShareModels": "相同端點的金鑰共用其模型。",
+    "pasteSeveral": "貼上多個"
   },
   "status": {
     "healthy": "健康",
