@@ -86,7 +86,8 @@
     "success": "成功",
     "failures": "故障",
     "dismiss": "解散",
-    "status": "現況"
+    "status": "現況",
+    "copyFailed": "無法複製 — 請手動選取文字並複製"
   },
   "settings": {
     "title": "設定",

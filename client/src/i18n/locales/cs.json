@@ -66,6 +66,7 @@
     "confirm": "Potvrďte",
     "copy": "Rozumím",
     "copied": "Zkopírováno",
+    "copyFailed": "Nepodařilo se zkopírovat — označte text a zkopírujte ho ručně",
     "show": "Pořad",
     "hide": "Schovej se",
     "apply": "Přihlaste se",
