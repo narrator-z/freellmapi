@@ -49,9 +49,7 @@ const DEFAULT_DASHBOARD_ORIGINS = [
 // must run before first paint. Kept as a literal so the CSP header stays a
 // constant string; csp-inline-bootstrap.test.ts recomputes it from the real
 // index.html (source and build) and fails if the two ever drift apart.
-// Fork: client/index.html ships an RTL-aware inline bootstrap (ar/he/fa/ur).
-// This hash must match the fork's actual bootstrap, not upstream's.
-export const INLINE_BOOTSTRAP_SHA = "'sha256-NhQ9t1luOLg/gJxVj+cgjX5vxl4o7owwcLBpVHf+wD8='";
+export const INLINE_BOOTSTRAP_SHA = "'sha256-4Mz/yZAENQGlTAAeE1WqXruXCripvlvl0s+Q9S1VS4A='";
 
 // A build asset is safe to cache forever+immutable when its URL is
 // content-addressed. Vite parks every hashed chunk (JS, CSS, fonts, images)
