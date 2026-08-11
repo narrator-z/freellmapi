@@ -15,10 +15,10 @@ import { GetKeyLink, usePlatforms } from './shared'
 // provider. Extracted verbatim from the old inline KeysPage form so all field
 // validation, the keyless/Cloudflare special cases, and the POST /api/keys
 // mutation stay identical. On success it toasts and asks the dialog to close.
-export function AddKeyForm({ onSuccess }: { onSuccess: () => void }) {
+export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => void; initialPlatform?: Platform }) {
   const { t } = useI18n()
   const queryClient = useQueryClient()
-  const [platform, setPlatform] = useState<Platform | ''>('')
+  const [platform, setPlatform] = useState<Platform | ''>(initialPlatform ?? '')
   const [apiKey, setApiKey] = useState('')
   const [accountId, setAccountId] = useState('')
   const [label, setLabel] = useState('')

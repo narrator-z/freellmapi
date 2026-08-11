@@ -10,17 +10,19 @@ import type {
   Platform,
 } from '@freellmapi/shared/types.js';
 import { routeRequest, hasEnabledToolsModel, resolveStickyPreference, routingReserveTokens, resolveModelGroupCandidates, type RouteResult, type ChainRow } from '../services/router.js';
-import { getDb, getUnifiedApiKey } from '../db/index.js';
+import { getDb } from '../db/index.js';
+import { resolveAuth, prependSystemPrompt } from '../lib/system-prompt.js';
 import { isUnifyEnabled, getModelGroups, resolveRequestedIdForDispatch } from '../services/model-groups.js';
 import { contentToString } from '../lib/content.js';
 import { repairToolArguments, toolSchemaMap } from '../lib/tool-args.js';
 import { rescueInlineToolCalls, startsWithDialectMarker, couldBecomeDialectMarker, containsDialectMarker } from '../lib/tool-call-rescue.js';
 import {
-  timingSafeStringEqual,
   extractApiToken,
   getRequestGroupId,
   getStickyModel,
   setStickyModel,
+  streamReasoningText,
+  completionReasoningText,
   traceRouteEvent,
   logRequest,
 } from './proxy.js';
@@ -312,10 +314,10 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
   const requestGroupId = getRequestGroupId(req);
   res.setHeader('X-Request-ID', requestGroupId);
 
-  // Same unified-key auth as the proxy (accepts Bearer or x-api-key).
-  const token = extractApiToken(req);
-  const unifiedKey = getUnifiedApiKey();
-  if (!token || !timingSafeStringEqual(token, unifiedKey)) {
+  // Same auth as the proxy (accepts Bearer or x-api-key): unified key, or a
+  // client-profile key carrying a server-enforced system prompt (#411).
+  const auth = resolveAuth(extractApiToken(req));
+  if (!auth) {
     res.status(401).json({ error: { message: 'Invalid API key', type: 'authentication_error' } });
     return;
   }
@@ -386,6 +388,11 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
   });
   messages = compressionResult.messages;
   res.setHeader('X-FreeLLM-Compress', formatCompressionHeader(compressionResult));
+
+  // Server-enforced system prompt (#411): after compression so it is never
+  // compressed away, first in the list so the caller's own instructions
+  // (`instructions` / system input items) follow it and cannot override it.
+  messages = prependSystemPrompt(messages, auth.systemPrompt);
 
   const estimatedInputTokens = messages.reduce(
     (sum, m) => sum + Math.ceil(contentToString(m.content).length / 4),
@@ -515,7 +522,7 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
     state,
     attemptLog,
     clientGone: () => clientGone,
-    route: () => routeRequest(estimatedTotal, state.skipKeys.size > 0 ? state.skipKeys : undefined, preferredModel, false, wantsTools, state.skipModels.size > 0 ? state.skipModels : undefined, groupChain, completionOpts.response_format !== undefined),
+    route: () => routeRequest(estimatedTotal, state.skipKeys.size > 0 ? state.skipKeys : undefined, preferredModel, false, wantsTools, state.skipModels.size > 0 ? state.skipModels : undefined, groupChain, completionOpts.response_format !== undefined, state.skipPlatforms.size > 0 ? state.skipPlatforms : undefined),
     dispatch: async (route, attempt) => {
       traceRouteEvent('Responses', {
         event: attempt === 0 ? 'start' : 'next',
@@ -532,6 +539,11 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
         // tool-call accumulator keyed by the provider's tool_call index
         const toolAcc = new Map<number, { outputIndex: number; itemId: string; callId: string; name: string; args: string }>();
         let totalOutputTokens = 0;
+        // #764: ttfb = first token of ANY kind (content or reasoning), recorded
+        // in the pump loop; commit() only backfills streams that never produced
+        // one. This path previously logged no ttfb at all, so Analytics showed
+        // a null speed for every /v1/responses turn.
+        let ttfbMs: number | null = null;
 
         // Inline-dialect hold window (#231): first text is held until it
         // either matches a tool-call dialect marker (held to the end and
@@ -549,6 +561,7 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
         // on the same connection with no bytes on the wire. Idempotent.
         const commit = () => {
           if (streamStarted) return;
+          if (ttfbMs === null) ttfbMs = Date.now() - start;
           res.setHeader('Content-Type', 'text/event-stream');
           res.setHeader('Cache-Control', 'no-cache');
           res.setHeader('Connection', 'keep-alive');
@@ -609,8 +622,16 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
             // Text deltas → output_text events on a single message item, after
             // the dialect hold window has decided the text is real prose.
             const text = delta.content ?? '';
+            // #764: reasoning models stream thinking before the first answer
+            // token — count that first token as ttfb so Analytics speed
+            // reflects the real head-of-stream, and count thinking tokens as
+            // real output consumption.
+            const reasoning = streamReasoningText(chunk);
+            if (ttfbMs === null && (text.length > 0 || reasoning.length > 0)) {
+              ttfbMs = Date.now() - start;
+            }
             if (text) {
-              totalOutputTokens += Math.ceil(text.length / 4);
+              totalOutputTokens += Math.ceil((text.length + reasoning.length) / 4);
               if (dialectMode === 'passthrough') {
                 if (msgItemId === null) openTextItem('');
                 sse('response.output_text.delta', {
@@ -630,6 +651,9 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
                   }
                 }
               }
+            } else if (reasoning.length > 0) {
+              // #764: thinking-only chunk (no visible text yet) — count tokens.
+              totalOutputTokens += Math.ceil(reasoning.length / 4);
             }
 
             // Tool-call deltas → function_call item + argument deltas.
@@ -764,7 +788,7 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
             inputTokens: estimatedInputTokens,
             outputTokens: totalOutputTokens,
           });
-          logRequest(route.platform, route.modelId, route.keyId, 'success', estimatedInputTokens, totalOutputTokens, Date.now() - start, null);
+          logRequest(route.platform, route.modelId, route.keyId, 'success', estimatedInputTokens, totalOutputTokens, Date.now() - start, null, ttfbMs);
           return 'done';
         } catch (streamErr: any) {
           // Client abort mid-stream: the pump's own `if (clientGone) break`
@@ -787,7 +811,7 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
               latencyMs: Date.now() - start,
               error: safe,
             });
-            logRequest(route.platform, route.modelId, route.keyId, 'error', estimatedInputTokens, 0, Date.now() - start, safe);
+            logRequest(route.platform, route.modelId, route.keyId, 'error', estimatedInputTokens, 0, Date.now() - start, safe, ttfbMs);
             sse('response.failed', { response: { id: responseId, object: 'response', status: 'failed', error: { message: `Provider error (${route.displayName}): stream interrupted`, type: 'stream_error' } } });
             res.end();
             return 'committed';
@@ -828,7 +852,11 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
         }
       }
       const promptTokens = result.usage?.prompt_tokens ?? estimatedInputTokens;
-      const completionTokens = result.usage?.completion_tokens ?? Math.ceil(text.length / 4);
+      // #764: include reasoning tokens (message.reasoning_content / reasoning)
+      // in the chars/4 estimate so thinking models aren't undercounted when the
+      // provider omits `usage`.
+      const completionTokens = result.usage?.completion_tokens
+        ?? Math.ceil((text.length + completionReasoningText(result).length) / 4);
 
       // Empty completion → fail over via the shared loop (see the streaming
       // path); finish_reason 'length' skips the cooldown/penalty.
