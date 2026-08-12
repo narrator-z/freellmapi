@@ -30,12 +30,13 @@ const ORIGINAL_NODE_ENV = process.env.NODE_ENV;
 function addModel(opts: {
   platform: string; modelId: string; name: string;
   intelligenceRank: number; sizeLabel: string; budget: string; priority: number;
+  vision?: boolean;
 }): number {
   const db = getDb();
   db.prepare(`
-    INSERT INTO models (platform, model_id, display_name, intelligence_rank, speed_rank, size_label, monthly_token_budget, enabled)
-    VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-  `).run(opts.platform, opts.modelId, opts.name, opts.intelligenceRank, 1, opts.sizeLabel, opts.budget);
+    INSERT INTO models (platform, model_id, display_name, intelligence_rank, speed_rank, size_label, monthly_token_budget, enabled, supports_vision, supports_tools)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, 1)
+  `).run(opts.platform, opts.modelId, opts.name, opts.intelligenceRank, 1, opts.sizeLabel, opts.budget, opts.vision ? 1 : 0);
   const id = (db.prepare('SELECT id FROM models WHERE platform = ? AND model_id = ?')
     .get(opts.platform, opts.modelId) as { id: number }).id;
   db.prepare('INSERT INTO fallback_config (model_db_id, priority, enabled) VALUES (?, ?, 1)').run(id, opts.priority);
@@ -128,6 +129,33 @@ describe('bandit router', () => {
     const counts = pickCounts(200);
     expect(counts['x'] ?? 0).toBeGreaterThan(0);
     expect(counts['y'] ?? 0).toBeGreaterThan(0);
+  });
+
+  it('exploration draws are never wasted on a model that cannot serve the request', () => {
+    // vision-a is measured and wins every ordinary bandit draw. text-b and
+    // vision-c are both unmeasured, but only vision-c can serve a vision
+    // request. The pre-fix router put BOTH in the explore pool, so ~half the
+    // explore draws promoted text-b, which the main loop's vision gate then
+    // skipped — a wasted draw. With the pool filtered, vision-c receives
+    // every explore draw (~10% of requests); unfixed it got only ~5%, far
+    // below the 150/2000 bound asserted here.
+    setExploreEnabled(true);
+    addModel({ platform: 'google', modelId: 'vision-a', name: 'Vision A', intelligenceRank: 1, sizeLabel: 'Frontier', budget: '~50M', priority: 1, vision: true });
+    addModel({ platform: 'groq', modelId: 'text-b', name: 'Text B', intelligenceRank: 2, sizeLabel: 'Frontier', budget: '~50M', priority: 2 });
+    addModel({ platform: 'google', modelId: 'vision-c', name: 'Vision C', intelligenceRank: 30, sizeLabel: 'Small', budget: '~50M', priority: 3, vision: true });
+    addHistory('google', 'vision-a', { successes: 500, failures: 0, outTokens: 1000, latencyMs: 300, ttfbMs: 100 });
+    setRoutingStrategy('balanced');
+    refreshStatsCache(getDb(), true);
+
+    const counts: Record<string, number> = {};
+    for (let i = 0; i < 2000; i++) {
+      const r = routeRequest(100, undefined, undefined, /*requireVision=*/ true);
+      counts[r.modelId] = (counts[r.modelId] ?? 0) + 1;
+    }
+    // The loop gate already guarantees this half; the pool filter is what the
+    // vision-c bound below actually pins down.
+    expect(counts['text-b'] ?? 0).toBe(0);
+    expect(counts['vision-c'] ?? 0).toBeGreaterThan(150);
   });
 
   it('smartest vs fastest flips which model wins, at equal reliability', () => {
