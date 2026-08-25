@@ -10,6 +10,18 @@ import type { Platform } from '../../../../shared/types'
 import { useI18n } from '@/i18n'
 import { toast } from '@/lib/toast'
 import { GetKeyLink, usePlatforms } from './shared'
+import type { ScopeCandidate } from '@/lib/model-scope-selection'
+
+// A key that just landed, plus the models the picker should offer for it.
+// Exported so add-key-dialog can type its post-add scope offer. The fork keeps
+// the registry-driven platform list (usePlatforms), so this pane never emits
+// an offer and the scope picker stays dormant — matching the fork's original
+// behaviour. The shape is kept identical to upstream so the dialog contract holds.
+export interface AddedKeyScopeOffer {
+  keyId: number
+  platformLabel: string
+  candidates: ScopeCandidate[]
+}
 
 // The "Provider key" pane of the Add key dialog: paste a credential for a known
 // provider. Extracted verbatim from the old inline KeysPage form so all field
