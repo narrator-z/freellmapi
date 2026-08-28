@@ -79,6 +79,18 @@ describe('Ollama emulation', () => {
     expect(shown.body.modified_at).toBeTruthy();
   });
 
+  // #fork: `freellmauto` is an exact alias of `auto` on the Ollama surface too.
+  it('advertises and resolves the freellmauto alias like auto (#fork)', async () => {
+    setSetting('ollama_emulation', 'open-loopback');
+    const tags = await request(app, 'GET', '/api/tags');
+    expect(tags.status).toBe(200);
+    expect(tags.body.models.some((m: any) => m.name === 'freellmauto')).toBe(true);
+
+    const shown = await request(app, 'POST', '/api/show', { model: 'freellmauto' });
+    expect(shown.status).toBe(200);
+    expect(shown.body.modelfile).toBe('FROM auto');
+  });
+
   it('answers load/unload probes without calling any provider', async () => {
     setSetting('ollama_emulation', 'open-loopback');
     const fetchSpy = vi.spyOn(global, 'fetch');

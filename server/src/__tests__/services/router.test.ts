@@ -6,6 +6,7 @@ import {
   recordRateLimitHit,
   routeRequest,
   setRoutingStrategy,
+  normalizeAutoAlias,
 } from '../../services/router.js';
 import { setCooldown } from '../../services/ratelimit.js';
 
@@ -326,5 +327,29 @@ describe('Router exhaustion diagnostics (issue _1)', () => {
     try { routeRequest(); } catch (e) { caught = e; }
     expect(caught).toBeDefined();
     expect(caught.diagnostics.some((d: string) => /cooldown/.test(d))).toBe(true);
+  });
+});
+
+describe('normalizeAutoAlias (#fork freellmauto alias)', () => {
+  it('maps bare freellmauto to auto (case-insensitive)', () => {
+    expect(normalizeAutoAlias('freellmauto')).toBe('auto');
+    expect(normalizeAutoAlias('FreeLLMauto')).toBe('auto');
+    expect(normalizeAutoAlias('  FREELLMAUTO  ')).toBe('auto');
+  });
+
+  it('maps freellmauto:<suffix> to auto:<suffix>', () => {
+    expect(normalizeAutoAlias('freellmauto:fast')).toBe('auto:fast');
+    expect(normalizeAutoAlias('freellmauto:my-group')).toBe('auto:my-group');
+  });
+
+  it('leaves auto and auto:<suffix> untouched', () => {
+    expect(normalizeAutoAlias('auto')).toBe('auto');
+    expect(normalizeAutoAlias('auto:smart')).toBe('auto:smart');
+  });
+
+  it('leaves unrelated model ids untouched', () => {
+    expect(normalizeAutoAlias('gpt-4o')).toBe('gpt-4o');
+    expect(normalizeAutoAlias('claude-opus-4-1')).toBe('claude-opus-4-1');
+    expect(normalizeAutoAlias(undefined)).toBeUndefined();
   });
 });

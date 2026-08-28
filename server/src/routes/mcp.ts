@@ -79,6 +79,9 @@ function listModels(args: Record<string, unknown>): unknown {
   }));
   return {
     auto: { id: 'auto', description: 'router picks the best available model', context_window: autoContextWindow },
+    // `freellmauto` is an exact alias of `auto` for MCP clients that can't send
+    // the bare `auto` id (#fork).
+    freellmauto: { id: 'freellmauto', description: 'router picks the best available model (alias of auto)', context_window: autoContextWindow },
     count: rows.length,
     models: rows,
   };

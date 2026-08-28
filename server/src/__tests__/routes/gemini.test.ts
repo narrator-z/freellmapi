@@ -87,6 +87,20 @@ describe('native Gemini /v1beta surface', () => {
     expect(single.body.name).toBe('models/auto');
   });
 
+  // #fork: `freellmauto` is an exact alias of `auto` on the Gemini surface too.
+  it('resolves the freellmauto alias like auto in the Gemini surface (#fork)', async () => {
+    const single = await request(app, 'GET', '/v1beta/models/freellmauto', undefined, {
+      'x-goog-api-key': getUnifiedApiKey(),
+    });
+    expect(single.status).toBe(200);
+    expect(single.body.name).toBe('models/freellmauto');
+
+    const list = await request(app, 'GET', '/v1beta/models', undefined, {
+      'x-goog-api-key': getUnifiedApiKey(),
+    });
+    expect(list.body.models.some((model: any) => model.name === 'models/freellmauto')).toBe(true);
+  });
+
   it('translates generateContent and structured tools through the shared router', async () => {
     let upstreamBody: any;
     const originalFetch = global.fetch;

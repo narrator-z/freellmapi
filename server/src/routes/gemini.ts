@@ -77,6 +77,20 @@ function modelShape(model: NormalizedModel | null, autoContextWindow: number | n
   };
 }
 
+// `freellmauto` is an exact alias of `auto` (#fork) — a distinct, discoverable
+// id that resolves to the same router behavior.
+function freellmautoModelShape(autoContextWindow: number | null) {
+  return {
+    name: 'models/freellmauto',
+    displayName: 'Auto (freellmauto alias — router picks the best available model)',
+    description: 'FreeLLMAPI automatically selects the best available model (freellmauto alias of auto)',
+    inputTokenLimit: autoContextWindow ?? 128_000,
+    outputTokenLimit: Math.min(8192, autoContextWindow ?? 128_000),
+    supportedGenerationMethods: ['generateContent', 'streamGenerateContent', 'countTokens'],
+    version: 'freellmauto',
+  };
+}
+
 geminiRouter.get('/models', (req, res) => {
   if (!authenticate(req, res)) return;
   const { models, autoContextWindow } = buildModelListing();
@@ -87,6 +101,9 @@ geminiRouter.get('/models', (req, res) => {
   res.json({
     models: [
       modelShape(null, autoContextWindow),
+      // `freellmauto` is an exact alias of `auto` (#fork) — advertise it so
+      // Gemini-shaped clients that enumerate can discover it.
+      freellmautoModelShape(autoContextWindow),
       ...listed.map(model => modelShape(model, autoContextWindow)),
     ],
   });
@@ -96,8 +113,8 @@ geminiRouter.get(/^\/models\/(.+)$/, (req, res) => {
   if (!authenticate(req, res)) return;
   const requested = decodeURIComponent(req.params[0]).replace(/^models\//, '');
   const { models, autoContextWindow } = buildModelListing();
-  if (requested === 'auto') {
-    res.json(modelShape(null, autoContextWindow));
+  if (requested === 'auto' || requested === 'freellmauto') {
+    res.json(requested === 'auto' ? modelShape(null, autoContextWindow) : freellmautoModelShape(autoContextWindow));
     return;
   }
   const model = models.find(entry => entry.id === requested);

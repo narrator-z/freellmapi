@@ -113,7 +113,10 @@ ollamaRouter.get('/api/tags', (req, res) => {
       quantization_level: 'remote',
     },
   };
-  res.json({ models: [auto, ...models.filter(model => model.available === 1).map(ollamaModel)] });
+  // `freellmauto` is an exact alias of `auto` (#fork) — advertise it so Ollama
+  // clients that enumerate can discover it.
+  const freellmauto = { ...auto, name: 'freellmauto', model: 'freellmauto' };
+  res.json({ models: [auto, freellmauto, ...models.filter(model => model.available === 1).map(ollamaModel)] });
 });
 
 ollamaRouter.get('/api/version', (req, res) => {
@@ -133,7 +136,7 @@ ollamaRouter.post('/api/show', (req, res) => {
   }
   const id = normalizeOllamaModel(parsed.data.model || parsed.data.name);
   const { models, autoContextWindow } = buildModelListing();
-  if (id === 'auto') {
+  if (id === 'auto' || id === 'freellmauto') {
     // /api/tags advertises `auto`, and clients probe /api/show for
     // capabilities before using a model.
     res.json({

@@ -52,7 +52,7 @@ export function setGeminiModelMap(input: unknown): GeminiModelMap {
 
 export function classifyGeminiFamily(model?: string): GeminiFamily | null {
   const normalized = (model ?? '').trim().toLowerCase().replace(/^models\//, '');
-  if (!normalized || normalized === 'auto') return 'default';
+  if (!normalized || normalized === 'auto' || normalized === 'freellmauto') return 'default';
   if (!normalized.startsWith('gemini')) return null;
   if (/flash[-_]?lite/.test(normalized)) return 'flashLite';
   if (normalized.includes('flash')) return 'flash';

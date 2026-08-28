@@ -11,6 +11,7 @@ import {
   resolveStickyPreference,
   routingReserveTokens,
   resolveModelGroupCandidates,
+  normalizeAutoAlias,
   type ChainRow,
   type RouteResult,
 } from '../services/router.js';
@@ -108,7 +109,7 @@ interface ResolvedPin {
 }
 
 function resolvePin(model: string | undefined, messages: ChatMessage[], sessionId?: string): ResolvedPin {
-  const requested = model?.trim();
+  const requested = normalizeAutoAlias(model)?.trim();
   const auto = !requested || requested.toLowerCase() === 'auto' || requested.toLowerCase().startsWith('auto:');
   if (auto) {
     return {

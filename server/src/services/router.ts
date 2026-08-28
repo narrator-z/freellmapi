@@ -1220,14 +1220,39 @@ function activeChainOrThrow(db: Db): ChainRow[] {
   throw err;
 }
 
+/**
+ * `auto` alias (#fork): some clients/tools can't send the bare `auto` id, so we
+ * accept `freellmauto` (and `freellmauto:<suffix>`, mirroring `auto:<suffix>`)
+ * as an exact synonym. Centralized here so every routing surface — OpenAI chat
+ * completions, the Responses API, the Anthropic messages surface, and the
+ * shared inbound-chat resolver — normalizes through one function and resolves
+ * `freellmauto` identically to `auto`.
+ */
+const AUTO_MODEL_CANON = 'auto';
+const AUTO_MODEL_ALIASES = ['freellmauto'] as const;
+
+export function normalizeAutoAlias(modelId: string | undefined): string | undefined {
+  if (!modelId) return modelId;
+  const trimmed = modelId.trim();
+  const lower = trimmed.toLowerCase();
+  for (const alias of AUTO_MODEL_ALIASES) {
+    if (lower === alias) return AUTO_MODEL_CANON;
+    if (lower.startsWith(`${alias}:`)) {
+      return `${AUTO_MODEL_CANON}:${trimmed.slice(alias.length + 1)}`;
+    }
+  }
+  return modelId;
+}
+
 export function resolveRoutingChain(modelString: string | undefined): ResolvedChain {
   const db = getDb();
+  const normalized = normalizeAutoAlias(modelString);
 
-  if (!modelString || modelString.toLowerCase() === 'auto') {
+  if (!normalized || normalized.toLowerCase() === 'auto') {
     return { chain: activeChainOrThrow(db), strategyKey: 'auto' };
   }
 
-  const lower = modelString.toLowerCase();
+  const lower = normalized.toLowerCase();
   if (!lower.startsWith('auto:')) {
     return { chain: activeChainOrThrow(db), strategyKey: 'auto' };
   }

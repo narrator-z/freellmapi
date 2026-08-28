@@ -3,7 +3,7 @@ import { Router } from 'express';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import type { ChatMessage, ChatToolCall, ModelListRow, TokenUsage } from '@freellmapi/shared/types.js';
-import { routeRequest, resolveRoutingChain, resolveModelGroupCandidates, resolveStickyPreference, recordRateLimitHit, recordSuccess, hasEnabledVisionModel, hasEnabledToolsModel, hasOtherUsableKey, routingReserveTokens, type RouteResult, type ResolvedChain, type ChainRow } from '../services/router.js';
+import { routeRequest, resolveRoutingChain, resolveModelGroupCandidates, resolveStickyPreference, recordRateLimitHit, recordSuccess, hasEnabledVisionModel, hasEnabledToolsModel, hasOtherUsableKey, routingReserveTokens, normalizeAutoAlias, type RouteResult, type ResolvedChain, type ChainRow } from '../services/router.js';
 import { recordRequest, recordTokens, setCooldown, getCooldownDurationForLimit, PAYMENT_REQUIRED_COOLDOWN_MS, MODEL_FORBIDDEN_COOLDOWN_MS, learnLimitFromError } from '../services/ratelimit.js';
 import { runEmbeddings, EmbeddingsError } from '../services/embeddings.js';
 import { runImageGeneration, runVideoGeneration, runSpeech, runTranscription, MediaError, MAX_TRANSCRIPTION_BYTES } from '../services/media.js';
@@ -44,7 +44,9 @@ const AUTO_MODEL_ID = 'auto';
 
 function isAutoModel(modelId: string | undefined): boolean {
   if (!modelId) return true;
-  const lower = modelId.toLowerCase();
+  const normalized = normalizeAutoAlias(modelId);
+  if (!normalized) return true;
+  const lower = normalized.toLowerCase();
   return lower === AUTO_MODEL_ID || lower.startsWith(`${AUTO_MODEL_ID}:`);
 }
 
@@ -377,6 +379,19 @@ proxyRouter.get('/models', (req: Request, res: Response) => {
         // `context_length` is OpenRouter's field name and the one most
         // OpenAI-compatible clients read; emit both so whichever a client
         // looks for is populated. Additive — clients ignore unknown fields.
+        context_length: autoContextWindow,
+        available: true,
+        unavailable_reason: null,
+      },
+      {
+        // `freellmauto` is an exact alias of `auto` for clients/tools that can't
+        // send the bare `auto` id (#fork). Same routing behavior and ceiling.
+        id: 'freellmauto',
+        object: 'model',
+        created: 0,
+        owned_by: 'freellmapi',
+        name: 'Auto (freellmauto alias — router picks the best available model)',
+        context_window: autoContextWindow,
         context_length: autoContextWindow,
         available: true,
         unavailable_reason: null,

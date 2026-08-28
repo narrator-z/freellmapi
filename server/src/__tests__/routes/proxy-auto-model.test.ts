@@ -213,4 +213,75 @@ describe('Virtual "auto" model', () => {
     expect(status).toBe(404);
     expect(body.error.code).toBe('model_not_found');
   });
+
+  // #fork: `freellmauto` is an exact alias of `auto` for clients that can't send
+  // the bare `auto` id. The listing must advertise it so those clients can
+  // discover it.
+  it('lists "freellmauto" as an alias of "auto" in /v1/models', async () => {
+    const { status, body } = await request(app, 'GET', '/v1/models', undefined, authHeaders());
+    expect(status).toBe(200);
+
+    const alias = body.data.find((m: any) => m.id === 'freellmauto');
+    expect(alias).toBeDefined();
+    expect(alias).toMatchObject({
+      id: 'freellmauto',
+      object: 'model',
+      owned_by: 'freellmapi',
+      available: true,
+      unavailable_reason: null,
+    });
+    expect(alias.context_window).toBe(alias.context_length);
+    expect(typeof alias.context_window).toBe('number');
+
+    // Ids stay unique — the alias must not collide with the canonical `auto`.
+    const ids = body.data.map((m: any) => m.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  // #fork: `model:"freellmauto"` must route exactly like `model:"auto"` (no
+  // 404 model_not_found).
+  it('treats model:"freellmauto" as auto-route instead of a 404', async () => {
+    const origFetch = global.fetch;
+
+    vi.spyOn(global, 'fetch').mockImplementation(async (url, init) => {
+      const urlStr = typeof url === 'string' ? url : url.toString();
+      if (urlStr.includes('api.groq.com/openai/v1/chat/completions')) {
+        return {
+          ok: true,
+          json: () => Promise.resolve({
+            id: 'chatcmpl-freellmauto',
+            object: 'chat.completion',
+            created: 123,
+            model: 'openai/gpt-oss-120b',
+            choices: [{
+              index: 0,
+              message: { role: 'assistant', content: 'routed via freellmauto' },
+              finish_reason: 'stop',
+            }],
+            usage: { prompt_tokens: 5, completion_tokens: 3, total_tokens: 8 },
+          }),
+        } as any;
+      }
+      return origFetch(url, init);
+    });
+
+    const { status, body } = await request(app, 'POST', '/v1/chat/completions', {
+      model: 'freellmauto',
+      messages: [{ role: 'user', content: 'hello' }],
+    }, authHeaders());
+
+    expect(status).toBe(200);
+    expect(body.choices[0].message.content).toBe('routed via freellmauto');
+  });
+
+  // #fork: `freellmauto:<profile>` must resolve like `auto:<profile>`.
+  it('treats model:"freellmauto:unknown" like auto:unknown (unknown profile 400)', async () => {
+    const { status, body } = await request(app, 'POST', '/v1/chat/completions', {
+      model: 'freellmauto:no-such-profile',
+      messages: [{ role: 'user', content: 'hello' }],
+    }, authHeaders());
+
+    expect(status).toBe(400);
+    expect(body.error.message).toMatch(/profile/i);
+  });
 });
