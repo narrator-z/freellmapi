@@ -46,8 +46,8 @@
     "newEmail": "E-mail baru",
     "resetCode": "Kode reset",
     "resetCodePlaceholder": "kode dari log server",
-    "resetCodeHint": "Lihat kode reset kata sandi di log server.",
-    "forgotPasswordDescription": "Klik di bawah untuk membuat kode reset. Kode akan muncul di log server — masukkan di sini untuk menyetel kata sandi baru.",
+    "resetCodeHint": "Kode ada di log server. Kode tidak pernah dikirim lewat email.",
+    "forgotPasswordDescription": "Klik tombol di bawah untuk membuat kode reset. Kode ditulis ke log server, tidak pernah dikirim lewat email. Masukkan di sini untuk menyetel kata sandi baru.",
     "requestResetCode": "Kirim kode reset",
     "requestingResetCode": "Mengirim…",
     "resetPassword": "Reset kata sandi",
@@ -57,7 +57,9 @@
     "backToLogin": "Kembali ke masuk",
     "passwordChanged": "Kata sandi berhasil diubah.",
     "emailChanged": "E-mail berhasil diubah.",
-    "passwordReset": "Kata sandi telah direset. Silakan masuk."
+    "passwordReset": "Kata sandi telah direset. Silakan masuk.",
+    "resetCodeDockerHint": "Menjalankan di Docker? Kode ada di log container: docker logs <container>.",
+    "desktopSessionFailed": "Dasbor tidak dapat masuk ke server lokal. Tutup FreeLLMAPI lalu buka lagi."
   },
   "common": {
     "save": "Simpan",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Otomatis",
     "keySelectionLeastRemaining": "Sisa paling sedikit",
     "keySelectionHint": "Cara memilih di antara beberapa kunci pada penyedia yang sama. Otomatis mempertahankan rotasi saat ini; Sisa paling sedikit mengurutkan kunci berdasarkan kuota yang teramati dan mencoba yang sisanya paling banyak lebih dulu.",
+    "cooldownCeiling": "Cooldown otomatis terlama",
+    "cooldownCeilingHint": "Membatasi berapa lama tebakan router sendiri boleh menyingkirkan pasangan kunci dan model yang gagal. Tangganya biasanya naik 2 mnt, 10 mnt, 1 jam, 24 jam, dan kesalahan kredit atau tingkat menyingkirkan selama sehari. Waktu coba ulang yang disebutkan penyedia tidak pernah dipersingkat.",
+    "cooldownCeilingDefault": "Bawaan (hingga 24 jam)",
+    "cooldownCeiling10m": "10 menit",
+    "cooldownCeiling1h": "1 jam",
+    "cooldownCeiling6h": "6 jam",
     "moreOptions": "Opsi lainnya",
     "peakActive": "(jam sibuk)",
     "peakActiveHint": "Penyesuaian jam sibuk sedang aktif, jadi ini bukan bobot preset itu sendiri: 60% bobot kecepatan telah dipindahkan ke keandalan.",
@@ -342,6 +350,8 @@
     "noCooldown": "Tidak ada cooldown",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Hapus semua",
+    "clearAllHint": "Cabut semua cooldown, penalti, dan rangkaian kegagalan sekarang. Tekanan dibangun ulang dari hasil nyata berikutnya.",
     "errorsHeading": "{count} kesalahan terbaru",
     "noRecentErrors": "Tidak ada kesalahan terbaru",
     "noKey": "tidak ada kunci",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "Perlu kunci API",
     "claudeAliases": "Alias penemuan Claude Code",
     "claudeAliasesHint": "Ekspos alias claude/<model> agar pemilih model gateway dapat menampilkan daftar katalog.",
+    "mcpServer": "Server MCP",
+    "mcpServerHint": "Membuka endpoint /mcp untuk klien agen. Instalasi baru dimulai dalam keadaan nonaktif.",
     "urlTokensTitle": "Token URL yang dapat dicabut",
     "urlTokensDesc": "Hanya untuk klien tanpa header. Token URL bisa bocor ke riwayat dan log, jadi cabut jika sudah tidak diperlukan.",
     "urlTokenLabel": "Label token",
@@ -668,7 +680,8 @@
       "dsh": "Kerangka DeepSeek, yang menyimpan tiap penyedia sebagai rute yang bisa Anda ganti.",
       "mimo": "Agen terminal dari Xiaomi, cabang OpenCode yang menerima penyedia apa pun yang kompatibel dengan OpenAI.",
       "cursor": "Penyunting yang mengutamakan AI; lewat awan Cursor, jadi perlu URL publik.",
-      "generic": "Perkakas lain mana pun yang berbicara API OpenAI, disiapkan manual dengan URL dasar dan kunci."
+      "generic": "Perkakas lain mana pun yang berbicara API OpenAI, disiapkan manual dengan URL dasar dan kunci.",
+      "atomcode": "Agen terminal dari AtomGit, ditulis dalam Rust, yang menerima endpoint apa pun yang kompatibel dengan OpenAI."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Kunci #{n}",
     "attemptTimingHint": "Mulai offset dari awal permintaan · durasi upaya",
     "requestedModel": "Model yang diminta",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "Urutkan berdasarkan {column}",
+    "sortHint": "Pengurutan berlaku untuk {count} baris yang dimuat",
+    "cacheHitRate": "Rasio hit cache",
+    "cacheSavedTokens": "{tokens} token dihemat",
+    "cacheHitRateHint": "{hits} hit vs {misses} miss sejak server dijalankan · {requests} panggilan penyedia dihindari"
   },
   "logs": {
     "title": "Log",

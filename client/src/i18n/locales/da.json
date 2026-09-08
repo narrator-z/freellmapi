@@ -46,8 +46,8 @@
     "newEmail": "Ny e-mail",
     "resetCode": "Nulstillingskode",
     "resetCodePlaceholder": "kode fra serverloggene",
-    "resetCodeHint": "Nulstillingskoden findes i serverloggene.",
-    "forgotPasswordDescription": "Klik nedenfor for at generere en nulstillingskode. Koden vises i serverloggene — indtast den her for at vælge en ny adgangskode.",
+    "resetCodeHint": "Koden står i serverloggen. Den sendes aldrig på e-mail.",
+    "forgotPasswordDescription": "Klik på knappen nedenfor for at generere en nulstillingskode. Koden skrives til serverloggen og sendes aldrig på e-mail. Indtast den her for at vælge en ny adgangskode.",
     "requestResetCode": "Send kode",
     "requestingResetCode": "Sender…",
     "resetPassword": "Nulstil adgangskode",
@@ -57,7 +57,9 @@
     "backToLogin": "Tilbage til login",
     "passwordChanged": "Adgangskoden er skiftet.",
     "emailChanged": "E-mailen er skiftet.",
-    "passwordReset": "Adgangskoden er nulstillet. Log ind."
+    "passwordReset": "Adgangskoden er nulstillet. Log ind.",
+    "resetCodeDockerHint": "Kører du i Docker? Koden står i containerloggen: docker logs <container>.",
+    "desktopSessionFailed": "Dashboardet kunne ikke logge ind på den lokale server. Afslut FreeLLMAPI, og åbn det igen."
   },
   "common": {
     "save": "Gem",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Automatisk",
     "keySelectionLeastRemaining": "Mindst tilbage",
     "keySelectionHint": "Hvordan der vælges mellem flere nøgler hos samme udbyder. Automatisk beholder den nuværende rotation; Mindst tilbage rangordner nøglerne efter observeret kvote og prøver først den, der har mest tilbage.",
+    "cooldownCeiling": "Længste automatiske nedkøling",
+    "cooldownCeilingHint": "Begrænser, hvor længe routerens egne gæt må bænke et fejlende nøgle- og modelpar. Stigen vokser normalt 2 min, 10 min, 1 t, 24 t, og kredit- eller niveaufejl bænker en dag. Ventetider oplyst af udbyderen forkortes aldrig.",
+    "cooldownCeilingDefault": "Standard (op til 24 t)",
+    "cooldownCeiling10m": "10 minutter",
+    "cooldownCeiling1h": "1 time",
+    "cooldownCeiling6h": "6 timer",
     "moreOptions": "Flere valgmuligheder",
     "peakActive": "(spidsbelastning)",
     "peakActiveHint": "Justeringen for spidsbelastning er aktiv lige nu, så det er ikke forudindstillingens egne vægte: 60 % af hastighedsvægten er flyttet til pålidelighed.",
@@ -342,6 +350,8 @@
     "noCooldown": "Ingen cooldown",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Ryd alt",
+    "clearAllHint": "Ophæver straks alle nedkølinger, straffe og fejlserier. Presset genopbygges ud fra de næste rigtige resultater.",
     "errorsHeading": "{count} nylige fejl",
     "noRecentErrors": "Ingen nylige fejl",
     "noKey": "Ingen nøgle",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "API-nøgle påkrævet",
     "claudeAliases": "Claude Code-opdagelsesaliasser",
     "claudeAliasesHint": "Eksponér claude/<model>-aliasser, så gatewayens modelvælger kan vise kataloget.",
+    "mcpServer": "MCP-server",
+    "mcpServerHint": "Eksponerer /mcp-endpointet for agentklienter. Nye installationer starter slået fra.",
     "urlTokensTitle": "Tilbagekaldelige URL-tokens",
     "urlTokensDesc": "Kun til klienter uden headers. URL-tokens kan lække til historik og logs, så tilbagekald dem, når de ikke længere er nødvendige.",
     "urlTokenLabel": "Token-etiket",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Nøgle #{n}",
     "attemptTimingHint": "Startforskydning fra anmodningsstart · Forsøgsvarighed",
     "requestedModel": "Efterspurgt model",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "Sortér efter {column}",
+    "sortHint": "Sorteringen gælder de {count} indlæste rækker",
+    "cacheHitRate": "Cache-hitrate",
+    "cacheSavedTokens": "{tokens} tokens sparet",
+    "cacheHitRateHint": "{hits} hits mod {misses} misses siden serveren startede · {requests} udbyderkald undgået"
   },
   "logs": {
     "title": "Log",

@@ -46,8 +46,8 @@
     "newEmail": "പുതിയ ഇമെയിൽ",
     "resetCode": "റീസെറ്റ് കോഡ്",
     "resetCodePlaceholder": "സെർവർ ലോഗിലെ കോഡ്",
-    "resetCodeHint": "പാസ്‌വേഡ് റീസെറ്റ് കോഡ് സെർവർ ലോഗിൽ കാണുക.",
-    "forgotPasswordDescription": "റീസെറ്റ് കോഡ് ഉണ്ടാക്കാൻ താഴെ ക്ലിക്ക് ചെയ്യുക. കോഡ് സെർവർ ലോഗിൽ കാണും — പുതിയ പാസ്‌വേഡ് സജ്ജമാക്കാൻ ഇവിടെ നൽകുക.",
+    "resetCodeHint": "കോഡ് സെർവർ ലോഗിലുണ്ട്. അത് ഒരിക്കലും ഇമെയിൽ വഴി അയയ്ക്കില്ല.",
+    "forgotPasswordDescription": "റീസെറ്റ് കോഡ് ഉണ്ടാക്കാൻ താഴെയുള്ള ബട്ടൺ ക്ലിക്ക് ചെയ്യുക. കോഡ് സെർവർ ലോഗിൽ എഴുതപ്പെടുന്നു, ഒരിക്കലും ഇമെയിൽ ചെയ്യില്ല. പുതിയ പാസ്‌വേഡ് സജ്ജമാക്കാൻ ഇവിടെ നൽകുക.",
     "requestResetCode": "റീസെറ്റ് കോഡ് അയയ്ക്കുക",
     "requestingResetCode": "അയയ്ക്കുന്നു…",
     "resetPassword": "പാസ്‌വേഡ് റീസെറ്റ് ചെയ്യുക",
@@ -57,7 +57,9 @@
     "backToLogin": "സൈൻ ഇന്നിലേക്ക് മടങ്ങുക",
     "passwordChanged": "പാസ്‌വേഡ് വിജയകരമായി മാറ്റി.",
     "emailChanged": "ഇമെയിൽ വിജയകരമായി മാറ്റി.",
-    "passwordReset": "പാസ്‌വേഡ് റീസെറ്റ് ചെയ്തു. സൈൻ ഇൻ ചെയ്യുക."
+    "passwordReset": "പാസ്‌വേഡ് റീസെറ്റ് ചെയ്തു. സൈൻ ഇൻ ചെയ്യുക.",
+    "resetCodeDockerHint": "Docker-ൽ പ്രവർത്തിപ്പിക്കുകയാണോ? കോഡ് കണ്ടെയ്നർ ലോഗിലുണ്ട്: docker logs <container>.",
+    "desktopSessionFailed": "ഡാഷ്‌ബോർഡിന് ലോക്കൽ സെർവറിൽ സൈൻ ഇൻ ചെയ്യാനായില്ല. FreeLLMAPI അടച്ച് വീണ്ടും തുറക്കുക."
   },
   "common": {
     "save": "സംരക്ഷിക്കുക",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "സ്വയം",
     "keySelectionLeastRemaining": "ഏറ്റവും കുറവ് ബാക്കി",
     "keySelectionHint": "ഒരേ ദാതാവിന്റെ പല കീകൾക്കിടയിൽ എങ്ങനെ തിരഞ്ഞെടുക്കണം. സ്വയം നിലവിലെ ക്രമം നിലനിർത്തുന്നു; ഏറ്റവും കുറവ് ബാക്കി നിരീക്ഷിച്ച ക്വോട്ട അനുസരിച്ച് കീകൾ അടുക്കി, ഏറ്റവും കൂടുതൽ ബാക്കിയുള്ള കീ ആദ്യം പരീക്ഷിക്കുന്നു.",
+    "cooldownCeiling": "പരമാവധി സ്വയമേവയുള്ള കൂൾഡൗൺ",
+    "cooldownCeilingHint": "റൂട്ടറിന്റെ സ്വന്തം ഊഹങ്ങൾ പരാജയപ്പെടുന്ന കീയും മോഡലും ജോഡിയെ എത്ര നേരം മാറ്റിനിർത്താമെന്ന് പരിമിതപ്പെടുത്തുന്നു. ഗോവണി സാധാരണയായി 2 മിനിറ്റ്, 10 മിനിറ്റ്, 1 മണിക്കൂർ, 24 മണിക്കൂർ എന്നിങ്ങനെ ഉയരുന്നു; ക്രെഡിറ്റ് അല്ലെങ്കിൽ ടയർ പിശകുകൾ ഒരു ദിവസത്തേക്ക് മാറ്റിനിർത്തുന്നു. ദാതാവ് പറയുന്ന വീണ്ടും ശ്രമിക്കൽ സമയങ്ങൾ ഒരിക്കലും കുറയ്ക്കില്ല.",
+    "cooldownCeilingDefault": "സ്ഥിരസ്ഥിതി (24 മണിക്കൂർ വരെ)",
+    "cooldownCeiling10m": "10 മിനിറ്റ്",
+    "cooldownCeiling1h": "1 മണിക്കൂർ",
+    "cooldownCeiling6h": "6 മണിക്കൂർ",
     "moreOptions": "കൂടുതൽ ഓപ്ഷനുകൾ",
     "peakActive": "(തിരക്കുള്ള സമയം)",
     "peakActiveHint": "തിരക്കുസമയ ക്രമീകരണം ഇപ്പോൾ സജീവമാണ്, അതിനാൽ ഇവ പ്രീസെറ്റിന്റെ സ്വന്തം തൂക്കങ്ങളല്ല: വേഗതയുടെ തൂക്കത്തിന്റെ 60% വിശ്വാസ്യതയിലേക്ക് മാറ്റിയിരിക്കുന്നു.",
@@ -342,6 +350,8 @@
     "noCooldown": "കൂൾഡൗൺ ഇല്ല",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "എല്ലാം മായ്ക്കുക",
+    "clearAllHint": "എല്ലാ കൂൾഡൗണുകളും പിഴകളും പരാജയ പരമ്പരകളും ഇപ്പോൾ നീക്കുക. അടുത്ത യഥാർത്ഥ ഫലങ്ങളിൽ നിന്ന് സമ്മർദ്ദം വീണ്ടും രൂപപ്പെടും.",
     "errorsHeading": "{count} സമീപകാല പിശകുകൾ",
     "noRecentErrors": "സമീപകാല പിശകുകളൊന്നുമില്ല",
     "noKey": "താക്കോൽ ഇല്ല",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "API കീ ആവശ്യമാണ്",
     "claudeAliases": "Claude Code കണ്ടെത്തൽ അപരനാമങ്ങൾ",
     "claudeAliasesHint": "ഗേറ്റ്‌വേ മോഡൽ പിക്കറിന് കാറ്റലോഗ് ലിസ്റ്റ് ചെയ്യാൻ claude/<model> അപരനാമങ്ങൾ തുറന്നുകൊടുക്കുക.",
+    "mcpServer": "MCP സെർവർ",
+    "mcpServerHint": "ഏജന്റ് ക്ലയന്റുകൾക്കായി /mcp എൻഡ്‌പോയിന്റ് തുറക്കുന്നു. പുതിയ ഇൻസ്റ്റാളേഷനുകളിൽ ഇത് ഓഫാണ്.",
     "urlTokensTitle": "റദ്ദാക്കാവുന്ന URL ടോക്കണുകൾ",
     "urlTokensDesc": "ഹെഡർ ഇല്ലാത്ത ക്ലയൻ്റുകൾക്ക് മാത്രം. URL ടോക്കണുകൾ ചരിത്രത്തിലേക്കും ലോഗുകളിലേക്കും ചോർന്നേക്കാം, അതിനാൽ ആവശ്യമില്ലാതാകുമ്പോൾ അവ റദ്ദാക്കുക.",
     "urlTokenLabel": "ടോക്കൺ ലേബൽ",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "കീ #{n}",
     "attemptTimingHint": "അഭ്യർത്ഥന ആരംഭത്തിൽ നിന്ന് ഓഫ്സെറ്റ് ആരംഭിക്കുക · ശ്രമ കാലയളവ്",
     "requestedModel": "അഭ്യർത്ഥിച്ച മോഡൽ",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "{column} അനുസരിച്ച് ക്രമീകരിക്കുക",
+    "sortHint": "ക്രമീകരണം ലോഡ് ചെയ്ത {count} വരികൾക്ക് മാത്രമേ ബാധകമാകൂ",
+    "cacheHitRate": "കാഷ് ഹിറ്റ് നിരക്ക്",
+    "cacheSavedTokens": "{tokens} ടോക്കണുകൾ ലാഭിച്ചു",
+    "cacheHitRateHint": "സെർവർ ആരംഭിച്ചതിനുശേഷം {hits} ഹിറ്റുകൾ, {misses} മിസ്സുകൾ · {requests} ദാതാവ് കോളുകൾ ഒഴിവാക്കി"
   },
   "logs": {
     "title": "ലോഗുകൾ",

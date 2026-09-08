@@ -46,8 +46,8 @@
     "newEmail": "דוא\"ל חדש",
     "resetCode": "קוד איפוס",
     "resetCodePlaceholder": "קוד מיומני השרת",
-    "resetCodeHint": "קוד איפוס הסיסמה מופיע ביומני השרת.",
-    "forgotPasswordDescription": "לחץ למטה כדי ליצור קוד איפוס. הקוד יופיע ביומני השרת — הזן אותו כאן כדי להגדיר סיסמה חדשה.",
+    "resetCodeHint": "הקוד מופיע ביומן השרת. הוא לעולם לא נשלח באימייל.",
+    "forgotPasswordDescription": "לחץ על הכפתור למטה כדי ליצור קוד איפוס. הקוד נכתב ליומן השרת ולעולם לא נשלח באימייל. הזן אותו כאן כדי להגדיר סיסמה חדשה.",
     "requestResetCode": "שליחת קוד",
     "requestingResetCode": "שולח…",
     "resetPassword": "איפוס סיסמה",
@@ -57,7 +57,9 @@
     "backToLogin": "חזרה להתחברות",
     "passwordChanged": "הסיסמה שונתה בהצלחה.",
     "emailChanged": "הדוא\"ל שונה בהצלחה.",
-    "passwordReset": "הסיסמה אופסה. יש להתחבר."
+    "passwordReset": "הסיסמה אופסה. יש להתחבר.",
+    "resetCodeDockerHint": "מריצים ב-Docker? הקוד מופיע ביומן הקונטיינר: docker logs <container>.",
+    "desktopSessionFailed": "לוח הבקרה לא הצליח להתחבר לשרת המקומי. סגור את FreeLLMAPI ופתח אותו מחדש."
   },
   "common": {
     "save": "שמור",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "אוטומטי",
     "keySelectionLeastRemaining": "הכי מעט נותר",
     "keySelectionHint": "כיצד לבחור בין כמה מפתחות של אותו ספק. אוטומטי שומר על הסבב הנוכחי; הכי מעט נותר מדרג את המפתחות לפי המכסה שנצפתה ומנסה תחילה את זה שנותר לו הכי הרבה.",
+    "cooldownCeiling": "צינון אוטומטי מרבי",
+    "cooldownCeilingHint": "מגביל כמה זמן הניחושים של הנתב עצמו רשאים להשבית זוג מפתח ומודל שנכשל. הסולם עולה בדרך כלל 2 דק׳, 10 דק׳, שעה, 24 שעות, ושגיאות יתרה או דרגה משביתות ליום. זמני ניסיון חוזר שהספק מציין לעולם אינם מקוצרים.",
+    "cooldownCeilingDefault": "ברירת מחדל (עד 24 שעות)",
+    "cooldownCeiling10m": "10 דקות",
+    "cooldownCeiling1h": "שעה אחת",
+    "cooldownCeiling6h": "6 שעות",
     "moreOptions": "אפשרויות נוספות",
     "peakActive": "(שעות שיא)",
     "peakActiveHint": "התאמת שעות השיא פעילה כרגע, ולכן אלו אינם המשקלים של הפריסט עצמו: 60% ממשקל המהירות הועברו לאמינות.",
@@ -342,6 +350,8 @@
     "noCooldown": "אין קירור",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "נקה הכול",
+    "clearAllHint": "מסיר מיד כל צינון, קנס ורצף כשלים. הלחץ נבנה מחדש מהתוצאות האמיתיות הבאות.",
     "errorsHeading": "{count} שגיאות אחרונות",
     "noRecentErrors": "אין שגיאות אחרונות",
     "noKey": "אין מפתח",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "נדרש מפתח API",
     "claudeAliases": "כינויי גילוי של Claude Code",
     "claudeAliasesHint": "חשוף כינויי claude/<model> כדי שבורר המודלים של השער יוכל להציג את הקטלוג.",
+    "mcpServer": "שרת MCP",
+    "mcpServerHint": "חושף את נקודת הקצה /mcp ללקוחות סוכנים. התקנות חדשות מתחילות כשהוא כבוי.",
     "urlTokensTitle": "טוקני URL ניתנים לביטול",
     "urlTokensDesc": "ללקוחות ללא כותרות בלבד. טוקני URL עלולים לדלוף להיסטוריה וליומנים, לכן בטל אותם כשאינם נחוצים עוד.",
     "urlTokenLabel": "תווית טוקן",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "מפתח #{n}",
     "attemptTimingHint": "התחל הזזה מהבקשה · משך הניסיון",
     "requestedModel": "מודל מבוקש",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "מיון לפי {column}",
+    "sortHint": "המיון חל על {count} השורות שנטענו בלבד",
+    "cacheHitRate": "שיעור פגיעות במטמון",
+    "cacheSavedTokens": "נחסכו {tokens} טוקנים",
+    "cacheHitRateHint": "{hits} פגיעות מול {misses} החטאות מאז הפעלת השרת · נחסכו {requests} קריאות לספק"
   },
   "logs": {
     "title": "יומן",

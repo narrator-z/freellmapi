@@ -11,7 +11,8 @@ import { getAllPenalties, getRoutingScores, getRoutingStrategy, setRoutingStrate
 import { BANDIT_PRESETS, isValidTimezone, type RoutingStrategy } from '../services/scoring.js';
 import { parseBudget } from '../lib/budget.js';
 import { getModelGroups } from '../services/model-groups.js';
-import { getPenaltyInspector } from '../services/penalty-inspector.js';
+import { getPenaltyInspector, clearRouterPressure } from '../services/penalty-inspector.js';
+import { getCooldownCeilingMs, setCooldownCeilingMs, MIN_COOLDOWN_CEILING_MS, MAX_COOLDOWN_CEILING_MS } from '../services/ratelimit.js';
 import { getActiveProfileId } from '../services/profile-models.js';
 import { qualifiedModelMemberId } from '../lib/endpoint-scope.js';
 import { overriddenFieldNames } from '../services/model-state.js';
@@ -30,11 +31,19 @@ fallbackRouter.get('/routing', (_req: Request, res: Response) => {
     peakStartHour: peakHours.startHour,
     peakEndHour: peakHours.endHour,
     peakTimezone: peakHours.timezone,
+    cooldownCeilingMs: getCooldownCeilingMs(),
   });
 });
 
 fallbackRouter.get('/penalty-inspector', (_req: Request, res: Response) => {
   res.json(getPenaltyInspector());
+});
+
+// DELETE /penalty-inspector → lift every cooldown, penalty and failure streak
+// at once (#952). The per-key DELETE /api/keys/:id/cooldowns stays for the
+// surgical case; this is the escape hatch for a pool that cannot route at all.
+fallbackRouter.delete('/penalty-inspector', (_req: Request, res: Response) => {
+  res.json(clearRouterPressure());
 });
 
 const routingSchema = z.object({
@@ -59,6 +68,12 @@ const routingSchema = z.object({
   // `strategy`, which ranks MODELS — the two are set from the same form, so
   // they round-trip through the same request.
   keySelectionStrategy: z.enum(['auto', 'least-remaining']).optional(),
+  // Ceiling on automatic cooldowns (#952): 1 min .. 24 h in ms, null = no cap
+  // (the escalation ladder keeps its 24h top step and 402/403 bench a day).
+  cooldownCeilingMs: z.number().int()
+    .min(MIN_COOLDOWN_CEILING_MS, { message: `cooldownCeilingMs must be at least ${MIN_COOLDOWN_CEILING_MS} (1 minute)` })
+    .max(MAX_COOLDOWN_CEILING_MS, { message: `cooldownCeilingMs must be at most ${MAX_COOLDOWN_CEILING_MS} (24 hours)` })
+    .nullable().optional(),
 });
 
 // PUT /routing → switch strategy. Presets are just weight vectors over the three
@@ -86,6 +101,9 @@ fallbackRouter.put('/routing', (req: Request, res: Response) => {
   }
   if (parsed.data.keySelectionStrategy !== undefined) {
     setKeySelectionStrategy(parsed.data.keySelectionStrategy);
+  }
+  if (parsed.data.cooldownCeilingMs !== undefined) {
+    setCooldownCeilingMs(parsed.data.cooldownCeilingMs);
   }
   try {
     setPeakHoursConfig({
@@ -115,6 +133,7 @@ fallbackRouter.put('/routing', (req: Request, res: Response) => {
     peakStartHour: peak.startHour,
     peakEndHour: peak.endHour,
     peakTimezone: peak.timezone,
+    cooldownCeilingMs: getCooldownCeilingMs(),
   });
 });
 
@@ -189,9 +208,24 @@ function orderProfileRows(rows: any[]): any[] {
 }
 
 // Get fallback chain (with dynamic penalties)
-fallbackRouter.get('/', (_req: Request, res: Response) => {
+fallbackRouter.get('/', (req: Request, res: Response) => {
   const db = getDb();
-  const activeProfileId = getActiveProfileId(db);
+  // #1047: an explicit ?profile= pins the read to that chain, so a client
+  // caching per-chain can never have "the active chain, whichever that is right
+  // now" written into a specific chain's cache entry. During an activation the
+  // active id changes between the client's two fetches; that race is how chain
+  // B's rows ended up rendered (and nearly saved) under chain A's name.
+  let activeProfileId = getActiveProfileId(db);
+  const requestedRaw = req.query.profile;
+  if (requestedRaw !== undefined) {
+    const requested = Number.parseInt(String(requestedRaw), 10);
+    if (!Number.isInteger(requested) || requested <= 0
+      || !db.prepare('SELECT 1 FROM profiles WHERE id = ?').get(requested)) {
+      res.status(404).json({ error: { message: `no such profile: ${String(requestedRaw)}` } });
+      return;
+    }
+    activeProfileId = requested;
+  }
   // `fallback_config` is the chain only for an install that has no profiles at
   // all. Once one is active it is authoritative even when it is empty — falling
   // through to the global table there is what made two different empty chains

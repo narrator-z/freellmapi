@@ -46,8 +46,8 @@
     "newEmail": "Barua pepe mpya",
     "resetCode": "Msimbo wa kuweka upya",
     "resetCodePlaceholder": "msimbo kutoka kwenye kumbukumbu za seva",
-    "resetCodeHint": "Angalia msimbo wa kuweka upya nenosiri kwenye kumbukumbu za seva.",
-    "forgotPasswordDescription": "Bofya hapa chini kutengeneza msimbo. Msimbo utaonekana kwenye kumbukumbu za seva — uweke hapa ili kuweka nenosiri jipya.",
+    "resetCodeHint": "Msimbo uko kwenye kumbukumbu ya seva. Hautumwi kamwe kwa barua pepe.",
+    "forgotPasswordDescription": "Bofya kitufe hapa chini kutengeneza msimbo wa kuweka upya. Msimbo huandikwa kwenye kumbukumbu ya seva, hautumwi kamwe kwa barua pepe. Uweke hapa ili kuweka nenosiri jipya.",
     "requestResetCode": "Tuma msimbo",
     "requestingResetCode": "Inatuma…",
     "resetPassword": "Weka upya nenosiri",
@@ -57,7 +57,9 @@
     "backToLogin": "Rudi kuingia",
     "passwordChanged": "Nenosiri limebadilishwa.",
     "emailChanged": "Barua pepe imebadilishwa.",
-    "passwordReset": "Nenosiri limewekwa upya. Tafadhali ingia."
+    "passwordReset": "Nenosiri limewekwa upya. Tafadhali ingia.",
+    "resetCodeDockerHint": "Unatumia Docker? Msimbo uko kwenye kumbukumbu ya kontena: docker logs <container>.",
+    "desktopSessionFailed": "Dashibodi haikuweza kuingia kwenye seva ya ndani. Funga FreeLLMAPI kisha uifungue tena."
   },
   "common": {
     "save": "Hifadhi",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Otomatiki",
     "keySelectionLeastRemaining": "Iliyobaki kidogo zaidi",
     "keySelectionHint": "Jinsi ya kuchagua kati ya funguo kadhaa za mtoa huduma mmoja. Otomatiki huhifadhi mzunguko wa sasa; Iliyobaki kidogo zaidi hupanga funguo kwa kiasi kilichoonekana na hujaribu kwanza ile yenye kiasi kikubwa zaidi kilichobaki.",
+    "cooldownCeiling": "Kipindi kirefu zaidi cha kupoa kiotomatiki",
+    "cooldownCeilingHint": "Huweka kikomo cha muda ambao makisio ya kipanga njia chenyewe yanaweza kuweka kando jozi ya ufunguo na modeli inayoshindwa. Ngazi kwa kawaida hupanda dakika 2, dakika 10, saa 1, saa 24, na makosa ya salio au daraja huweka kando kwa siku moja. Muda wa kujaribu tena uliotajwa na mtoa huduma haufupishwi kamwe.",
+    "cooldownCeilingDefault": "Chaguo-msingi (hadi saa 24)",
+    "cooldownCeiling10m": "Dakika 10",
+    "cooldownCeiling1h": "Saa 1",
+    "cooldownCeiling6h": "Saa 6",
     "moreOptions": "Chaguo zaidi",
     "peakActive": "(saa za msongamano)",
     "peakActiveHint": "Marekebisho ya saa za msongamano yanatumika sasa hivi, hivyo hizi si uzito wa kiolezo chenyewe: asilimia 60 ya uzito wa kasi umehamishiwa kwenye uaminifu.",
@@ -342,6 +350,8 @@
     "noCooldown": "Hakuna baridi",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Futa zote",
+    "clearAllHint": "Ondoa sasa kila kipindi cha kupoa, adhabu na mfululizo wa kushindwa. Shinikizo hujengwa upya kutoka matokeo halisi yanayofuata.",
     "errorsHeading": "{count} makosa ya hivi majuzi",
     "noRecentErrors": "Hakuna makosa ya hivi majuzi",
     "noKey": "hakuna ufunguo",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "Ufunguo wa API unahitajika",
     "claudeAliases": "Lakabu za ugunduzi za Claude Code",
     "claudeAliasesHint": "Onyesha lakabu za claude/<model> ili kichaguzi cha miundo cha lango kiweze kuorodhesha katalogi.",
+    "mcpServer": "Seva ya MCP",
+    "mcpServerHint": "Hufungua kiungo /mcp kwa wateja wa mawakala. Usakinishaji mpya huanza ukiwa umezimwa.",
     "urlTokensTitle": "Tokeni za URL zinazoweza kubatilishwa",
     "urlTokensDesc": "Kwa wateja wasio na vichwa pekee. Tokeni za URL zinaweza kuvuja kwenye historia na kumbukumbu, kwa hivyo zibatilishe zisipohitajika tena.",
     "urlTokenLabel": "Lebo ya tokeni",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Ufunguo #{n}",
     "attemptTimingHint": "Anza kukabiliana na ombi kuanza · muda wa jaribio",
     "requestedModel": "Umeomba muundo",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "Panga kwa {column}",
+    "sortHint": "Upangaji unatumika kwa safu {count} zilizopakiwa",
+    "cacheHitRate": "Kiwango cha mafanikio ya akiba",
+    "cacheSavedTokens": "Tokeni {tokens} zimehifadhiwa",
+    "cacheHitRateHint": "Mafanikio {hits} dhidi ya makosa {misses} tangu seva ianze · miito {requests} kwa mtoa huduma imeepukwa"
   },
   "logs": {
     "title": "Kumbukumbu",

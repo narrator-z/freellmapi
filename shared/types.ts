@@ -64,6 +64,14 @@ export type Platform =
   | 'google'
   | 'groq'
   | 'cerebras'
+  // Sail Research — native Responses API provider. $5 in free credits refreshes
+  // monthly when a payment method is attached; usage beyond the grant is
+  // pay-as-you-go. Background polling is required for its flex-only models.
+  | 'sail'
+  // Hosted gateways; model rows are delivered by the signed catalog only.
+  // ElectronHub renews weekly credits; Experiential renews monthly credits.
+  | 'electronhub'
+  | 'experiential'
   // B.AI — OpenAI-compatible gateway. Its catalog row is a live-tested,
   // limited-time 0-credit promotion, not a recurring free allowance.
   | 'bai'
@@ -72,6 +80,10 @@ export type Platform =
   // published. Catalog rows live in the hosted catalog (premium now, free after
   // 30 days).
   | 'anyapi'
+  // AMD Radeon Cloud TokenFactory — OpenAI-compatible shared inference. Its
+  // rotating public-model roster is free without consuming instance credits,
+  // with recurring account-level allowance and request/concurrency controls.
+  | 'radeon'
   | 'nvidia'
   | 'mistral'
   | 'sambanova'
@@ -399,6 +411,11 @@ export interface ChatMessage {
   // (DeepSeek on OpenCode Zen) require it to be replayed verbatim on the next
   // turn or they 400; the proxy preserves and forwards it. See issue #255.
   reasoning_content?: string;
+  // Moonshot's "partial" prefill flag on an assistant turn: when true, the
+  // model continues the given text instead of starting a fresh turn. Only
+  // forwarded to models that understand it (Moonshot/Kimi); stripped for all
+  // other providers. See issue #1038.
+  partial?: boolean;
 }
 
 export interface ChatCompletionRequest {
@@ -435,6 +452,10 @@ export interface TokenUsage {
   // to its chars/4 estimate when absent. (#764)
   completion_tokens_details?: { reasoning_tokens?: number };
   prompt_tokens_details?: { cached_tokens?: number };
+  // Gateway-synthesized block (upstream never sent usage): flagged so a
+  // cost-accounting client can tell it apart from the upstream's real
+  // counts. (#1084)
+  estimated?: boolean;
 }
 
 export interface ChatCompletionResponse {

@@ -46,8 +46,8 @@
     "newEmail": "Bagong e-mail",
     "resetCode": "Reset code",
     "resetCodePlaceholder": "code mula sa server logs",
-    "resetCodeHint": "Tingnan ang reset code sa server logs.",
-    "forgotPasswordDescription": "I-click sa ibaba para bumuo ng reset code. Lalabas ang code sa server logs — ilagay ito rito para magtakda ng bagong password.",
+    "resetCodeHint": "Nasa server log ang code. Hindi ito kailanman ipinapadala sa email.",
+    "forgotPasswordDescription": "I-click ang button sa ibaba para bumuo ng reset code. Isinusulat ang code sa server log, hindi kailanman ipinapadala sa email. Ilagay ito rito para magtakda ng bagong password.",
     "requestResetCode": "Ipadala ang code",
     "requestingResetCode": "Ipinapadala…",
     "resetPassword": "I-reset ang password",
@@ -57,7 +57,9 @@
     "backToLogin": "Bumalik sa pag-sign in",
     "passwordChanged": "Matagumpay na napalitan ang password.",
     "emailChanged": "Matagumpay na napalitan ang e-mail.",
-    "passwordReset": "Na-reset ang password. Mag-sign in po."
+    "passwordReset": "Na-reset ang password. Mag-sign in po.",
+    "resetCodeDockerHint": "Tumatakbo sa Docker? Nasa container log ang code: docker logs <container>.",
+    "desktopSessionFailed": "Hindi nakapag-sign in ang dashboard sa lokal na server. Isara ang FreeLLMAPI at buksan itong muli."
   },
   "common": {
     "save": "I-save",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Awto",
     "keySelectionLeastRemaining": "Pinakakaunti ang natitira",
     "keySelectionHint": "Kung paano pumili sa ilang key ng iisang provider. Pinapanatili ng Awto ang kasalukuyang rotasyon; ini-ranggo ng Pinakakaunti ang natitira ang mga key ayon sa naobserbahang quota at sinusubukan muna ang may pinakamaraming natitira.",
+    "cooldownCeiling": "Pinakamahabang awtomatikong cooldown",
+    "cooldownCeilingHint": "Nililimitahan kung gaano katagal maaaring itabi ng sariling hula ng router ang isang pares ng key at model na nabibigo. Karaniwang tumataas ang hagdan sa 2 min, 10 min, 1 oras, 24 oras, at ang mga error sa credit o tier ay nagtatabi nang isang araw. Hindi kailanman pinaiikli ang oras ng muling pagsubok na sinabi ng provider.",
+    "cooldownCeilingDefault": "Default (hanggang 24 oras)",
+    "cooldownCeiling10m": "10 minuto",
+    "cooldownCeiling1h": "1 oras",
+    "cooldownCeiling6h": "6 oras",
     "moreOptions": "Higit pang mga opsyon",
     "peakActive": "(oras ng rurok)",
     "peakActiveHint": "Aktibo ngayon ang pag-aayos para sa oras ng rurok, kaya hindi ito ang mismong timbang ng preset: 60% ng timbang ng bilis ay inilipat sa pagiging maaasahan.",
@@ -342,6 +350,8 @@
     "noCooldown": "Walang cooldown",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Burahin lahat",
+    "clearAllHint": "Alisin ngayon ang bawat cooldown, penalty at sunod-sunod na pagkabigo. Muling nabubuo ang presyon mula sa susunod na tunay na resulta.",
     "errorsHeading": "{count} mga kamakailang error",
     "noRecentErrors": "Walang kamakailang error",
     "noKey": "walang susi",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "Kailangan ng API key",
     "claudeAliases": "Mga discovery alias ng Claude Code",
     "claudeAliasesHint": "Ilantad ang mga claude/<model> na alias para mailista ng model picker ng gateway ang catalog.",
+    "mcpServer": "MCP server",
+    "mcpServerHint": "Ilalantad ang /mcp endpoint para sa mga agent client. Naka-off ito sa mga bagong install.",
     "urlTokensTitle": "Mga nare-revoke na URL token",
     "urlTokensDesc": "Para lamang sa mga client na walang header. Maaaring tumagas ang mga URL token sa history at mga log, kaya i-revoke ang mga ito kapag hindi na kailangan.",
     "urlTokenLabel": "Label ng token",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Susi #{n}",
     "attemptTimingHint": "Start offset mula sa request start · tagal ng pagtatangka",
     "requestedModel": "Hinihiling na modelo",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "Ayusin ayon sa {column}",
+    "sortHint": "Ang pag-aayos ay para lamang sa {count} na-load na row",
+    "cacheHitRate": "Cache hit rate",
+    "cacheSavedTokens": "{tokens} token ang natipid",
+    "cacheHitRateHint": "{hits} hit laban sa {misses} miss mula nang magsimula ang server · {requests} tawag sa provider ang naiwasan"
   },
   "logs": {
     "title": "Mga Log",

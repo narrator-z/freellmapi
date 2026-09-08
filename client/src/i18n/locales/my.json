@@ -46,8 +46,8 @@
     "newEmail": "အီးမေးလ်အသစ်",
     "resetCode": "ပြန်လည်သတ်မှတ်ကုဒ်",
     "resetCodePlaceholder": "ဆာဗာမှတ်တမ်းမှ ကုဒ်",
-    "resetCodeHint": "စကားဝှက်ပြန်လည်သတ်မှတ်ကုဒ်ကို ဆာဗာမှတ်တမ်းတွင် ကြည့်ပါ။",
-    "forgotPasswordDescription": "ကုဒ်ထုတ်ရန် အောက်တွင်နှိပ်ပါ။ ကုဒ်သည် ဆာဗာမှတ်တမ်းတွင် ပေါ်လာမည် — စကားဝှက်အသစ်သတ်မှတ်ရန် ဤနေရာတွင် ထည့်ပါ။",
+    "resetCodeHint": "ကုဒ်သည် ဆာဗာမှတ်တမ်းတွင် ရှိသည်။ အီးမေးလ်ဖြင့် ဘယ်တော့မှ မပို့ပါ။",
+    "forgotPasswordDescription": "ပြန်လည်သတ်မှတ်ကုဒ်ထုတ်ရန် အောက်ပါခလုတ်ကို နှိပ်ပါ။ ကုဒ်ကို ဆာဗာမှတ်တမ်းတွင် ရေးသားပြီး အီးမေးလ်ဖြင့် ဘယ်တော့မှ မပို့ပါ။ စကားဝှက်အသစ်သတ်မှတ်ရန် ဤနေရာတွင် ထည့်ပါ။",
     "requestResetCode": "ကုဒ်ပို့ရန်",
     "requestingResetCode": "ပို့နေသည်…",
     "resetPassword": "စကားဝှက်ပြန်လည်သတ်မှတ်ရန်",
@@ -57,7 +57,9 @@
     "backToLogin": "ဝင်ရောက်ရန်သို့ပြန်သွားရန်",
     "passwordChanged": "စကားဝှက်ပြောင်းပြီးပါပြီ။",
     "emailChanged": "အီးမေးလ်ပြောင်းပြီးပါပြီ။",
-    "passwordReset": "စကားဝှက်ပြန်လည်သတ်မှတ်ပြီးပါပြီ။ ဝင်ရောက်ပါ။"
+    "passwordReset": "စကားဝှက်ပြန်လည်သတ်မှတ်ပြီးပါပြီ။ ဝင်ရောက်ပါ။",
+    "resetCodeDockerHint": "Docker တွင် လည်ပတ်နေပါသလား။ ကုဒ်သည် ကွန်တိန်နာမှတ်တမ်းတွင် ရှိသည် - docker logs <container>",
+    "desktopSessionFailed": "ဒက်ရှ်ဘုတ်သည် ဒေသတွင်းဆာဗာသို့ ဝင်ရောက်၍ မရပါ။ FreeLLMAPI ကို ပိတ်ပြီး ပြန်ဖွင့်ပါ။"
   },
   "common": {
     "save": "သိမ်းဆည်းပါ",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "အလိုအလျောက်",
     "keySelectionLeastRemaining": "ကျန်အနည်းဆုံး",
     "keySelectionHint": "တူညီသောဝန်ဆောင်မှုပေးသူ၏ သော့များစွာအနက် မည်သို့ရွေးမည်ကို သတ်မှတ်သည်။ အလိုအလျောက်သည် လက်ရှိလှည့်ပတ်မှုကို ဆက်ထိန်းသည်။ ကျန်အနည်းဆုံးသည် တွေ့ရှိထားသော ကုန်ကျခွင့်အလိုက် သော့များကို စီပြီး ကျန်အများဆုံးသော့ကို ဦးစွာစမ်းသည်။",
+    "cooldownCeiling": "အလိုအလျောက် cooldown အကြာဆုံး",
+    "cooldownCeilingHint": "router ၏ ကိုယ်ပိုင်ခန့်မှန်းချက်များက ကျရှုံးနေသော key နှင့် model အတွဲကို မည်မျှကြာကြာ ဘေးဖယ်ထားနိုင်သည်ကို ကန့်သတ်သည်။ လှေကားသည် ပုံမှန်အားဖြင့် 2 မိနစ်၊ 10 မိနစ်၊ 1 နာရီ၊ 24 နာရီ တက်ပြီး credit သို့မဟုတ် tier အမှားများက တစ်ရက်ဘေးဖယ်သည်။ ပံ့ပိုးသူဖော်ပြသော ပြန်ကြိုးစားချိန်များကို ဘယ်တော့မှ မတိုစေပါ။",
+    "cooldownCeilingDefault": "မူလ (24 နာရီအထိ)",
+    "cooldownCeiling10m": "10 မိနစ်",
+    "cooldownCeiling1h": "1 နာရီ",
+    "cooldownCeiling6h": "6 နာရီ",
     "moreOptions": "နောက်ထပ် ရွေးချယ်စရာများ",
     "peakActive": "(အလုပ်များချိန်)",
     "peakActiveHint": "အလုပ်များချိန် ချိန်ညှိမှုသည် ယခု အသက်ဝင်နေသဖြင့် ဤအလေးချိန်များသည် ကြိုတင်သတ်မှတ်ချက်၏ ကိုယ်ပိုင်အလေးချိန်များ မဟုတ်ပါ— အမြန်နှုန်းအလေးချိန်၏ 60% ကို ယုံကြည်စိတ်ချရမှုသို့ ရွှေ့ထားသည်။",
@@ -342,6 +350,8 @@
     "noCooldown": "Cooldown မရှိပါ",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "အားလုံးရှင်းလင်းရန်",
+    "clearAllHint": "cooldown၊ ပြစ်ဒဏ်နှင့် ဆက်တိုက်ကျရှုံးမှုအားလုံးကို ယခုဖယ်ရှားပါ။ နောက်တစ်ကြိမ် အမှန်တကယ်ရလဒ်များမှ ဖိအားပြန်လည်တည်ဆောက်သည်။",
     "errorsHeading": "{count} အမှားများ",
     "noRecentErrors": "မကြာသေးမီက အမှားမရှိပါ",
     "noKey": "သော့မရှိ",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "API ကီး လိုအပ်သည်",
     "claudeAliases": "Claude Code ရှာဖွေမှု အမည်ပွားများ",
     "claudeAliasesHint": "Gateway မော်ဒယ်ရွေးချယ်ကိရိယာက catalog ကို စာရင်းပြနိုင်ရန် claude/<model> အမည်ပွားများကို ဖော်ပြပေးပါ။",
+    "mcpServer": "MCP ဆာဗာ",
+    "mcpServerHint": "အေးဂျင့်ကလိုင်းယင့်များအတွက် /mcp အဆုံးမှတ်ကို ဖွင့်ပေးသည်။ တပ်ဆင်မှုအသစ်များတွင် ပိတ်ထားသည်။",
     "urlTokensTitle": "ရုပ်သိမ်းနိုင်သော URL တိုကင်များ",
     "urlTokensDesc": "Header မပါသော client များအတွက်သာ ဖြစ်သည်။ URL တိုကင်များသည် မှတ်တမ်းနှင့် log များထဲသို့ ပေါက်ကြားနိုင်သဖြင့် မလိုအပ်တော့ပါက ရုပ်သိမ်းပါ။",
     "urlTokenLabel": "တိုကင် တံဆိပ်",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "သော့ #{n}",
     "attemptTimingHint": "တောင်းဆိုမှုစတင်ချိန်မှ စတင်အော့ဖ်ဆက် · ကြိုးစားမှုကြာချိန်",
     "requestedModel": "တောင်းဆိုထားသော မော်ဒယ်",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "{column} အလိုက် စီရန်",
+    "sortHint": "စီစဉ်ခြင်းသည် ဖွင့်ပြီးသော အတန်း {count} ခုအတွက်သာ သက်ရောက်သည်",
+    "cacheHitRate": "ကက်ရှ် ထိမှန်နှုန်း",
+    "cacheSavedTokens": "တိုကင် {tokens} ချွေတာခဲ့သည်",
+    "cacheHitRateHint": "ဆာဗာစတင်ချိန်မှစ၍ ထိမှန် {hits} ကြိမ်၊ လွဲ {misses} ကြိမ် · ဝန်ဆောင်မှုပေးသူ ခေါ်ဆိုမှု {requests} ကြိမ် ရှောင်ရှားခဲ့သည်"
   },
   "logs": {
     "title": "မှတ်တမ်းများ",

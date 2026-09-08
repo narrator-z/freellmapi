@@ -46,8 +46,8 @@
     "newEmail": "E-mail nou",
     "resetCode": "Cod de resetare",
     "resetCodePlaceholder": "cod din jurnalele serverului",
-    "resetCodeHint": "Găsești codul de resetare în jurnalele serverului.",
-    "forgotPasswordDescription": "Apasă mai jos pentru a genera un cod de resetare. Codul va apărea în jurnalele serverului — introdu-l aici pentru a seta o parolă nouă.",
+    "resetCodeHint": "Codul se află în jurnalul serverului. Nu este trimis niciodată prin e-mail.",
+    "forgotPasswordDescription": "Apasă butonul de mai jos pentru a genera un cod de resetare. Codul este scris în jurnalul serverului, niciodată trimis prin e-mail. Introdu-l aici pentru a seta o parolă nouă.",
     "requestResetCode": "Trimite codul",
     "requestingResetCode": "Se trimite…",
     "resetPassword": "Resetează parola",
@@ -57,7 +57,9 @@
     "backToLogin": "Înapoi la autentificare",
     "passwordChanged": "Parola a fost schimbată.",
     "emailChanged": "E-mailul a fost schimbat.",
-    "passwordReset": "Parola a fost resetată. Autentifică-te."
+    "passwordReset": "Parola a fost resetată. Autentifică-te.",
+    "resetCodeDockerHint": "Rulezi în Docker? Codul se află în jurnalul containerului: docker logs <container>.",
+    "desktopSessionFailed": "Panoul de control nu s-a putut autentifica la serverul local. Închide FreeLLMAPI și deschide-l din nou."
   },
   "common": {
     "save": "Salvează",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Automat",
     "keySelectionLeastRemaining": "Cel mai puțin rămas",
     "keySelectionHint": "Cum se alege între mai multe chei ale aceluiași furnizor. Automat păstrează rotația actuală; Cel mai puțin rămas ordonează cheile după cota observată și o încearcă prima pe cea cu cel mai mult rămas.",
+    "cooldownCeiling": "Cea mai lungă răcire automată",
+    "cooldownCeilingHint": "Limitează cât timp pot propriile estimări ale routerului să suspende o pereche cheie și model care eșuează. Scara urcă în mod normal la 2 min, 10 min, 1 h, 24 h, iar erorile de credit sau de nivel suspendă pentru o zi. Timpii de reîncercare indicați de furnizor nu sunt niciodată scurtați.",
+    "cooldownCeilingDefault": "Implicit (până la 24 h)",
+    "cooldownCeiling10m": "10 minute",
+    "cooldownCeiling1h": "1 oră",
+    "cooldownCeiling6h": "6 ore",
     "moreOptions": "Mai multe opțiuni",
     "peakActive": "(ore de vârf)",
     "peakActiveHint": "Ajustarea pentru orele de vârf este activă acum, deci acestea nu sunt ponderile presetării în sine: 60% din ponderea vitezei a trecut la fiabilitate.",
@@ -342,6 +350,8 @@
     "noCooldown": "Fără timp de reîncărcare",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Șterge tot",
+    "clearAllHint": "Ridică imediat toate răcirile, penalizările și seriile de eșecuri. Presiunea se reconstruiește din următoarele rezultate reale.",
     "errorsHeading": "{count} erori recente",
     "noRecentErrors": "Fără erori recente",
     "noKey": "fără cheie",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "Cheie API necesară",
     "claudeAliases": "Aliasuri de descoperire Claude Code",
     "claudeAliasesHint": "Expune aliasurile claude/<model> pentru ca selectorul de modele al gateway-ului să poată lista catalogul.",
+    "mcpServer": "Server MCP",
+    "mcpServerHint": "Expune endpointul /mcp către clienții agent. Instalările noi pornesc dezactivate.",
     "urlTokensTitle": "Tokenuri URL revocabile",
     "urlTokensDesc": "Doar pentru clienți fără anteturi. Tokenurile URL pot ajunge în istoric și în loguri, așa că revocă-le când nu mai sunt necesare.",
     "urlTokenLabel": "Etichetă token",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Cheia #{n}",
     "attemptTimingHint": "Start offset față de începutul cererii · Durata încercării",
     "requestedModel": "Modelul cerut",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "Sortează după {column}",
+    "sortHint": "Sortarea se aplică celor {count} rânduri încărcate",
+    "cacheHitRate": "Rata de succes a cache-ului",
+    "cacheSavedTokens": "{tokens} tokenuri economisite",
+    "cacheHitRateHint": "{hits} accesări reușite față de {misses} ratări de la pornirea serverului · {requests} apeluri către furnizor evitate"
   },
   "logs": {
     "title": "Jurnale",

@@ -46,8 +46,8 @@
     "newEmail": "Uusi sähköposti",
     "resetCode": "Palautuskoodi",
     "resetCodePlaceholder": "koodi palvelimen lokeista",
-    "resetCodeHint": "Palautuskoodi löytyy palvelimen lokeista.",
-    "forgotPasswordDescription": "Napsauta alta luodaksesi palautuskoodin. Koodi näkyy palvelimen lokeissa — syötä se tähän asettaaksesi uuden salasanan.",
+    "resetCodeHint": "Koodi on palvelimen lokissa. Sitä ei koskaan lähetetä sähköpostitse.",
+    "forgotPasswordDescription": "Napsauta alla olevaa painiketta luodaksesi palautuskoodin. Koodi kirjoitetaan palvelimen lokiin, eikä sitä koskaan lähetetä sähköpostitse. Syötä se tähän asettaaksesi uuden salasanan.",
     "requestResetCode": "Lähetä koodi",
     "requestingResetCode": "Lähetetään…",
     "resetPassword": "Palauta salasana",
@@ -57,7 +57,9 @@
     "backToLogin": "Takaisin kirjautumiseen",
     "passwordChanged": "Salasana vaihdettu.",
     "emailChanged": "Sähköposti vaihdettu.",
-    "passwordReset": "Salasana palautettu. Kirjaudu sisään."
+    "passwordReset": "Salasana palautettu. Kirjaudu sisään.",
+    "resetCodeDockerHint": "Onko käytössä Docker? Koodi on kontin lokissa: docker logs <container>.",
+    "desktopSessionFailed": "Hallintapaneeli ei voinut kirjautua paikalliselle palvelimelle. Sulje FreeLLMAPI ja avaa se uudelleen."
   },
   "common": {
     "save": "Tallenna",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Automaattinen",
     "keySelectionLeastRemaining": "Vähiten jäljellä",
     "keySelectionHint": "Miten valitaan saman palveluntarjoajan useista avaimista. Automaattinen säilyttää nykyisen kierron; Vähiten jäljellä järjestää avaimet havaitun kiintiön mukaan ja kokeilee ensin sitä, jolla on eniten jäljellä.",
+    "cooldownCeiling": "Pisin automaattinen jäähdytys",
+    "cooldownCeilingHint": "Rajoittaa, kuinka pitkään reitittimen omat arviot voivat hyllyttää epäonnistuvan avain- ja malliparin. Portaat nousevat yleensä 2 min, 10 min, 1 h, 24 h, ja saldo- tai tasovirheet hyllyttävät päiväksi. Palveluntarjoajan ilmoittamia uudelleenyritysaikoja ei koskaan lyhennetä.",
+    "cooldownCeilingDefault": "Oletus (enintään 24 h)",
+    "cooldownCeiling10m": "10 minuuttia",
+    "cooldownCeiling1h": "1 tunti",
+    "cooldownCeiling6h": "6 tuntia",
     "moreOptions": "Lisäasetukset",
     "peakActive": "(ruuhka-aika)",
     "peakActiveHint": "Ruuhka-ajan säätö on nyt käytössä, joten nämä eivät ole esiasetuksen omat painot: 60 % nopeuden painosta on siirretty luotettavuudelle.",
@@ -342,6 +350,8 @@
     "noCooldown": "Ei jäähdytysaikaa",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Tyhjennä kaikki",
+    "clearAllHint": "Poistaa heti kaikki jäähdytykset, rangaistukset ja virhesarjat. Paine rakentuu uudelleen seuraavista todellisista tuloksista.",
     "errorsHeading": "{count} viimeaikaiset virheet",
     "noRecentErrors": "Ei viimeaikaisia virheitä",
     "noKey": "ei avainta",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "API-avain vaaditaan",
     "claudeAliases": "Claude Coden löytämisaliakset",
     "claudeAliasesHint": "Julkaise claude/<model>-aliakset, jotta yhdyskäytävän mallivalitsin voi listata katalogin.",
+    "mcpServer": "MCP-palvelin",
+    "mcpServerHint": "Julkaisee /mcp-päätepisteen agenttiasiakkaille. Uusissa asennuksissa se on aluksi pois päältä.",
     "urlTokensTitle": "Peruutettavat URL-tokenit",
     "urlTokensDesc": "Vain otsikottomille asiakkaille. URL-tokenit voivat vuotaa historiaan ja lokeihin, joten peruuta ne, kun niitä ei enää tarvita.",
     "urlTokenLabel": "Tokenin nimi",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Avain #{n}",
     "attemptTimingHint": "Aloita siirtymä pyynnön alusta · Yrityksen kesto",
     "requestedModel": "Pyydetty malli",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "Lajittele: {column}",
+    "sortHint": "Lajittelu koskee vain ladattuja {count} riviä",
+    "cacheHitRate": "Välimuistin osumaprosentti",
+    "cacheSavedTokens": "{tokens} tokenia säästetty",
+    "cacheHitRateHint": "{hits} osumaa vs. {misses} ohitusta palvelimen käynnistyksestä · {requests} palveluntarjoajan kutsua vältetty"
   },
   "logs": {
     "title": "Lokit",

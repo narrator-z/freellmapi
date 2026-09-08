@@ -21,7 +21,7 @@ import {
   reliabilityPosterior, expectedReliability, sampleBeta,
   speedScore, intelligenceScore, intelligenceComposite, headroomFactor, rateWindowHeadroomFactor,
   rateLimitFactor, combineScore,
-  peakAdjustedWeights, isValidPeakHour, isValidTimezone,
+  peakAdjustedWeights, taskAdjustedWeights, TASK_WEIGHT_SHARE, isValidPeakHour, isValidTimezone,
   DEFAULT_PEAK_HOURS, type PeakHoursConfig,
   observedSpeedRank, TIMEOUT_LATENCY_CAP_MS,
   type HeadroomThresholds,
@@ -339,6 +339,18 @@ export function getAllPenalties(): Array<{ modelDbId: number; count: number; pen
   return result.sort((a, b) => b.penalty - a.penalty);
 }
 
+/**
+ * Operator clear (#952): forget every model's penalty at once and report how
+ * many models were carrying one. Pairs with clearAllCooldowns — a pool stuck
+ * behind day-long benches also has its models sunk by penalties, and lifting
+ * one without the other leaves the router still avoiding them.
+ */
+export function clearAllPenalties(): number {
+  const count = getAllPenalties().length;
+  rateLimitPenalties.clear();
+  return count;
+}
+
 // ── Routing strategy (persisted) ────────────────────────────────────────────
 const STRATEGY_KEY = 'routing_strategy';
 const CUSTOM_WEIGHTS_KEY = 'routing_custom_weights';
@@ -382,6 +394,33 @@ export function setHeadroomThresholds(rampStart?: number | null, floor?: number 
   };
   apply(HEADROOM_RAMP_START_KEY, rampStart);
   apply(HEADROOM_FLOOR_KEY, floor);
+}
+
+// ── Task-type weight share (persisted) ─────────────────────────────────────
+// #1127 follow-up: the bandit bias applied for a declared/derived task type
+// moves `share` of one axis onto the other (code: speed → intelligence; chat:
+// the reverse). The default matches the scoring.ts constant; operators can
+// tune it 0..1 (0 = bias disabled) without a code change. Absent/invalid
+// values fall back to the constant so existing installs are untouched.
+export const TASK_WEIGHT_SHARE_KEY = 'routing_task_weight_share';
+
+export function getTaskWeightShare(): number {
+  const raw = getSetting(TASK_WEIGHT_SHARE_KEY);
+  if (raw === undefined || raw.trim() === '') return TASK_WEIGHT_SHARE;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 && n <= 1 ? n : TASK_WEIGHT_SHARE;
+}
+
+// null clears back to the default; a value outside 0..1 throws.
+export function setTaskWeightShare(value: number | null): void {
+  if (value === null) {
+    getDb().prepare('DELETE FROM settings WHERE key = ?').run(TASK_WEIGHT_SHARE_KEY);
+    return;
+  }
+  if (!Number.isFinite(value) || value < 0 || value > 1) {
+    throw new Error(`Invalid value ${value} for ${TASK_WEIGHT_SHARE_KEY} (must be 0..1)`);
+  }
+  setSetting(TASK_WEIGHT_SHARE_KEY, String(value));
 }
 
 /** Chance per request that an unmeasured model gets tried first when the
@@ -1022,12 +1061,12 @@ function scoreChainEntry(
  * faithful reflection of the user's picked strategy, not a re-sampled draw each
  * request. Priority mode is deterministic either way.
  */
-function orderChain(chain: ChainRow[], strategy: RoutingStrategy, sampled = true): ChainRow[] {
+function orderChain(chain: ChainRow[], strategy: RoutingStrategy, sampled = true, task?: 'code' | 'chat'): ChainRow[] {
   // Tier first, always: it is the one ordering input that score must not be able
   // to override (see ChainRow.match_tier). Zero for every chain built anywhere
   // else, so this is a no-op outside slug-fallback resolution.
   const tier = (e: ChainRow) => e.match_tier ?? 0;
-  const weights = weightsFor(strategy);
+  let weights = weightsFor(strategy);
   if (!weights) {
     // Legacy priority mode: manual chain order + the 429/failure penalty,
     // ascending.
@@ -1062,6 +1101,17 @@ function orderChain(chain: ChainRow[], strategy: RoutingStrategy, sampled = true
       .map(({ e, i }, rank) => ({ e, i, eff: rank + 1 + getPenalty(e.model_db_id) }))
       .sort((a, b) => tier(a.e) - tier(b.e) || a.eff - b.eff || a.e.priority - b.e.priority || a.i - b.i)
       .map(x => x.e);
+  }
+
+  // Task-type bias (#1127): a client-declared/derived task type moves part of
+  // one axis onto the other (code: speed → intelligence; chat: the reverse).
+  // Applied AFTER the peak-hours adjustment, on the same weights the rest of
+  // the chain scores with; opt-in, so absent a signal the preset stands.
+  // `fastest`, `reliable` and `custom` are exempt (see TASK_EXEMPT_STRATEGIES),
+  // and the share is operator-tunable via settings (0 disables the bias).
+  if (task) {
+    const adjusted = taskAdjustedWeights(weights, task, strategy, getTaskWeightShare());
+    weights = adjusted.adjusted ? adjusted.weights : weights;
   }
 
   const composites = chain.map(e => intelligenceComposite(e.size_label, e.intelligence_rank));
@@ -1573,6 +1623,18 @@ export function hasOtherUsableKey(modelDbId: number, excludingKeyId: number, ski
 }
 
 /**
+ * Can ANY key serve this model right now? The same gates hasOtherUsableKey
+ * applies — scope (#657), per-key cooldown, and the provider/model rate and
+ * token windows — with no key excluded. /v1/models uses it to tell a `ready`
+ * model from an `exhausted` one (#1100), so the listing cannot claim a model
+ * the router would immediately skip.
+ */
+export function hasUsableKeyForModel(modelDbId: number): boolean {
+  // Key ids are AUTOINCREMENT and start at 1, so -1 excludes nothing.
+  return hasOtherUsableKey(modelDbId, -1);
+}
+
+/**
  * Every key that can be ROUTED to this model: enabled + healthy/unknown, not
  * scoped away from the model (#657), and — for a custom model — belonging to
  * the model's own endpoint (#212, #619). Deliberately ignores the transient
@@ -1903,7 +1965,7 @@ export function resolveFusionCandidate(modelId: string): FusionCandidate | null 
   return null;
 }
 
-export function routeRequest(estimatedTokens = 1000, skipKeys?: Set<string>, preferredModelDbId?: number, requireVision = false, requireTools = false, skipModels?: Set<number>, prefetchedChain?: ChainRow[], requireStructured = false, skipPlatforms?: Set<string>, exactOutputReserve = 0): RouteResult {
+export function routeRequest(estimatedTokens = 1000, skipKeys?: Set<string>, preferredModelDbId?: number, requireVision = false, requireTools = false, skipModels?: Set<number>, prefetchedChain?: ChainRow[], requireStructured = false, skipPlatforms?: Set<string>, exactOutputReserve = 0, task?: 'code' | 'chat'): RouteResult {
   const db = getDb();
 
   const strategy = getRoutingStrategy();
@@ -1911,7 +1973,7 @@ export function routeRequest(estimatedTokens = 1000, skipKeys?: Set<string>, pre
 
   const chain = (prefetchedChain ?? getActiveChain(db)).filter(e => e.enabled);
 
-  const sortedChain = orderChain(chain, strategy);
+  const sortedChain = orderChain(chain, strategy, true, task);
 
   // Exploration toggle (#685/#707 follow-up): when enabled, give a model with
   // no reliability/speed samples a guaranteed chance to be tried, so it stops
@@ -2106,7 +2168,28 @@ export function getRoutingScores(): { strategy: RoutingStrategy; keySelectionStr
   const strategy = getRoutingStrategy();
   refreshStatsCache(db);
 
-  const chain = getActiveChain(db);
+  // Score the whole enabled catalog, not just the active chain (#1047). Since
+  // #1023 the dashboard table lists every catalog row through the chain, and
+  // merging it against chain-only scores left every not-yet-opted-in row with
+  // blank reliability/speed — which read as "each new chain starts from
+  // scratch" even though the underlying per-model stats are global. Rows the
+  // chain names keep its enabled flag; the rest score as disabled. Display
+  // only: routeRequest still walks getActiveChain.
+  const profileId = getActiveProfileId(db);
+  const chain = db.prepare(`
+    SELECT m.id AS model_db_id, COALESCE(c.priority, 0) AS priority, COALESCE(c.enabled, 0) AS enabled,
+           m.platform, m.model_id, m.display_name, m.intelligence_rank,
+           m.size_label, m.monthly_token_budget,
+           m.rpm_limit, m.rpd_limit, m.tpm_limit, m.tpd_limit, m.supports_vision,
+           m.supports_tools, m.context_window, m.key_id, m.endpoint_scope
+    FROM models m
+    LEFT JOIN ${profileId != null
+      ? '(SELECT model_db_id, priority, enabled FROM profile_models WHERE profile_id = ?) c'
+      : '(SELECT model_db_id, priority, enabled FROM fallback_config) c'}
+      ON c.model_db_id = m.id
+    WHERE m.enabled = 1
+    ORDER BY c.priority ASC
+  `).all(...(profileId != null ? [profileId] : [])) as ChainRow[];
 
   // For display we score under 'balanced' weights when in priority mode, so the
   // table still shows a meaningful ranking even with the bandit turned off.

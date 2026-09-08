@@ -46,8 +46,8 @@
     "newEmail": "Нов имейл",
     "resetCode": "Код за нулиране",
     "resetCodePlaceholder": "код от логовете на сървъра",
-    "resetCodeHint": "Кодът за нулиране е в логовете на сървъра.",
-    "forgotPasswordDescription": "Натиснете по-долу, за да генерирате код за нулиране. Кодът ще се появи в логовете на сървъра — въведете го тук, за да зададете нова парола.",
+    "resetCodeHint": "Кодът е в лога на сървъра. Никога не се изпраща по имейл.",
+    "forgotPasswordDescription": "Натиснете бутона по-долу, за да генерирате код за нулиране. Кодът се записва в лога на сървъра и никога не се изпраща по имейл. Въведете го тук, за да зададете нова парола.",
     "requestResetCode": "Изпрати код",
     "requestingResetCode": "Изпращане…",
     "resetPassword": "Нулиране на паролата",
@@ -57,7 +57,9 @@
     "backToLogin": "Назад към входа",
     "passwordChanged": "Паролата е сменена.",
     "emailChanged": "Имейлът е сменен.",
-    "passwordReset": "Паролата е нулирана. Влезте отново."
+    "passwordReset": "Паролата е нулирана. Влезте отново.",
+    "resetCodeDockerHint": "Работите в Docker? Кодът е в лога на контейнера: docker logs <container>.",
+    "desktopSessionFailed": "Таблото не успя да влезе в локалния сървър. Затворете FreeLLMAPI и го отворете отново."
   },
   "common": {
     "save": "Запази",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Автоматично",
     "keySelectionLeastRemaining": "Най-малко остатък",
     "keySelectionHint": "Как се избира между няколко ключа на един и същ доставчик. Автоматично запазва текущото редуване; Най-малко остатък подрежда ключовете по наблюдаваната квота и първо опитва този с най-много останало.",
+    "cooldownCeiling": "Най-дълго автоматично охлаждане",
+    "cooldownCeilingHint": "Ограничава колко дълго собствените предположения на маршрутизатора могат да изключват провалящата се двойка ключ и модел. Стълбата обикновено расте 2 мин, 10 мин, 1 ч, 24 ч, а грешките за кредит или ниво изключват за ден. Времената за повторен опит, посочени от доставчика, никога не се съкращават.",
+    "cooldownCeilingDefault": "По подразбиране (до 24 ч)",
+    "cooldownCeiling10m": "10 минути",
+    "cooldownCeiling1h": "1 час",
+    "cooldownCeiling6h": "6 часа",
     "moreOptions": "Още опции",
     "peakActive": "(пикови часове)",
     "peakActiveHint": "Корекцията за пиковите часове е активна в момента, така че това не са собствените тегла на предварителната настройка: 60% от теглото на скоростта е прехвърлено към надеждността.",
@@ -342,6 +350,8 @@
     "noCooldown": "Няма време за презареждане",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Изчисти всичко",
+    "clearAllHint": "Незабавно премахва всички охлаждания, наказания и серии от грешки. Напрежението се натрупва отново от следващите реални резултати.",
     "errorsHeading": "{count} скорошни грешки",
     "noRecentErrors": "Няма скорошни грешки",
     "noKey": "Без ключ",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "Изисква се API ключ",
     "claudeAliases": "Псевдоними за откриване на Claude Code",
     "claudeAliasesHint": "Изложете псевдоними claude/<model>, за да може селекторът на модели на шлюза да покаже каталога.",
+    "mcpServer": "MCP сървър",
+    "mcpServerHint": "Отваря крайната точка /mcp за агентни клиенти. Новите инсталации започват изключени.",
     "urlTokensTitle": "Отменяеми URL токени",
     "urlTokensDesc": "Само за клиенти без хедъри. URL токените могат да изтекат в историята и логовете, затова ги отменяйте, когато вече не са нужни.",
     "urlTokenLabel": "Етикет на токена",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Ключ #{n}",
     "attemptTimingHint": "Изместване на старта от заявката за старт · Продължителност на опита",
     "requestedModel": "Поискан модел",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "Сортиране по {column}",
+    "sortHint": "Сортирането се прилага за {count} заредени реда",
+    "cacheHitRate": "Процент попадения в кеша",
+    "cacheSavedTokens": "Спестени {tokens} токена",
+    "cacheHitRateHint": "{hits} попадения срещу {misses} пропуска от старта на сървъра · спестени {requests} заявки към доставчик"
   },
   "logs": {
     "title": "Логове",

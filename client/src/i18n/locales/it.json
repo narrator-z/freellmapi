@@ -5,7 +5,7 @@
     "keys": "Chiavi",
     "agents": "Agenti",
     "analytics": "Analisi",
-    "catalog": "Premium",
+    "catalog": "Catalogo",
     "settings": "Impostazioni",
     "signOut": "Esci",
     "openMenu": "Apri menu di navigazione",
@@ -46,8 +46,8 @@
     "newEmail": "Nuova email",
     "resetCode": "Codice di reset",
     "resetCodePlaceholder": "codice dai log del server",
-    "resetCodeHint": "Controlla i log del server per ottenere il codice di reset della password.",
-    "forgotPasswordDescription": "Clicca il pulsante qui sotto per generare un codice di reset. Il codice apparirà nei log del server — inseriscilo qui per impostare una nuova password.",
+    "resetCodeHint": "Il codice è nel log del server. Non viene mai inviato via email.",
+    "forgotPasswordDescription": "Clicca il pulsante qui sotto per generare un codice di reset. Il codice viene scritto nel log del server, mai inviato via email. Inseriscilo qui per impostare una nuova password.",
     "requestResetCode": "Invia codice di reset",
     "requestingResetCode": "Invio…",
     "resetPassword": "Reimposta password",
@@ -57,7 +57,9 @@
     "backToLogin": "Torna al login",
     "passwordChanged": "Password modificata con successo.",
     "emailChanged": "Email modificata con successo.",
-    "passwordReset": "Password reimpostata con successo. Accedi di nuovo."
+    "passwordReset": "Password reimpostata con successo. Accedi di nuovo.",
+    "resetCodeDockerHint": "Usi Docker? Il codice è nel log del container: docker logs <container>.",
+    "desktopSessionFailed": "La dashboard non è riuscita ad accedere al server locale. Chiudi FreeLLMAPI e riaprilo."
   },
   "common": {
     "save": "Salva",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Automatica",
     "keySelectionLeastRemaining": "Meno residuo",
     "keySelectionHint": "Come scegliere tra più chiavi dello stesso provider. Automatica mantiene la rotazione attuale; Meno residuo ordina le chiavi in base alla quota osservata e prova per prima quella con più margine.",
+    "cooldownCeiling": "Raffreddamento automatico massimo",
+    "cooldownCeilingHint": "Limita per quanto tempo le stime del router possono mettere in panchina una coppia chiave e modello che fallisce. La scala normalmente sale a 2 min, 10 min, 1 h, 24 h, e gli errori di credito o di livello escludono per un giorno. I tempi di ritentativo indicati dal provider non vengono mai accorciati.",
+    "cooldownCeilingDefault": "Predefinito (fino a 24 h)",
+    "cooldownCeiling10m": "10 minuti",
+    "cooldownCeiling1h": "1 ora",
+    "cooldownCeiling6h": "6 ore",
     "moreOptions": "Altre opzioni",
     "peakActive": "(ore di punta)",
     "peakActiveHint": "La regolazione per le ore di punta è attiva in questo momento, quindi questi non sono i pesi del preset: il 60% del peso della velocità è passato all'affidabilità.",
@@ -342,6 +350,8 @@
     "noCooldown": "Nessun cooldown",
     "cooldownChip": "{key}: {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Cancella tutto",
+    "clearAllHint": "Rimuove subito ogni raffreddamento, penalità e serie di errori. La pressione si ricostruisce dai prossimi risultati reali.",
     "errorsHeading": "{count} errori recenti",
     "noRecentErrors": "Nessun errore recente",
     "noKey": "nessuna chiave",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "Chiave API richiesta",
     "claudeAliases": "Alias di scoperta per Claude Code",
     "claudeAliasesHint": "Esponi gli alias claude/<model> così il selettore di modelli del gateway può elencare il catalogo.",
+    "mcpServer": "Server MCP",
+    "mcpServerHint": "Espone l'endpoint /mcp ai client agente. Le nuove installazioni partono disattivate.",
     "urlTokensTitle": "Token URL revocabili",
     "urlTokensDesc": "Solo per client senza header. I token URL possono finire nella cronologia e nei log, quindi revocali quando non servono più.",
     "urlTokenLabel": "Etichetta del token",
@@ -668,7 +680,8 @@
       "dsh": "L'imbracatura di DeepSeek, che tiene ogni fornitore come una rotta commutabile.",
       "mimo": "L'agente da terminale di Xiaomi, un fork di OpenCode che accetta qualsiasi fornitore compatibile OpenAI.",
       "cursor": "L'editor pensato per l'IA; passa dal cloud di Cursor, quindi serve un URL pubblico.",
-      "generic": "Qualsiasi altro strumento che parli l'API di OpenAI, configurato a mano con URL base e chiave."
+      "generic": "Qualsiasi altro strumento che parli l'API di OpenAI, configurato a mano con URL base e chiave.",
+      "atomcode": "L'agente da terminale di AtomGit, scritto in Rust, che accetta qualsiasi endpoint compatibile OpenAI."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Chiave #{n}",
     "attemptTimingHint": "Offset dall'inizio della richiesta · durata del tentativo",
     "requestedModel": "Modello richiesto",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "Ordina per {column}",
+    "sortHint": "L'ordinamento si applica alle {count} righe caricate",
+    "cacheHitRate": "Tasso di hit della cache",
+    "cacheSavedTokens": "{tokens} token risparmiati",
+    "cacheHitRateHint": "{hits} hit contro {misses} miss dall'avvio del server · {requests} chiamate al provider evitate"
   },
   "logs": {
     "title": "Log",

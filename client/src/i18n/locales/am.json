@@ -46,8 +46,8 @@
     "newEmail": "አዲስ ኢሜይል",
     "resetCode": "ዳግም ማስጀመሪያ ኮድ",
     "resetCodePlaceholder": "ከአገልጋይ መዝገብ የተገኘ ኮድ",
-    "resetCodeHint": "የይለፍ ቃል ዳግም ማስጀመሪያ ኮዱን በአገልጋይ መዝገብ ውስጥ ይመልከቱ።",
-    "forgotPasswordDescription": "ኮድ ለመፍጠር ከታች ይጫኑ። ኮዱ በአገልጋይ መዝገብ ውስጥ ይታያል — አዲስ የይለፍ ቃል ለማዘጋጀት እዚህ ያስገቡት።",
+    "resetCodeHint": "ኮዱ በአገልጋይ መዝገብ ውስጥ ነው። በኢሜይል በፍጹም አይላክም።",
+    "forgotPasswordDescription": "ዳግም ማስጀመሪያ ኮድ ለመፍጠር ከታች ያለውን አዝራር ይጫኑ። ኮዱ በአገልጋይ መዝገብ ውስጥ ይጻፋል፣ በኢሜይል በፍጹም አይላክም። አዲስ የይለፍ ቃል ለማዘጋጀት እዚህ ያስገቡት።",
     "requestResetCode": "ኮድ ላክ",
     "requestingResetCode": "በመላክ ላይ…",
     "resetPassword": "የይለፍ ቃል ዳግም አስጀምር",
@@ -57,7 +57,9 @@
     "backToLogin": "ወደ መግቢያ ተመለስ",
     "passwordChanged": "የይለፍ ቃል በተሳካ ሁኔታ ተቀይሯል።",
     "emailChanged": "ኢሜይል በተሳካ ሁኔታ ተቀይሯል።",
-    "passwordReset": "የይለፍ ቃል ዳግም ተጀምሯል። እባክዎ ይግቡ።"
+    "passwordReset": "የይለፍ ቃል ዳግም ተጀምሯል። እባክዎ ይግቡ።",
+    "resetCodeDockerHint": "በ Docker ውስጥ እየሮጠ ነው? ኮዱ በኮንቴይነሩ መዝገብ ውስጥ ነው፦ docker logs <container>።",
+    "desktopSessionFailed": "ዳሽቦርዱ ወደ አካባቢያዊ አገልጋዩ መግባት አልቻለም። FreeLLMAPI ን ዘግተው እንደገና ይክፈቱት።"
   },
   "common": {
     "save": "አስቀምጥ",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "ራስ-ሰር",
     "keySelectionLeastRemaining": "ትንሹ የቀረው",
     "keySelectionHint": "ከአንድ አቅራቢ በርካታ ቁልፎች መካከል እንዴት እንደሚመረጥ። ራስ-ሰር አሁን ያለውን ተራ ይጠብቃል፤ ትንሹ የቀረው ቁልፎቹን በተስተዋለው ኮታ ደርድሮ ብዙ የቀረውን ቁልፍ አስቀድሞ ይሞክራል።",
+    "cooldownCeiling": "ረጅሙ አውቶማቲክ ማቀዝቀዣ",
+    "cooldownCeilingHint": "የራውተሩ የራሱ ግምቶች የሚወድቅን የቁልፍ እና ሞዴል ጥንድ ለምን ያህል ጊዜ ማግለል እንደሚችሉ ይገድባል። መሰላሉ በተለምዶ 2 ደቂቃ፣ 10 ደቂቃ፣ 1 ሰዓት፣ 24 ሰዓት ይወጣል፣ የክሬዲት ወይም የደረጃ ስህተቶች ደግሞ ለአንድ ቀን ያገልላሉ። አቅራቢው የገለጻቸው የድጋሚ ሙከራ ጊዜያት በፍጹም አይቀነሱም።",
+    "cooldownCeilingDefault": "ነባሪ (እስከ 24 ሰዓት)",
+    "cooldownCeiling10m": "10 ደቂቃ",
+    "cooldownCeiling1h": "1 ሰዓት",
+    "cooldownCeiling6h": "6 ሰዓት",
     "moreOptions": "ተጨማሪ አማራጮች",
     "peakActive": "(የጫና ሰዓት)",
     "peakActiveHint": "የጫና ሰዓት ማስተካከያ አሁን እየሠራ ነው፣ ስለዚህ እነዚህ የቅድመ-ቅንብሩ ራሱ ክብደቶች አይደሉም፦ ከፍጥነት ክብደት 60% ወደ አስተማማኝነት ተዛውሯል።",
@@ -342,6 +350,8 @@
     "noCooldown": "ማቀዝቀዝ የለም",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "ሁሉንም አጽዳ",
+    "clearAllHint": "ሁሉንም ማቀዝቀዣዎች፣ ቅጣቶች እና ተከታታይ ውድቀቶች አሁን ያንሱ። ግፊቱ ከቀጣዮቹ እውነተኛ ውጤቶች እንደገና ይገነባል።",
     "errorsHeading": "{count} የቅርብ ጊዜ ስህተቶች",
     "noRecentErrors": "ምንም የቅርብ ጊዜ ስህተቶች የሉም",
     "noKey": "ቁልፍ የለም",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "የAPI ቁልፍ ያስፈልጋል",
     "claudeAliases": "የClaude Code ፍለጋ ተለዋጭ ስሞች",
     "claudeAliasesHint": "የጌትዌዩ ሞዴል መራጭ ካታሎጉን መዘርዘር እንዲችል የclaude/<model> ተለዋጭ ስሞችን ይክፈቱ።",
+    "mcpServer": "MCP አገልጋይ",
+    "mcpServerHint": "ለወኪል ደንበኞች የ/mcp መዳረሻን ይክፈቱ። አዲስ ተከላዎች ጠፍቶ ይጀምራሉ።",
     "urlTokensTitle": "ሊሻሩ የሚችሉ የURL ቶከኖች",
     "urlTokensDesc": "ራስጌ ለሌላቸው ደንበኞች ብቻ። የURL ቶከኖች ወደ ታሪክ እና ምዝግብ ማስታወሻዎች ሊፈሱ ይችላሉ፣ ስለዚህ በማያስፈልጉበት ጊዜ ይሽሯቸው።",
     "urlTokenLabel": "የቶከን መለያ",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "ቁልፍ #{n}",
     "attemptTimingHint": "ከጥያቄ ጅምር ማካካሻ ጀምር · የሙከራ ጊዜ",
     "requestedModel": "የተጠየቀው ሞዴል",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "በ{column} ደርድር",
+    "sortHint": "መደርደሩ የሚሠራው በተጫኑት {count} ረድፎች ላይ ብቻ ነው",
+    "cacheHitRate": "የመሸጎጫ ግኝት መጠን",
+    "cacheSavedTokens": "{tokens} ቶከን ተቆጥቧል",
+    "cacheHitRateHint": "አገልጋዩ ከተጀመረ ወዲህ {hits} ግኝት እና {misses} ስህተት · {requests} የአቅራቢ ጥሪዎች ተስወግደዋል"
   },
   "logs": {
     "title": "መዝገቦች",

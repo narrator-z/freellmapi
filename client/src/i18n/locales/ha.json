@@ -46,8 +46,8 @@
     "newEmail": "Sabon imel",
     "resetCode": "Lambar sake saiti",
     "resetCodePlaceholder": "lamba daga tarihin uwar garke",
-    "resetCodeHint": "Duba lambar sake saiti a tarihin uwar garke.",
-    "forgotPasswordDescription": "Danna ƙasa don ƙirƙirar lamba. Lambar za ta bayyana a tarihin uwar garke — shigar da ita nan don sabuwar kalmar sirri.",
+    "resetCodeHint": "Lambar tana cikin tarihin uwar garke. Ba a taɓa aika ta ta imel ba.",
+    "forgotPasswordDescription": "Danna maɓallin da ke ƙasa don ƙirƙirar lambar sake saiti. Ana rubuta lambar a cikin tarihin uwar garke, ba a taɓa aika ta ta imel ba. Shigar da ita nan don saita sabuwar kalmar sirri.",
     "requestResetCode": "Aika lamba",
     "requestingResetCode": "Ana aikawa…",
     "resetPassword": "Sake saita kalmar sirri",
@@ -57,7 +57,9 @@
     "backToLogin": "Koma shiga",
     "passwordChanged": "An canza kalmar sirri.",
     "emailChanged": "An canza imel.",
-    "passwordReset": "An sake saita kalmar sirri. Da fatan shiga."
+    "passwordReset": "An sake saita kalmar sirri. Da fatan shiga.",
+    "resetCodeDockerHint": "Kana amfani da Docker? Lambar tana cikin tarihin kwantena: docker logs <container>.",
+    "desktopSessionFailed": "Dashboard ɗin bai iya shiga uwar garken gida ba. Rufe FreeLLMAPI ka sake buɗe shi."
   },
   "common": {
     "save": "Ajiye",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Ta atomatik",
     "keySelectionLeastRemaining": "Mafi ƙarancin saura",
     "keySelectionHint": "Yadda ake zaɓi tsakanin maɓallai da yawa na mai bayarwa ɗaya. Ta atomatik yana riƙe da jujjuyawar yanzu; Mafi ƙarancin saura yana jera maɓallai bisa ƙimar da aka lura da ita kuma yana gwada wanda ya fi sauran da farko.",
+    "cooldownCeiling": "Mafi tsawon hutun kai tsaye",
+    "cooldownCeilingHint": "Yana iyakance tsawon lokacin da hasashen na'urar tuƙa kanta zai iya ajiye maɓalli da samfuri masu gazawa. Matakan yawanci suna hawa minti 2, minti 10, awa 1, awa 24, kuma kurakuran kuɗi ko matsayi suna ajiye rana ɗaya. Ba a taɓa rage lokutan sake gwadawa da mai bayarwa ya bayyana ba.",
+    "cooldownCeilingDefault": "Tsoho (har zuwa awa 24)",
+    "cooldownCeiling10m": "Minti 10",
+    "cooldownCeiling1h": "Awa 1",
+    "cooldownCeiling6h": "Awa 6",
     "moreOptions": "Ƙarin zaɓuɓɓuka",
     "peakActive": "(lokutan cunkoso)",
     "peakActiveHint": "Gyaran lokutan cunkoso yana aiki yanzu, don haka waɗannan ba nauyin saitin kansa ba ne: kashi 60 na nauyin gudu an mayar da shi ga aminci.",
@@ -342,6 +350,8 @@
     "noCooldown": "Babu sanyi",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Share duka",
+    "clearAllHint": "Cire dukkan lokutan hutu, hukunce-hukunce da jerin gazawa yanzu. Matsin lamba yana sake ginuwa daga sakamakon gaske na gaba.",
     "errorsHeading": "{count} kurakurai na baya-bayan nan",
     "noRecentErrors": "Babu kurakurai na baya-bayan nan",
     "noKey": "babu makulli",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "Ana buƙatar maɓallin API",
     "claudeAliases": "Sunayen gano na Claude Code",
     "claudeAliasesHint": "Fitar da sunayen claude/<model> domin mazaɓin samfura na gateway ya iya lissafa kundin.",
+    "mcpServer": "Sabar MCP",
+    "mcpServerHint": "Yana buɗe ƙarshen /mcp ga abokan huldar wakilai. Sabbin shigarwa suna farawa a kashe.",
     "urlTokensTitle": "Alamomin URL masu sokewa",
     "urlTokensDesc": "Don abokan ciniki marasa header kawai. Alamomin URL na iya zuba cikin tarihi da rajistan ayyuka, don haka soke su idan ba a buƙatarsu.",
     "urlTokenLabel": "Lakabin alama",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Maɓalli #{n}",
     "attemptTimingHint": "Fara biya daga farkon buƙatun · lokacin ƙoƙarin",
     "requestedModel": "Samfurin da ake nema",
-    "ttft": "Saukewa: TTFT"
+    "ttft": "Saukewa: TTFT",
+    "sortBy": "Tsara bisa {column}",
+    "sortHint": "Tsarawar ta shafi layuka {count} da aka ɗora kawai",
+    "cacheHitRate": "Yawan nasarar cache",
+    "cacheSavedTokens": "An adana tokens {tokens}",
+    "cacheHitRateHint": "Nasara {hits} kan rashi {misses} tun farawar sabar · an guji kiran mai bayarwa {requests}"
   },
   "logs": {
     "title": "Logs",

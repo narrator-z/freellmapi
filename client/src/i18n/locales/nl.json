@@ -46,8 +46,8 @@
     "newEmail": "Nieuw e-mailadres",
     "resetCode": "Resetcode",
     "resetCodePlaceholder": "code uit de serverlogs",
-    "resetCodeHint": "Kijk in de serverlogs voor de resetcode.",
-    "forgotPasswordDescription": "Klik hieronder om een resetcode te genereren. De code verschijnt in de serverlogs — voer hem hier in om een nieuw wachtwoord in te stellen.",
+    "resetCodeHint": "De code staat in de serverlog. Hij wordt nooit per e-mail verstuurd.",
+    "forgotPasswordDescription": "Klik op de knop hieronder om een resetcode te genereren. De code wordt naar de serverlog geschreven en nooit per e-mail verstuurd. Voer hem hier in om een nieuw wachtwoord in te stellen.",
     "requestResetCode": "Resetcode versturen",
     "requestingResetCode": "Versturen…",
     "resetPassword": "Wachtwoord resetten",
@@ -57,7 +57,9 @@
     "backToLogin": "Terug naar inloggen",
     "passwordChanged": "Wachtwoord gewijzigd.",
     "emailChanged": "E-mailadres gewijzigd.",
-    "passwordReset": "Wachtwoord gereset. Log opnieuw in."
+    "passwordReset": "Wachtwoord gereset. Log opnieuw in.",
+    "resetCodeDockerHint": "Draait het in Docker? De code staat in de containerlog: docker logs <container>.",
+    "desktopSessionFailed": "Het dashboard kon niet inloggen op de lokale server. Sluit FreeLLMAPI af en open het opnieuw."
   },
   "common": {
     "save": "Sla op",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Automatisch",
     "keySelectionLeastRemaining": "Minste resterend",
     "keySelectionHint": "Hoe er wordt gekozen tussen meerdere sleutels van dezelfde provider. Automatisch houdt de huidige rotatie aan; Minste resterend rangschikt sleutels op het waargenomen quotum en probeert eerst die met het meeste over.",
+    "cooldownCeiling": "Langste automatische afkoeling",
+    "cooldownCeilingHint": "Begrenst hoe lang de eigen schattingen van de router een falend sleutel-en-modelpaar mogen uitsluiten. De ladder loopt normaal op naar 2 min, 10 min, 1 u, 24 u, en tegoed- of niveaufouten sluiten een dag uit. Door de provider opgegeven wachttijden worden nooit ingekort.",
+    "cooldownCeilingDefault": "Standaard (tot 24 u)",
+    "cooldownCeiling10m": "10 minuten",
+    "cooldownCeiling1h": "1 uur",
+    "cooldownCeiling6h": "6 uur",
     "moreOptions": "Meer opties",
     "peakActive": "(piekuren)",
     "peakActiveHint": "De piekuren-aanpassing is nu actief, dus dit zijn niet de gewichten van de preset zelf: 60% van het snelheidsgewicht is verschoven naar betrouwbaarheid.",
@@ -342,6 +350,8 @@
     "noCooldown": "Geen cooldown",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Alles wissen",
+    "clearAllHint": "Heft nu elke afkoeling, straf en foutreeks op. De druk bouwt zich opnieuw op uit de volgende echte resultaten.",
     "errorsHeading": "{count} recente fouten",
     "noRecentErrors": "Geen recente fouten",
     "noKey": "Geen sleutel",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "API-sleutel vereist",
     "claudeAliases": "Claude Code-detectiealiassen",
     "claudeAliasesHint": "Stel claude/<model>-aliassen beschikbaar zodat de modelkiezer van de gateway de catalogus kan tonen.",
+    "mcpServer": "MCP-server",
+    "mcpServerHint": "Stelt het /mcp-eindpunt beschikbaar voor agentclients. Nieuwe installaties beginnen uitgeschakeld.",
     "urlTokensTitle": "Intrekbare URL-tokens",
     "urlTokensDesc": "Alleen voor clients zonder headers. URL-tokens kunnen in geschiedenis en logs terechtkomen, dus trek ze in zodra ze niet meer nodig zijn.",
     "urlTokenLabel": "Tokenlabel",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeeks harnas, dat elke aanbieder als een omschakelbare route bewaart.",
       "mimo": "Xiaomi's terminalagent, een OpenCode-fork die elke OpenAI-compatibele aanbieder aankan.",
       "cursor": "De AI-gerichte editor; hij loopt via de cloud van Cursor en heeft dus een publieke URL nodig.",
-      "generic": "Elk ander hulpmiddel dat de OpenAI-API spreekt, met de hand ingesteld via basis-URL en sleutel."
+      "generic": "Elk ander hulpmiddel dat de OpenAI-API spreekt, met de hand ingesteld via basis-URL en sleutel.",
+      "atomcode": "AtomGit's terminalagent, geschreven in Rust, die elk OpenAI-compatibel endpoint aankan."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Sleutel #{n}",
     "attemptTimingHint": "Start offset van verzoek start · Duur van de poging",
     "requestedModel": "Aangevraagd model",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "Sorteren op {column}",
+    "sortHint": "De sortering geldt voor de {count} geladen rijen",
+    "cacheHitRate": "Cache-hitratio",
+    "cacheSavedTokens": "{tokens} tokens bespaard",
+    "cacheHitRateHint": "{hits} hits tegenover {misses} missers sinds de serverstart · {requests} provideraanroepen vermeden"
   },
   "logs": {
     "title": "Logs",

@@ -46,8 +46,8 @@
     "newEmail": "Novo e-mail",
     "resetCode": "Código de reposição",
     "resetCodePlaceholder": "código dos registos do servidor",
-    "resetCodeHint": "Consulte os registos do servidor para obter o código.",
-    "forgotPasswordDescription": "Clique abaixo para gerar um código de reposição. O código aparecerá nos registos do servidor — introduza-o aqui para definir uma nova palavra-passe.",
+    "resetCodeHint": "O código está no registo do servidor. Nunca é enviado por e-mail.",
+    "forgotPasswordDescription": "Clique no botão abaixo para gerar um código de reposição. O código é escrito no registo do servidor, nunca enviado por e-mail. Introduza-o aqui para definir uma nova palavra-passe.",
     "requestResetCode": "Enviar código",
     "requestingResetCode": "A enviar…",
     "resetPassword": "Repor palavra-passe",
@@ -57,7 +57,9 @@
     "backToLogin": "Voltar ao início de sessão",
     "passwordChanged": "Palavra-passe alterada com sucesso.",
     "emailChanged": "E-mail alterado com sucesso.",
-    "passwordReset": "Palavra-passe reposta. Inicie sessão."
+    "passwordReset": "Palavra-passe reposta. Inicie sessão.",
+    "resetCodeDockerHint": "Está a usar Docker? O código está no registo do contentor: docker logs <container>.",
+    "desktopSessionFailed": "O painel não conseguiu iniciar sessão no servidor local. Feche o FreeLLMAPI e volte a abri-lo."
   },
   "common": {
     "save": "Guardar",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Automática",
     "keySelectionLeastRemaining": "Menor restante",
     "keySelectionHint": "Como escolher entre várias chaves do mesmo fornecedor. Automática mantém a rotação atual; Menor restante ordena as chaves pela quota observada e tenta primeiro a que tem mais disponível.",
+    "cooldownCeiling": "Arrefecimento automático máximo",
+    "cooldownCeilingHint": "Limita durante quanto tempo as próprias estimativas do encaminhador podem afastar um par de chave e modelo com falhas. A escada sobe normalmente 2 min, 10 min, 1 h, 24 h, e erros de crédito ou de escalão afastam durante um dia. Os tempos de nova tentativa indicados pelo fornecedor nunca são encurtados.",
+    "cooldownCeilingDefault": "Predefinição (até 24 h)",
+    "cooldownCeiling10m": "10 minutos",
+    "cooldownCeiling1h": "1 hora",
+    "cooldownCeiling6h": "6 horas",
     "moreOptions": "Mais opções",
     "peakActive": "(horas de ponta)",
     "peakActiveHint": "O ajuste de horas de ponta está ativo neste momento, por isso estes não são os pesos do próprio preset: 60% do peso da velocidade passou para a fiabilidade.",
@@ -342,6 +350,8 @@
     "noCooldown": "Sem tempo de recarga",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Limpar tudo",
+    "clearAllHint": "Levanta agora todos os arrefecimentos, penalizações e séries de falhas. A pressão é reconstruída a partir dos próximos resultados reais.",
     "errorsHeading": "{count} erros recentes",
     "noRecentErrors": "Sem erros recentes",
     "noKey": "sem chave",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "Chave de API obrigatória",
     "claudeAliases": "Aliases de descoberta do Claude Code",
     "claudeAliasesHint": "Exponha aliases claude/<model> para que o seletor de modelos do gateway possa listar o catálogo.",
+    "mcpServer": "Servidor MCP",
+    "mcpServerHint": "Expõe o ponto final /mcp aos clientes de agente. As instalações novas começam desligadas.",
     "urlTokensTitle": "Tokens de URL revogáveis",
     "urlTokensDesc": "Apenas para clientes sem cabeçalhos. Os tokens de URL podem ser expostos no histórico e nos registos, por isso revogue-os quando já não forem necessários.",
     "urlTokenLabel": "Etiqueta do token",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Chave #{n}",
     "attemptTimingHint": "Início deslocado a partir do início do pedido · Duração da tentativa",
     "requestedModel": "Modelo solicitado",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "Ordenar por {column}",
+    "sortHint": "A ordenação aplica-se às {count} linhas carregadas",
+    "cacheHitRate": "Taxa de acerto da cache",
+    "cacheSavedTokens": "{tokens} tokens poupados",
+    "cacheHitRateHint": "{hits} acertos contra {misses} falhas desde o arranque do servidor · {requests} chamadas ao fornecedor evitadas"
   },
   "logs": {
     "title": "Registos",

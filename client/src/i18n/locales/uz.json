@@ -46,8 +46,8 @@
     "newEmail": "Yangi e-pochta",
     "resetCode": "Tiklash kodi",
     "resetCodePlaceholder": "server jurnallaridagi kod",
-    "resetCodeHint": "Parolni tiklash kodini server jurnallarida ko'ring.",
-    "forgotPasswordDescription": "Tiklash kodini yaratish uchun quyiga bosing. Kod server jurnallarida ko'rinadi — yangi parol o'rnatish uchun shu yerga kiriting.",
+    "resetCodeHint": "Kod server jurnalida. U hech qachon elektron pochta orqali yuborilmaydi.",
+    "forgotPasswordDescription": "Tiklash kodini yaratish uchun quyidagi tugmani bosing. Kod server jurnaliga yoziladi, hech qachon elektron pochta orqali yuborilmaydi. Yangi parol o'rnatish uchun shu yerga kiriting.",
     "requestResetCode": "Kodni yuborish",
     "requestingResetCode": "Yuborilmoqda…",
     "resetPassword": "Parolni tiklash",
@@ -57,7 +57,9 @@
     "backToLogin": "Kirishga qaytish",
     "passwordChanged": "Parol muvaffaqiyatli o'zgartirildi.",
     "emailChanged": "E-pochta muvaffaqiyatli o'zgartirildi.",
-    "passwordReset": "Parol tiklandi. Iltimos, kiring."
+    "passwordReset": "Parol tiklandi. Iltimos, kiring.",
+    "resetCodeDockerHint": "Docker ichida ishlayaptimi? Kod konteyner jurnalida: docker logs <container>.",
+    "desktopSessionFailed": "Boshqaruv paneli lokal serverga kira olmadi. FreeLLMAPI dasturini yopib, qayta oching."
   },
   "common": {
     "save": "Saqlash",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Avtomatik",
     "keySelectionLeastRemaining": "Eng kam qolgan",
     "keySelectionHint": "Bitta provayderning bir nechta kaliti orasidan qanday tanlanadi. Avtomatik joriy navbatni saqlaydi; Eng kam qolgan kalitlarni kuzatilgan kvota bo‘yicha tartiblaydi va eng ko‘p qolgan kalitni birinchi sinaydi.",
+    "cooldownCeiling": "Eng uzun avtomatik sovish",
+    "cooldownCeilingHint": "Marshrutizatorning o‘z taxminlari ishlamayotgan kalit va model juftligini qancha vaqt chetlatishi mumkinligini cheklaydi. Zina odatda 2 daq, 10 daq, 1 soat, 24 soat ko‘tariladi, kredit yoki daraja xatolari esa bir kun chetlatadi. Provayder ko‘rsatgan qayta urinish vaqtlari hech qachon qisqartirilmaydi.",
+    "cooldownCeilingDefault": "Standart (24 soatgacha)",
+    "cooldownCeiling10m": "10 daqiqa",
+    "cooldownCeiling1h": "1 soat",
+    "cooldownCeiling6h": "6 soat",
     "moreOptions": "Qo'shimcha sozlamalar",
     "peakActive": "(eng band soatlar)",
     "peakActiveHint": "Eng band soatlar moslashuvi hozir yoqilgan, shuning uchun bular andozaning oʻz vaznlari emas: tezlik vaznining 60% ishonchlilikka koʻchirilgan.",
@@ -342,6 +350,8 @@
     "noCooldown": "Sovutish yo'q",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Hammasini tozalash",
+    "clearAllHint": "Barcha sovish davrlari, jarimalar va nosozlik ketma-ketliklarini hoziroq olib tashlaydi. Bosim keyingi haqiqiy natijalardan qayta yig‘iladi.",
     "errorsHeading": "{count} oxirgi xatolar",
     "noRecentErrors": "Oxirgi xatolar yo'q",
     "noKey": "kalit yo'q",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "API kaliti talab qilinadi",
     "claudeAliases": "Claude Code aniqlash taxalluslari",
     "claudeAliasesHint": "Shlyuz model tanlagichi katalogni ro'yxatlashi uchun claude/<model> taxalluslarini oching.",
+    "mcpServer": "MCP serveri",
+    "mcpServerHint": "Agent mijozlari uchun /mcp yakuniy nuqtasini ochadi. Yangi o‘rnatishlarda u o‘chiq bo‘ladi.",
     "urlTokensTitle": "Bekor qilinadigan URL tokenlari",
     "urlTokensDesc": "Faqat sarlavhasiz mijozlar uchun. URL tokenlari tarix va jurnallarga sizib chiqishi mumkin, shuning uchun kerak bo'lmaganda ularni bekor qiling.",
     "urlTokenLabel": "Token yorlig'i",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Kalit #{n}",
     "attemptTimingHint": "So'rov boshlanishidan boshlab ofsetni boshlash · urinish davomiyligi",
     "requestedModel": "So'ralgan model",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "{column} bo‘yicha saralash",
+    "sortHint": "Saralash faqat yuklangan {count} ta qatorga qo‘llanadi",
+    "cacheHitRate": "Kesh muvaffaqiyat darajasi",
+    "cacheSavedTokens": "{tokens} token tejaldi",
+    "cacheHitRateHint": "Server ishga tushganidan beri {hits} muvaffaqiyat, {misses} o‘tkazib yuborish · {requests} ta provayder so‘rovi tejaldi"
   },
   "logs": {
     "title": "Jurnal",

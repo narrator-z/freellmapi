@@ -46,8 +46,8 @@
     "newEmail": "Yeni e-poçt",
     "resetCode": "Sıfırlama kodu",
     "resetCodePlaceholder": "server jurnallarındakı kod",
-    "resetCodeHint": "Parol sıfırlama kodunu server jurnallarında görün.",
-    "forgotPasswordDescription": "Sıfırlama kodu yaratmaq üçün aşağıya klikləyin. Kod server jurnallarında görünəcək — yeni parol təyin etmək üçün buraya daxil edin.",
+    "resetCodeHint": "Kod server jurnalındadır. E-poçtla heç vaxt göndərilmir.",
+    "forgotPasswordDescription": "Sıfırlama kodu yaratmaq üçün aşağıdakı düyməyə klikləyin. Kod server jurnalına yazılır, e-poçtla heç vaxt göndərilmir. Yeni parol təyin etmək üçün onu buraya daxil edin.",
     "requestResetCode": "Kodu göndər",
     "requestingResetCode": "Göndərilir…",
     "resetPassword": "Parolu sıfırla",
@@ -57,7 +57,9 @@
     "backToLogin": "Girişə qayıt",
     "passwordChanged": "Parol uğurla dəyişdirildi.",
     "emailChanged": "E-poçt uğurla dəyişdirildi.",
-    "passwordReset": "Parol sıfırlandı. Zəhmət olmasa daxil olun."
+    "passwordReset": "Parol sıfırlandı. Zəhmət olmasa daxil olun.",
+    "resetCodeDockerHint": "Docker-də işləyirsiniz? Kod konteyner jurnalındadır: docker logs <container>.",
+    "desktopSessionFailed": "İdarə paneli lokal serverə daxil ola bilmədi. FreeLLMAPI-dən çıxın və yenidən açın."
   },
   "common": {
     "save": "Xilas et",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Avtomatik",
     "keySelectionLeastRemaining": "Ən az qalan",
     "keySelectionHint": "Eyni provayderin bir neçə açarı arasında necə seçim ediləcəyi. Avtomatik cari növbəni saxlayır; Ən az qalan açarları müşahidə olunan kvotaya görə sıralayır və ən çox qalanı ilk sınayır.",
+    "cooldownCeiling": "Ən uzun avtomatik soyuma",
+    "cooldownCeilingHint": "Marşrutlaşdırıcının öz təxminlərinin uğursuz açar və model cütünü nə qədər müddətə kənarlaşdıra biləcəyini məhdudlaşdırır. Pilləkən adətən 2 dəq, 10 dəq, 1 saat, 24 saat qalxır, kredit və ya səviyyə xətaları isə bir gün kənarlaşdırır. Provayderin bildirdiyi təkrar cəhd vaxtları heç vaxt qısaldılmır.",
+    "cooldownCeilingDefault": "Standart (24 saata qədər)",
+    "cooldownCeiling10m": "10 dəqiqə",
+    "cooldownCeiling1h": "1 saat",
+    "cooldownCeiling6h": "6 saat",
     "moreOptions": "Daha çox seçim",
     "peakActive": "(pik saatlar)",
     "peakActiveHint": "Pik saat tənzimləməsi hazırda aktivdir, ona görə bunlar hazır dəstin öz çəkiləri deyil: sürət çəkisinin 60%-i etibarlılığa keçirilib.",
@@ -342,6 +350,8 @@
     "noCooldown": "Soyuma vaxtı yoxdur",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Hamısını təmizlə",
+    "clearAllHint": "Bütün soyumaları, cərimələri və uğursuzluq seriyalarını dərhal aradan qaldırır. Təzyiq növbəti real nəticələrdən yenidən yığılır.",
     "errorsHeading": "{count} son səhvlər",
     "noRecentErrors": "Son vaxtlar heç bir səhv yoxdur",
     "noKey": "Açar yoxdur",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "API açarı tələb olunur",
     "claudeAliases": "Claude Code aşkarlama aliasları",
     "claudeAliasesHint": "Şlüzün model seçicisi kataloqu göstərə bilsin deyə claude/<model> aliaslarını açın.",
+    "mcpServer": "MCP serveri",
+    "mcpServerHint": "/mcp son nöqtəsini agent klientlərinə açır. Yeni quraşdırmalar sönülü başlayır.",
     "urlTokensTitle": "Ləğv edilə bilən URL tokenləri",
     "urlTokensDesc": "Yalnız başlıqsız müştərilər üçün. URL tokenləri tarixçəyə və loqlara sıza bilər, ona görə də artıq lazım olmadıqda onları ləğv edin.",
     "urlTokenLabel": "Token etiketi",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Açar #{n}",
     "attemptTimingHint": "Sorğu başlanğıcından ofset · Cəhd müddəti",
     "requestedModel": "Tələb olunan model",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "{column} üzrə sırala",
+    "sortHint": "Sıralama yalnız yüklənmiş {count} sətrə tətbiq olunur",
+    "cacheHitRate": "Keş uğur nisbəti",
+    "cacheSavedTokens": "{tokens} token qənaət edildi",
+    "cacheHitRateHint": "Server başladığından bəri {hits} uğur, {misses} uğursuzluq · {requests} provayder sorğusundan qaçınıldı"
   },
   "logs": {
     "title": "Loglar",

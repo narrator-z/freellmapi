@@ -46,8 +46,8 @@
     "newEmail": "Nový e-mail",
     "resetCode": "Kód pro reset",
     "resetCodePlaceholder": "kód ze serverových logů",
-    "resetCodeHint": "Kód pro reset hesla najdete v logách serveru.",
-    "forgotPasswordDescription": "Kliknutím níže vygenerujete kód pro reset. Kód se objeví v logách serveru — zadejte jej zde a nastavte nové heslo.",
+    "resetCodeHint": "Kód je v logu serveru. E-mailem se nikdy neposílá.",
+    "forgotPasswordDescription": "Kliknutím na tlačítko níže vygenerujete kód pro reset. Kód se zapíše do logu serveru, e-mailem se nikdy neposílá. Zadejte jej zde a nastavte nové heslo.",
     "requestResetCode": "Odeslat kód",
     "requestingResetCode": "Odesílání…",
     "resetPassword": "Resetovat heslo",
@@ -57,7 +57,9 @@
     "backToLogin": "Zpět k přihlášení",
     "passwordChanged": "Heslo bylo změněno.",
     "emailChanged": "E-mail byl změněn.",
-    "passwordReset": "Heslo bylo resetováno. Přihlaste se."
+    "passwordReset": "Heslo bylo resetováno. Přihlaste se.",
+    "resetCodeDockerHint": "Používáte Docker? Kód je v logu kontejneru: docker logs <container>.",
+    "desktopSessionFailed": "Řídicí panel se nedokázal přihlásit k místnímu serveru. Ukončete FreeLLMAPI a spusťte jej znovu."
   },
   "common": {
     "save": "Uložit",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Automaticky",
     "keySelectionLeastRemaining": "Nejméně zbývá",
     "keySelectionHint": "Jak se vybírá mezi několika klíči téhož poskytovatele. Automaticky zachová stávající střídání; Nejméně zbývá seřadí klíče podle zjištěné kvóty a nejdřív zkusí ten, kterému zbývá nejvíc.",
+    "cooldownCeiling": "Nejdelší automatické ochlazení",
+    "cooldownCeilingHint": "Omezuje, jak dlouho smí vlastní odhady směrovače odstavit selhávající dvojici klíče a modelu. Žebřík běžně stoupá 2 min, 10 min, 1 h, 24 h a chyby kreditu nebo úrovně odstaví na den. Časy opakování uvedené poskytovatelem se nikdy nezkracují.",
+    "cooldownCeilingDefault": "Výchozí (až 24 h)",
+    "cooldownCeiling10m": "10 minut",
+    "cooldownCeiling1h": "1 hodina",
+    "cooldownCeiling6h": "6 hodin",
     "moreOptions": "Další možnosti",
     "peakActive": "(špička)",
     "peakActiveHint": "Úprava pro špičku je právě aktivní, takže tohle nejsou váhy samotné předvolby: 60 % váhy rychlosti se přesunulo na spolehlivost.",
@@ -342,6 +350,8 @@
     "noCooldown": "Žádný cooldown",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Vymazat vše",
+    "clearAllHint": "Okamžitě zruší všechna ochlazení, penalizace a série selhání. Tlak se znovu vytvoří z dalších skutečných výsledků.",
     "errorsHeading": "{count} nedávné chyby",
     "noRecentErrors": "Žádné nedávné chyby",
     "noKey": "Bez klíče",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "Vyžadován API klíč",
     "claudeAliases": "Aliasy zjišťování pro Claude Code",
     "claudeAliasesHint": "Zpřístupněte aliasy claude/<model>, aby výběr modelů brány mohl vypsat katalog.",
+    "mcpServer": "Server MCP",
+    "mcpServerHint": "Zpřístupní endpoint /mcp agentním klientům. Nové instalace začínají vypnuté.",
     "urlTokensTitle": "Odvolatelné URL tokeny",
     "urlTokensDesc": "Pouze pro klienty bez hlaviček. URL tokeny mohou uniknout do historie a logů, proto je odvolejte, jakmile je nepotřebujete.",
     "urlTokenLabel": "Popisek tokenu",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Klíč #{n}",
     "attemptTimingHint": "Začít offset od začátku požadavku · Doba trvání pokusu",
     "requestedModel": "Požadovaný model",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "Seřadit podle: {column}",
+    "sortHint": "Řazení se vztahuje na {count} načtených řádků",
+    "cacheHitRate": "Úspěšnost cache",
+    "cacheSavedTokens": "Ušetřeno {tokens} tokenů",
+    "cacheHitRateHint": "{hits} zásahů proti {misses} minutím od spuštění serveru · ušetřeno {requests} volání poskytovatele"
   },
   "logs": {
     "title": "Logy",

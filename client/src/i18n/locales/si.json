@@ -46,8 +46,8 @@
     "newEmail": "නව ඊමේල්",
     "resetCode": "යළි සකසන කේතය",
     "resetCodePlaceholder": "සේවාදායක ලොග වල කේතය",
-    "resetCodeHint": "මුරපදය යළි සකසන කේතය සේවාදායක ලොග වල බලන්න.",
-    "forgotPasswordDescription": "යළි සකසන කේතයක් සෑදීමට පහත ක්ලික් කරන්න. කේතය සේවාදායක ලොග වල දිස්වේ — නව මුරපදයක් සැකසීමට මෙහි ඇතුළු කරන්න.",
+    "resetCodeHint": "කේතය සේවාදායක ලොගයේ ඇත. එය කිසි විටෙක ඊමේල් මගින් යවනු නොලැබේ.",
+    "forgotPasswordDescription": "යළි සකසන කේතයක් සෑදීමට පහත බොත්තම ක්ලික් කරන්න. කේතය සේවාදායක ලොගයට ලියනු ලබන අතර කිසි විටෙක ඊමේල් නොකෙරේ. නව මුරපදයක් සැකසීමට මෙහි ඇතුළු කරන්න.",
     "requestResetCode": "කේතය යවන්න",
     "requestingResetCode": "යවමින්…",
     "resetPassword": "මුරපදය යළි සකසන්න",
@@ -57,7 +57,9 @@
     "backToLogin": "පිවිසුමට ආපසු",
     "passwordChanged": "මුරපදය සාර්ථකව වෙනස් විය.",
     "emailChanged": "ඊමේල් සාර්ථකව වෙනස් විය.",
-    "passwordReset": "මුරපදය යළි සකසන ලදි. පිවිසෙන්න."
+    "passwordReset": "මුරපදය යළි සකසන ලදි. පිවිසෙන්න.",
+    "resetCodeDockerHint": "Docker තුළ ධාවනය වේද? කේතය කන්ටේනර් ලොගයේ ඇත: docker logs <container>.",
+    "desktopSessionFailed": "උපකරණ පුවරුවට දේශීය සේවාදායකයට පිවිසීමට නොහැකි විය. FreeLLMAPI වසා නැවත විවෘත කරන්න."
   },
   "common": {
     "save": "සුරකින්න",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "ස්වයංක්‍රීය",
     "keySelectionLeastRemaining": "අවම ඉතිරි",
     "keySelectionHint": "එකම සැපයුම්කරුගේ යතුරු කිහිපයක් අතරින් තෝරන ආකාරය. ස්වයංක්‍රීය වත්මන් කරකැවීම තබා ගනී; අවම ඉතිරි නිරීක්ෂිත කෝටාව අනුව යතුරු පෙළගස්වා වැඩිම ඉතිරි ඇති යතුර මුලින්ම උත්සාහ කරයි.",
+    "cooldownCeiling": "දිගම ස්වයංක්‍රීය සිසිලනය",
+    "cooldownCeilingHint": "රවුටරයේම අනුමානවලට අසාර්ථක වන යතුරු සහ ආකෘති යුගලයක් කොපමණ කලක් ඉවත් කර තැබිය හැකිදැයි සීමා කරයි. ඉණිමඟ සාමාන්‍යයෙන් මිනිත්තු 2, මිනිත්තු 10, පැය 1, පැය 24 දක්වා ඉහළ යන අතර ණය හෝ මට්ටමේ දෝෂ දිනකට ඉවත් කරයි. සැපයුම්කරු සඳහන් කරන නැවත උත්සාහ කාල කිසිවිටෙක කෙටි නොකෙරේ.",
+    "cooldownCeilingDefault": "පෙරනිමි (පැය 24 දක්වා)",
+    "cooldownCeiling10m": "මිනිත්තු 10",
+    "cooldownCeiling1h": "පැය 1",
+    "cooldownCeiling6h": "පැය 6",
     "moreOptions": "තවත් විකල්ප",
     "peakActive": "(කාර්යබහුල වේලාව)",
     "peakActiveHint": "කාර්යබහුල වේලා සීරුමාරුව දැන් සක්‍රියයි, එබැවින් මේවා පෙරසැකසුමේම බර නොවේ: වේගයේ බරින් 60%ක් විශ්වසනීයත්වයට මාරු වී ඇත.",
@@ -342,6 +350,8 @@
     "noCooldown": "සිසිල් කිරීමක් නැත",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "සියල්ල හිස් කරන්න",
+    "clearAllHint": "සියලු සිසිලන කාල, දඬුවම් සහ අසාර්ථක ධාරා දැන්ම ඉවත් කරන්න. ඊළඟ සැබෑ ප්‍රතිඵලවලින් පීඩනය නැවත ගොඩනැඟේ.",
     "errorsHeading": "{count} මෑත කාලීන දෝෂ",
     "noRecentErrors": "මෑත කාලීන දෝෂ නොමැත",
     "noKey": "යතුරක් නැත",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "API යතුර අවශ්‍යයි",
     "claudeAliases": "Claude Code සොයාගැනීමේ අන්වර්ථ නාම",
     "claudeAliasesHint": "ද්වාරයේ ආකෘති තෝරකයට නාමාවලිය ලැයිස්තුගත කළ හැකි වන පරිදි claude/<model> අන්වර්ථ නාම නිරාවරණය කරන්න.",
+    "mcpServer": "MCP සේවාදායකය",
+    "mcpServerHint": "නියෝජිත සේවාලාභීන් සඳහා /mcp අන්ත ලක්ෂ්‍යය විවෘත කරයි. නව ස්ථාපනවල එය ක්‍රියාවිරහිතව ආරම්භ වේ.",
     "urlTokensTitle": "අවලංගු කළ හැකි URL ටෝකන",
     "urlTokensDesc": "ශීර්ෂක රහිත සේවාලාභීන් සඳහා පමණි. URL ටෝකන ඉතිහාසයට සහ ලොග වෙත කාන්දු විය හැකි බැවින්, තවදුරටත් අවශ්‍ය නොවන විට ඒවා අවලංගු කරන්න.",
     "urlTokenLabel": "ටෝකන ලේබලය",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "යතුර #{n}",
     "attemptTimingHint": "ඉල්ලීම ආරම්භයේ සිට ඕෆ්සෙට් ආරම්භ කරන්න · උත්සාහ කාලය",
     "requestedModel": "ඉල්ලූ ආකෘතිය",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "{column} අනුව පෙළගස්වන්න",
+    "sortHint": "පෙළගැස්වීම පූරණය කළ පේළි {count} ට පමණක් අදාළ වේ",
+    "cacheHitRate": "හැඹිලි පහර අනුපාතය",
+    "cacheSavedTokens": "ටෝකන {tokens}ක් ඉතිරි විය",
+    "cacheHitRateHint": "සේවාදායකය ආරම්භ වූ දා සිට පහරවල් {hits}ක්, මගහැරීම් {misses}ක් · සැපයුම්කරු ඇමතුම් {requests}ක් වළක්වා ගැනිණි"
   },
   "logs": {
     "title": "ලොග",

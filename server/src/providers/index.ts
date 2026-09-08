@@ -8,6 +8,9 @@ import { AIHordeProvider } from './aihorde.js';
 import { ModelScopeProvider } from './modelscope.js';
 import { PollinationsProvider } from './pollinations.js';
 import { ZhipuProvider } from './zhipu.js';
+import { SailProvider } from './sail.js';
+import { ElectronHubProvider } from './electronhub.js';
+import { ExperientialProvider } from './experiential.js';
 
 // Shape of platform entries in the augmented catalog's platforms[] array.
 // Kept here so the augmented-catalog sync can type its call to
@@ -77,6 +80,19 @@ register(new OpenAICompatProvider({
   baseUrl: 'https://api.cerebras.ai/v1',
 }));
 
+// Sail Research — its stable API is /v1/responses and all calls are submitted
+// as background jobs, then polled. The dedicated adapter translates terminal
+// Responses objects back to Chat Completions and handles flex-only models.
+// Sail grants $5 in free credits every month when a payment method is attached;
+// usage beyond that grant is pay-as-you-go. Live-tested 2026-09-01. Model rows
+// stay in Oracle so the existing Premium-now / Free-after-30-days gate applies.
+register(new SailProvider());
+
+// Free-plan grants are shared wallets, not free credits per model. Eligibility
+// and tested model rows belong in Oracle, never in bundled DB migrations.
+register(new ElectronHubProvider());
+register(new ExperientialProvider());
+
 // B.AI — OpenAI-compatible gateway. Provider support is first-class, but the
 // only free catalog row currently published is a limited-time 0-credit promo;
 // keep commercial eligibility in the hosted catalog rather than seeding it.
@@ -104,6 +120,19 @@ register(new OpenAICompatProvider({
   platform: 'anyapi',
   name: 'AnyAPI',
   baseUrl: 'https://api.anyapi.ai/v1',
+}));
+
+// AMD Radeon Cloud TokenFactory — the shared Model API is OpenAI-compatible
+// and its current public roster is free without consuming GPU-instance
+// credits. Public models are experimental and may rotate, so their ids remain
+// in the hosted catalog rather than migrations. Both current models reject
+// parallel tool calls; long reasoning requests may run for up to ten minutes.
+register(new OpenAICompatProvider({
+  platform: 'radeon',
+  name: 'AMD Radeon Cloud',
+  baseUrl: 'https://developer.amd.com.cn/radeon/api/v1',
+  forceSingleToolCall: true,
+  timeoutMs: 600_000,
 }));
 
 // SambaNova was dropped in V23 (June 2026): the free tier is permanently gone.

@@ -46,8 +46,8 @@
     "newEmail": "Nova e-pošta",
     "resetCode": "Kod za poništavanje",
     "resetCodePlaceholder": "kod iz zapisa poslužitelja",
-    "resetCodeHint": "Kod za poništavanje lozinke potražite u zapisima poslužitelja.",
-    "forgotPasswordDescription": "Kliknite u nastavku za generiranje koda. Kod će se pojaviti u zapisima poslužitelja — unesite ga ovdje da postavite novu lozinku.",
+    "resetCodeHint": "Kod se nalazi u zapisu poslužitelja. Nikada se ne šalje e-poštom.",
+    "forgotPasswordDescription": "Kliknite gumb u nastavku za generiranje koda za poništavanje. Kod se zapisuje u zapis poslužitelja i nikada se ne šalje e-poštom. Unesite ga ovdje da postavite novu lozinku.",
     "requestResetCode": "Pošalji kod",
     "requestingResetCode": "Slanje…",
     "resetPassword": "Poništi lozinku",
@@ -57,7 +57,9 @@
     "backToLogin": "Natrag na prijavu",
     "passwordChanged": "Lozinka je promijenjena.",
     "emailChanged": "E-pošta je promijenjena.",
-    "passwordReset": "Lozinka je poništena. Prijavite se."
+    "passwordReset": "Lozinka je poništena. Prijavite se.",
+    "resetCodeDockerHint": "Koristite Docker? Kod se nalazi u zapisu kontejnera: docker logs <container>.",
+    "desktopSessionFailed": "Nadzorna ploča nije se uspjela prijaviti na lokalni poslužitelj. Zatvorite FreeLLMAPI i ponovno ga otvorite."
   },
   "common": {
     "save": "Spasi",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "Automatski",
     "keySelectionLeastRemaining": "Najmanje preostalo",
     "keySelectionHint": "Kako se bira između više ključeva istog pružatelja. Automatski zadržava trenutačnu rotaciju; Najmanje preostalo rangira ključeve prema opaženoj kvoti i prvo isprobava onaj kojemu je najviše preostalo.",
+    "cooldownCeiling": "Najdulje automatsko hlađenje",
+    "cooldownCeilingHint": "Ograničava koliko dugo vlastite procjene usmjerivača smiju isključiti neuspješan par ključa i modela. Ljestvica obično raste 2 min, 10 min, 1 h, 24 h, a pogreške kredita ili razine isključuju na jedan dan. Vremena ponovnog pokušaja koja navede pružatelj nikad se ne skraćuju.",
+    "cooldownCeilingDefault": "Zadano (do 24 h)",
+    "cooldownCeiling10m": "10 minuta",
+    "cooldownCeiling1h": "1 sat",
+    "cooldownCeiling6h": "6 sati",
     "moreOptions": "Više opcija",
     "peakActive": "(vršni sati)",
     "peakActiveHint": "Prilagodba za vršne sate trenutno je aktivna, pa ovo nisu težine same postavke: 60 % težine brzine prebačeno je na pouzdanost.",
@@ -342,6 +350,8 @@
     "noCooldown": "Nema cooldowna",
     "cooldownChip": "{key} - {time}",
     "resetCooldown": "Reset cooldown",
+    "clearAll": "Očisti sve",
+    "clearAllHint": "Odmah uklanja sva hlađenja, kazne i nizove neuspjeha. Pritisak se ponovno gradi iz sljedećih stvarnih rezultata.",
     "errorsHeading": "{count} nedavne pogreške",
     "noRecentErrors": "Nema nedavnih pogrešaka",
     "noKey": "Nema ključa",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "Potreban API ključ",
     "claudeAliases": "Aliasi za otkrivanje Claude Codea",
     "claudeAliasesHint": "Izložite claude/<model> aliase kako bi birač modela gatewaya mogao izlistati katalog.",
+    "mcpServer": "MCP poslužitelj",
+    "mcpServerHint": "Izlaže krajnju točku /mcp agentskim klijentima. Nove instalacije počinju isključene.",
     "urlTokensTitle": "Opozivi URL tokeni",
     "urlTokensDesc": "Samo za klijente bez zaglavlja. URL tokeni mogu procuriti u povijest i logove, pa ih opozovite kad više nisu potrebni.",
     "urlTokenLabel": "Oznaka tokena",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "Ključ #{n}",
     "attemptTimingHint": "Početak offseta od početka zahtjeva · Trajanje pokušaja",
     "requestedModel": "Traženi model",
-    "ttft": "TTFT"
+    "ttft": "TTFT",
+    "sortBy": "Sortiraj po: {column}",
+    "sortHint": "Sortiranje vrijedi za {count} učitanih redaka",
+    "cacheHitRate": "Stopa pogodaka predmemorije",
+    "cacheSavedTokens": "Ušteđeno {tokens} tokena",
+    "cacheHitRateHint": "{hits} pogodaka naspram {misses} promašaja od pokretanja poslužitelja · izbjegnuto {requests} poziva pružatelju"
   },
   "logs": {
     "title": "Logovi",

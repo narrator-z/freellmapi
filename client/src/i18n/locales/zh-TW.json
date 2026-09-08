@@ -57,7 +57,9 @@
     "backToLogin": "返回登入",
     "passwordChanged": "密碼已成功變更。",
     "emailChanged": "電子郵件已成功變更。",
-    "passwordReset": "密碼已成功重設。請登入。"
+    "passwordReset": "密碼已成功重設。請登入。",
+    "resetCodeDockerHint": "在 Docker 中執行？重設碼在容器日誌中：docker logs <container>",
+    "desktopSessionFailed": "儀表板無法登入本機伺服器。請結束 FreeLLMAPI 並重新開啟。"
   },
   "common": {
     "save": "存檔",
@@ -292,6 +294,12 @@
     "keySelectionAuto": "自動",
     "keySelectionLeastRemaining": "依剩餘額度",
     "keySelectionHint": "當同一供應商設定了多把金鑰時如何選擇。自動維持目前輪換；依剩餘額度會依觀測到的配額排序，優先使用剩餘最多的金鑰。",
+    "cooldownCeiling": "自動冷卻上限",
+    "cooldownCeilingHint": "限制路由器自身推測最多能將一組失敗的金鑰與模型停用多久。階梯通常為 2 分鐘、10 分鐘、1 小時、24 小時，餘額不足或等級限制錯誤會停用一天。供應商明確給出的重試時間不會被縮短。",
+    "cooldownCeilingDefault": "預設（最長 24 小時）",
+    "cooldownCeiling10m": "10 分鐘",
+    "cooldownCeiling1h": "1 小時",
+    "cooldownCeiling6h": "6 小時",
     "moreOptions": "更多選項",
     "peakActive": "（尖峰時段）",
     "peakActiveHint": "尖峰時段調整目前已生效，因此這些不是預設本身的權重：60% 的速度權重已轉移到可靠性上。",
@@ -342,6 +350,8 @@
     "noCooldown": "沒有冷卻時間",
     "cooldownChip": "{key}，{time}",
     "resetCooldown": "重設冷卻",
+    "clearAll": "全部清除",
+    "clearAllHint": "立即解除所有冷卻、懲罰與失敗計數。壓力會依之後的實際結果重新累積。",
     "errorsHeading": "{count}近期錯誤",
     "noRecentErrors": "最近沒有錯誤",
     "noKey": "沒有鑰匙",
@@ -403,6 +413,8 @@
     "ollamaKeyRequired": "需要 API 金鑰",
     "claudeAliases": "Claude Code 探索別名",
     "claudeAliasesHint": "公開 claude/<model> 別名，讓閘道的模型選擇器能列出目錄。",
+    "mcpServer": "MCP 伺服器",
+    "mcpServerHint": "向代理客戶端開放 /mcp 端點。新安裝預設關閉。",
     "urlTokensTitle": "可撤銷的 URL 權杖",
     "urlTokensDesc": "僅供無法傳送標頭的用戶端使用。URL 權杖可能外洩到歷史記錄與日誌中，不再需要時請撤銷。",
     "urlTokenLabel": "權杖標籤",
@@ -668,7 +680,8 @@
       "dsh": "DeepSeek's harness, which keeps every provider as a route you can switch between.",
       "mimo": "Xiaomi's terminal agent, an OpenCode fork that takes any OpenAI-compatible provider.",
       "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL.",
-      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key."
+      "generic": "Anything else that speaks the OpenAI API, set up by hand from a base URL and key.",
+      "atomcode": "AtomGit's terminal agent, written in Rust, that takes any OpenAI-compatible endpoint."
     }
   },
   "analytics": {
@@ -744,7 +757,12 @@
     "keyBadge": "金鑰 #{n}",
     "attemptTimingHint": "請求起始的起始偏移量 ·嘗試時間",
     "requestedModel": "需求模型",
-    "ttft": "首字延遲"
+    "ttft": "首字延遲",
+    "sortBy": "依{column}排序",
+    "sortHint": "排序僅套用於已載入的 {count} 列",
+    "cacheHitRate": "快取命中率",
+    "cacheSavedTokens": "已節省 {tokens} Token",
+    "cacheHitRateHint": "自伺服器啟動以來命中 {hits} 次、未命中 {misses} 次 · 省下 {requests} 次供應商呼叫"
   },
   "logs": {
     "title": "日誌",

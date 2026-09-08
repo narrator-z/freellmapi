@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import type { Db } from '../db/types.js';
 import { getDb, setSetting, getSetting } from '../db/index.js';
 import { hasProvider, registerFromCatalog, YANGMAO_PLATFORM_ALIASES, type CatalogPlatform } from '../providers/index.js';
