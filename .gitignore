@@ -31,6 +31,13 @@ overview.md
 security-audit-report-*.md
 qa-report-*.md
 
+# Local catalog comparison reports & data (kept locally, never pushed)
+catalog_vs_fork.md
+catalog_fork_comparison.html
+catalog_fork_comparison.md
+augmented_catalog.json
+gen_compare.js
+
 # WorkBuddy configuration files
 .workbuddy/
 .claude/
