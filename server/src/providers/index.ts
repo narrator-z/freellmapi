@@ -11,6 +11,8 @@ import { ZhipuProvider } from './zhipu.js';
 import { SailProvider } from './sail.js';
 import { ElectronHubProvider } from './electronhub.js';
 import { ExperientialProvider } from './experiential.js';
+import { Router9Provider } from './router9.js';
+import { SeptorProvider } from './septor.js';
 
 // Shape of platform entries in the augmented catalog's platforms[] array.
 // Kept here so the augmented-catalog sync can type its call to
@@ -92,6 +94,11 @@ register(new SailProvider());
 // and tested model rows belong in Oracle, never in bundled DB migrations.
 register(new ElectronHubProvider());
 register(new ExperientialProvider());
+// Router9 has shared monthly credits; Septor's zero-price models share daily
+// quota (its signup credit is one-time). Model rows live only in Oracle so
+// the existing Premium-now / Free-after-30-days gate remains authoritative.
+register(new Router9Provider());
+register(new SeptorProvider());
 
 // B.AI — OpenAI-compatible gateway. Provider support is first-class, but the
 // only free catalog row currently published is a limited-time 0-credit promo;
