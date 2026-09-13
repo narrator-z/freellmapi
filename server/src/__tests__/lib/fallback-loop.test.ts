@@ -841,3 +841,83 @@ describe('runFallbackLoop: routing-exhaustion diagnostics belong to the loop', (
     }
   });
 });
+
+// A chain-wide 400 on a tool-carrying request is most often an unsupported
+// JSON-Schema keyword, not a malformed request. The hint says so — but only
+// when the trail agrees, because a mixed trail points somewhere else entirely.
+describe('exhaustedRetryError: tool-schema hint on a chain-wide 400', () => {
+  const HINT = 'tool definition(s) and every provider rejected it as invalid';
+
+  const badRequest = () =>
+    Object.assign(
+      new Error('Cohere API error 400: invalid request: tools.0.function.parameters is malformed'),
+      { status: 400 },
+    );
+
+  const attempt = (errorClass: AttemptRecord['errorClass'], platform = 'cohere'): AttemptRecord => ({
+    platform,
+    modelId: 'command-a-plus-05-2026',
+    keyOrdinal: 1,
+    errorClass,
+  });
+
+  it('adds the hint when EVERY attempt was a bad request and the request carried tools', () => {
+    const body = exhaustedRetryError(badRequest(), 3, {
+      attempts: [attempt('provider_bad_request')],
+      hadTools: true,
+      toolCount: 2,
+    });
+    expect(body.status).toBe(400);
+    expect(body.code).toBe('provider_rejected_request');
+    expect(body.message).toContain(HINT);
+    expect(body.message).toContain('2 tool definition(s)');
+  });
+
+  it('omits the hint when the request carried no tools', () => {
+    const body = exhaustedRetryError(badRequest(), 3, {
+      attempts: [attempt('provider_bad_request')],
+      hadTools: false,
+      toolCount: 0,
+    });
+    expect(body.message).not.toContain(HINT);
+  });
+
+  it('omits the hint when the trail is mixed — a rate limit or timeout points elsewhere', () => {
+    for (const mixed of [
+      [attempt('provider_bad_request'), attempt('rate_limited')],
+      [attempt('provider_bad_request'), attempt('timeout')],
+      [attempt('upstream_error'), attempt('provider_bad_request')],
+    ]) {
+      const body = exhaustedRetryError(badRequest(), 3, { attempts: mixed, hadTools: true, toolCount: 2 });
+      expect(body.message, `trail: ${mixed.map(a => a.errorClass).join(',')}`).not.toContain(HINT);
+    }
+  });
+
+  it('omits the hint when there is no attempt trail to confirm the shape', () => {
+    const body = exhaustedRetryError(badRequest(), 3, { hadTools: true, toolCount: 2 });
+    expect(body.message).not.toContain(HINT);
+  });
+
+  it('omits the hint when no context is passed at all — historical callers are unchanged', () => {
+    const body = exhaustedRetryError(badRequest(), 3);
+    expect(body.status).toBe(400);
+    expect(body.code).toBe('provider_rejected_request');
+    expect(body.message).not.toContain(HINT);
+  });
+
+  it('leaves the non-tool 400 message identical to a call without the new fields', () => {
+    const trail = [attempt('provider_bad_request')];
+    const legacy = exhaustedRetryError(badRequest(), 3, { attempts: trail });
+    const flagOff = exhaustedRetryError(badRequest(), 3, { attempts: trail, hadTools: false });
+    expect(flagOff.message).toBe(legacy.message);
+  });
+
+  it('points at the opt-in detail setting instead of quoting provider text', () => {
+    const body = exhaustedRetryError(badRequest(), 3, {
+      attempts: [attempt('provider_bad_request')],
+      hadTools: true,
+      toolCount: 1,
+    });
+    expect(body.message).toContain('expose_fallback_detail_header');
+  });
+});

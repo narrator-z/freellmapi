@@ -268,4 +268,56 @@ describe('fallback hardening (items 3, 4, 5, 6)', () => {
     const usage = getDb().prepare("SELECT COALESCE(SUM(tokens), 0) AS t FROM rate_limit_usage WHERE kind = 'tokens'").get() as { t: number };
     expect(usage.t).toBeGreaterThan(0); // was recordTokens(…, usage?.total_tokens ?? 0)
   });
+
+  // The budget trick from item 5 gives a deterministic chain-wide 400 without
+  // needing the whole model pool to be exhausted one model at a time.
+  const SCHEMA_REJECT_400 = Object.assign(
+    new Error('Groq API error 400: tools.0.function.parameters: $schema is not supported'),
+    { status: 400 },
+  );
+
+  it('a chain-wide 400 on a tool-carrying request points at the tool schemas', async () => {
+    process.env.FALLBACK_TIME_BUDGET_MS = '1';
+    chatCompletion.mockImplementation(async () => {
+      await new Promise(r => setTimeout(r, 15)); // spend the budget after attempt 0
+      throw SCHEMA_REJECT_400;
+    });
+
+    const { status, body } = await post(app, '/v1/chat/completions', {
+      messages: [{ role: 'user', content: 'tool schema rejection test' }],
+      tools: [{
+        type: 'function',
+        function: {
+          name: 'lookup',
+          parameters: {
+            type: 'object',
+            properties: { q: { type: 'string' } },
+            required: ['q'],
+            $schema: 'http://json-schema.org/draft-07/schema#',
+          },
+        },
+      }],
+    }, key);
+
+    expect(status).toBe(400);
+    expect(body.error.code).toBe('provider_rejected_request');
+    expect(body.error.message).toContain('1 tool definition(s)');
+    expect(body.error.message).toContain('expose_fallback_detail_header');
+  });
+
+  it('the same 400 without tools says nothing about schemas', async () => {
+    process.env.FALLBACK_TIME_BUDGET_MS = '1';
+    chatCompletion.mockImplementation(async () => {
+      await new Promise(r => setTimeout(r, 15));
+      throw SCHEMA_REJECT_400;
+    });
+
+    const { status, body } = await post(app, '/v1/chat/completions', {
+      messages: [{ role: 'user', content: 'tool schema rejection control' }],
+    }, key);
+
+    expect(status).toBe(400);
+    expect(body.error.code).toBe('provider_rejected_request');
+    expect(body.error.message).not.toContain('tool definition(s)');
+  });
 });

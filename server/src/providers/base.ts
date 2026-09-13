@@ -11,6 +11,8 @@ import type { ExtendedSamplingOptions } from '../lib/sampling-params.js';
 import { proxyFetch } from '../lib/proxy.js';
 import { providerTimeoutMs, streamStallTimeoutMs } from '../lib/provider-timeout.js';
 import { extractThinkTagsFromStream } from '../lib/think-tags.js';
+import { isContextTooLargeError, isProviderBadRequestError } from '../lib/error-classify.js';
+import { nextSanitizeLevel, sanitizeToolsForProvider, type SchemaSanitizeLevel } from '../lib/tool-args.js';
 
 /** A provider HTTP error carrying the upstream status and, when the provider
  *  stated one, the parsed back-off so the router can bench the key for at least
@@ -26,6 +28,22 @@ export interface ProviderHttpError extends Error {
  *  forever, since the value feeds the cooldown expiry directly. A day is longer
  *  than any real free-tier reset window, so clamping cannot mask a genuine hint. */
 const MAX_RETRY_AFTER_MS = 24 * 60 * 60 * 1000;
+
+/** How aggressively this provider's tool schemas are cleaned before sending.
+ *  'L0' — the default for every provider — sends them exactly as the client
+ *  wrote them, so putting a provider on the ladder is a deliberate act rather
+ *  than something a provider inherits by accident. See SchemaSanitizeLevel. */
+const DEFAULT_SCHEMA_SANITIZE_LEVEL: SchemaSanitizeLevel = 'L0';
+
+/** Global kill switch. `TOOL_SCHEMA_LADDER=0` stops the downgrade RETRY for
+ *  every provider — the rollback path if it ever misfires in production
+ *  (extra requests against a free tier, a provider whose 400 means something
+ *  else). Deliberately does NOT touch sanitization: an opted-in provider keeps
+ *  stripping the keywords it always has, so disabling the retry cannot revive
+ *  the schema rejection it was added to work around. */
+function schemaLadderRetryEnabled(): boolean {
+  return process.env.TOOL_SCHEMA_LADDER !== '0';
+}
 
 /** Parse an HTTP `Retry-After` header (delta-seconds or an HTTP-date) into a
  *  millisecond delay, clamped to MAX_RETRY_AFTER_MS. Returns undefined when
@@ -148,6 +166,59 @@ export function providerHttpError(res: Response, message: string, body?: unknown
   return err;
 }
 
+/** Pick the most informative human-readable message out of an upstream error
+ *  body. Providers disagree about where they put it, and the difference is
+ *  load-bearing: when the read misses, a specific failure collapses into a
+ *  bare "Bad Request" that neither the error classifier nor the attempt trail
+ *  can act on.
+ *
+ *  The first three shapes — and their order — are the historical
+ *  OpenAICompat#upstreamErrorText contract and MUST NOT be reordered:
+ *    1. `error.message` — OpenAI-style, and most compatibility endpoints
+ *    2. `detail`        — RFC7807. NVIDIA NIM reports `Function id '...':
+ *                         DEGRADED function cannot be invoked` here; dropping
+ *                         this shape is what regressed #522.
+ *    3. `title`         — RFC7807 companion to `detail`
+ *  The rest are strictly additive: they are consulted only when every shape
+ *  above is absent, so a body that already yielded a real message cannot
+ *  change its text.
+ *    4. `error.detail`
+ *    5. `errors[0].message` — Cloudflare
+ *    6. `message`           — Cohere v2 reports the reason at the TOP level,
+ *                             which is why a Cohere 400 used to surface as a
+ *                             bare "Bad Request" with no usable cause.
+ *    7. `res.statusText`    — last resort ("Bad Request", "Unauthorized"…).
+ *
+ *  Read-only: the body is never mutated and never retained — only a string
+ *  comes back, so nothing extra reaches the attempt trace or the logs. */
+export function extractUpstreamErrorText(errBody: unknown, res: Response): string {
+  const e = errBody as {
+    error?: unknown;
+    detail?: unknown;
+    title?: unknown;
+    message?: unknown;
+    errors?: unknown;
+  } | null | undefined;
+
+  // `length > 0` (not a trimmed check) is the historical acceptance test — a
+  // whitespace-only value was accepted before, so it still is.
+  const text = (value: unknown): string | undefined =>
+    typeof value === 'string' && value.length > 0 ? value : undefined;
+
+  const errorObject = e?.error && typeof e.error === 'object' ? (e.error as { message?: unknown; detail?: unknown }) : undefined;
+  const firstError = Array.isArray(e?.errors) ? (e.errors[0] as { message?: unknown } | undefined) : undefined;
+
+  return (
+    text(errorObject?.message) ??
+    text(e?.detail) ??
+    text(e?.title) ??
+    text(errorObject?.detail) ??
+    text(firstError?.message) ??
+    text(e?.message) ??
+    res.statusText
+  );
+}
+
 // Extended sampling knobs (top_k, seed, penalties, logit_bias, logprobs,
 // response_format…) ride along via ExtendedSamplingOptions; adapters forward
 // them per the platform policy in lib/sampling-params.ts.
@@ -222,6 +293,63 @@ export abstract class BaseProvider {
    * the platform "configured", and the provider omits the Authorization header
    * on outgoing requests. Defaults to false; set by subclasses. */
   keyless = false;
+
+  /** Tool-schema sanitize level for this provider. 'L0' sends client schemas
+   *  untouched and opts the provider OUT of the downgrade retry entirely, so
+   *  raising it is the single switch that turns this behaviour on — and the
+   *  single switch that turns it back off in production if it misfires. */
+  protected schemaSanitizeLevel: SchemaSanitizeLevel = DEFAULT_SCHEMA_SANITIZE_LEVEL;
+
+  /** Send a tool-carrying request, retrying once per remaining sanitize rung
+   *  when the provider rejects the request as invalid.
+   *
+   *  A provider 400 on a tool call is usually the SCHEMA, not the request — but
+   *  the provider cannot say so, and the caller cannot see it, so the chain
+   *  spends a failover hop and eventually reports "all providers rejected the
+   *  request". Walking the ladder instead turns that hop into a success.
+   *
+   *  Deliberately narrow:
+   *   - no retry at all unless the provider opted in (level !== 'L0'), and
+   *     none anywhere when TOOL_SCHEMA_LADDER=0;
+   *   - only on provider_bad_request, and only while a lower rung exists;
+   *   - never on a context-too-large rejection, which is also a 400 for some
+   *     providers (Zhipu's "Prompt exceeds max length", #873). That one must
+   *     fail over to a bigger-window candidate immediately; retrying it here
+   *     would spend a request and add latency to reach the same conclusion;
+   *   - only when tools were actually sent;
+   *   - the retry changes nothing but the sanitize level — same key, same
+   *     model, same sampling parameters;
+   *   - a 400 is a pre-body response, so nothing has been streamed to the
+   *     caller and no partial output is duplicated.
+   *
+   *  Quota is not inflated by the retry: providers call
+   *  recordQuotaObservationsFromResponse before checking res.ok, but that
+   *  derives observations purely from rate-limit headers, and a schema
+   *  rejection carries none — so the rejected rung contributes nothing and
+   *  exactly one observation is written, for the attempt that succeeds. A
+   *  provider that did echo quota headers on its 400 would simply be
+   *  measured twice, which still lands on the right side. */
+  protected async sendWithSchemaLadder<T>(
+    tools: ChatToolDefinition[] | undefined,
+    send: (sanitizedTools: ChatToolDefinition[] | undefined) => Promise<T>,
+  ): Promise<T> {
+    const level0 = this.schemaSanitizeLevel;
+    if (!tools || tools.length === 0 || level0 === 'L0') return send(tools);
+    if (!schemaLadderRetryEnabled()) return send(sanitizeToolsForProvider(tools, level0));
+    let level: SchemaSanitizeLevel = level0;
+    for (;;) {
+      try {
+        return await send(sanitizeToolsForProvider(tools, level));
+      } catch (err) {
+        const next = nextSanitizeLevel(level);
+        if (!next || !isProviderBadRequestError(err) || isContextTooLargeError(err)) throw err;
+        console.log(
+          `[${this.platform}] tool schema rejected (400) at sanitize level ${level} — retrying once at ${next}`,
+        );
+        level = next;
+      }
+    }
+  }
 
   abstract chatCompletion(
     apiKey: string,

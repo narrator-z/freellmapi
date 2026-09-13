@@ -5,7 +5,7 @@ import type {
   ChatToolCall,
   Platform,
 } from '@freellmapi/shared/types.js';
-import { BaseProvider, providerHttpError, type CompletionOptions, type KeyValidationResult } from './base.js';
+import { BaseProvider, extractUpstreamErrorText, providerHttpError, type CompletionOptions, type KeyValidationResult } from './base.js';
 import { extendedBodyParams, resolveMaxTokens } from '../lib/sampling-params.js';
 import { rescueInlineToolCalls } from '../lib/tool-call-rescue.js';
 import { extractThinkFromMessage } from '../lib/think-tags.js';
@@ -128,18 +128,10 @@ export class OpenAICompatProvider extends BaseProvider {
     return rescued;
   }
 
-  /** Extract the useful text from an upstream error body. Most providers put it
-   * at error.message, but NVIDIA NIM answers RFC7807-style ({"title": ...,
-   * "detail": "Function id '...': DEGRADED function cannot be invoked"}) — the
-   * old error.message-only read collapsed that to "Bad Request", so neither the
-   * logs nor the error classifier could ever see the DEGRADED marker (#522). */
-  private upstreamErrorText(errBody: unknown, res: Response): string {
-    const e = errBody as { error?: { message?: unknown }; detail?: unknown; title?: unknown };
-    if (typeof e?.error?.message === 'string' && e.error.message) return e.error.message;
-    if (typeof e?.detail === 'string' && e.detail) return e.detail;
-    if (typeof e?.title === 'string' && e.title) return e.title;
-    return res.statusText;
-  }
+  // Upstream error text now comes from extractUpstreamErrorText() in base.js so
+  // every adapter reads the same shapes. The NIM RFC7807 case this method was
+  // written for ("detail"/"title" carrying the DEGRADED marker, #522) is covered
+  // by shapes 2 and 3 there, in the same order.
 
   /** Keyless providers (Kilo's anonymous free tier) must send NO Authorization
    * header — a stored sentinel like `Bearer no-key` could be treated as an
@@ -300,7 +292,7 @@ export class OpenAICompatProvider extends BaseProvider {
         out._routed_via = { platform: this.platform, model: modelId };
         return out;
       }
-      throw providerHttpError(res, `${this.name} API error ${res.status}: ${this.upstreamErrorText(err, res)}`, err);
+      throw providerHttpError(res, `${this.name} API error ${res.status}: ${extractUpstreamErrorText(err, res)}`, err);
     }
 
     let data: ChatCompletionResponse;
@@ -416,7 +408,7 @@ export class OpenAICompatProvider extends BaseProvider {
         yield { ...base, choices: [{ index: 0, delta: {}, finish_reason: 'tool_calls' }] };
         return;
       }
-      throw providerHttpError(res, `${this.name} API error ${res.status}: ${this.upstreamErrorText(err, res)}`, err);
+      throw providerHttpError(res, `${this.name} API error ${res.status}: ${extractUpstreamErrorText(err, res)}`, err);
     }
 
     // First-byte grace (#584): the same chat timeout that bounded the headers

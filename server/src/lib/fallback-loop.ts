@@ -692,6 +692,12 @@ export interface ExhaustionContext {
   // Set (to the failure count) when the circuit-breaker guardrail stopped the
   // loop; renders as a 503 instead of a rate-limit exhaustion.
   breakerFails?: number;
+  // Whether the request carried tool definitions, and how many. Read ONLY by
+  // the "every provider rejected this as invalid" branch, where a tool schema
+  // the provider won't accept is a far likelier cause than a genuinely
+  // malformed request. Optional so every other caller is untouched.
+  hadTools?: boolean;
+  toolCount?: number;
 }
 
 // Attempt classes that mean "this candidate is unavailable until a KNOWN time"
@@ -799,12 +805,26 @@ export function exhaustedRetryError(lastError: any, maxRetries?: number, ctx?: E
   }
 
   if (isProviderBadRequestError(lastError)) {
+    // A chain-wide 400 on a tool-carrying request is far more often an
+    // unsupported JSON-Schema keyword in a tool definition than a genuinely
+    // malformed request — the same shape the Cohere/Cohere-compat strict
+    // validators reject. Say so, but only when the trail confirms EVERY
+    // attempt was a bad-request: with a mixed trail (a 429 or a timeout in
+    // there) the hint would point at the wrong thing. Deliberately does not
+    // quote any provider text — the detail header is the opt-in for that.
+    const toolNote =
+      ctx?.hadTools === true && everyAttempt('provider_bad_request')
+        ? ` This request carried ${ctx.toolCount ?? 0} tool definition(s) and every provider rejected it as invalid — ` +
+          `an unsupported JSON-Schema keyword in a tool definition is a common cause, so check the tool schemas before ` +
+          `assuming the request body is malformed. Enable the ${EXPOSE_FALLBACK_DETAIL_SETTING} setting to see each ` +
+          `provider's own message.`
+        : '';
     return {
       kind: 'bad_request',
       status: 400,
       type: 'invalid_request_error',
       code: 'provider_rejected_request',
-      message: `All routed providers rejected the request as invalid${budgetNote}.${trail} Last error: ${safeLastError}`,
+      message: `All routed providers rejected the request as invalid${budgetNote}.${trail} Last error: ${safeLastError}${toolNote}`,
     };
   }
 
@@ -1001,6 +1021,13 @@ export interface FallbackHooks {
   // logRoutingExhaustion). Absent = the line still fires, without identifying
   // the surface or the request.
   logIdentity?: { surface: string; requestId?: string; requestedModel?: string };
+  // Whether the request carried tool definitions, and how many. Threaded into
+  // the exhaustion body so a chain-wide "rejected as invalid" can point at the
+  // tool schemas instead of leaving the caller guessing (see the bad_request
+  // branch of exhaustedRetryError). Purely diagnostic: it never changes which
+  // status or code is rendered, and it is ignored when absent.
+  hadTools?: boolean;
+  toolCount?: number;
   // Returns true once the client has hung up. Checked before STARTING each
   // retry: a chain nobody is waiting for must not keep burning provider
   // quota. Surfaces additionally thread a client-disconnect AbortSignal into
@@ -1101,6 +1128,13 @@ async function runFallbackLoopAttempts(hooks: FallbackHooks, trace: RequestTrace
   const budgetMs = hooks.timeBudgetMs ?? getFallbackTimeBudgetMs();
   const startedAt = Date.now();
   const attempts: AttemptRecord[] = hooks.attemptLog ?? [];
+  // Shared by every exhaustion render below. It holds the SAME array reference
+  // as `attempts`, so attempts pushed before a render are visible in it.
+  const exhaustionCtx: ExhaustionContext = {
+    attempts,
+    hadTools: hooks.hadTools,
+    toolCount: hooks.toolCount,
+  };
   const keyOrdinals = new Map<string, number>();
   const keyOrdinal = (route: RouteResult): number => {
     const key = `${route.platform}:${route.keyId}`;
@@ -1130,7 +1164,7 @@ async function runFallbackLoopAttempts(hooks: FallbackHooks, trace: RequestTrace
       return true;
     }
     hooks.onExhausted(
-      exhaustedRetryError(lastError, maxRetries, { attempts, breakerFails: breaker.consecutive }),
+      exhaustedRetryError(lastError, maxRetries, { ...exhaustionCtx, breakerFails: breaker.consecutive }),
       { attempts, timedOut: false },
     );
     return true;
@@ -1153,7 +1187,7 @@ async function runFallbackLoopAttempts(hooks: FallbackHooks, trace: RequestTrace
     // work), it just becomes the last one.
     if (attempt > 1 && budgetMs > 0 && Date.now() - startedAt >= budgetMs) {
       hooks.onExhausted(
-        exhaustedRetryError(lastError, maxRetries, { attempts, timedOut: true, budgetMs }),
+        exhaustedRetryError(lastError, maxRetries, { ...exhaustionCtx, timedOut: true, budgetMs }),
         { attempts, timedOut: true },
       );
       return;
@@ -1164,7 +1198,7 @@ async function runFallbackLoopAttempts(hooks: FallbackHooks, trace: RequestTrace
       route = hooks.route(attempt);
     } catch (routeErr) {
       const exhaustion = lastError
-        ? exhaustedRetryError(lastError, undefined, { attempts })
+        ? exhaustedRetryError(lastError, undefined, exhaustionCtx)
         : routingExhaustionBody(routeErr);
       // Zero attempts ran: log the router's per-candidate disposition, the only
       // record of why the pool was empty. With prior attempts the trail in the
@@ -1287,7 +1321,7 @@ async function runFallbackLoopAttempts(hooks: FallbackHooks, trace: RequestTrace
         }
         console.log(`[FallbackLoop] retry time budget expired mid-attempt on ${route.platform}/${route.modelId} after ${(elapsedMs / 1000).toFixed(1)}s — rendering timedOut exhaustion ${ownedWholeBudget ? `and benching the route (silent for the whole ${budgetMs}ms budget)` : 'without benching'}`);
         hooks.onExhausted(
-          exhaustedRetryError(lastError, maxRetries, { attempts, timedOut: true, budgetMs }),
+          exhaustedRetryError(lastError, maxRetries, { ...exhaustionCtx, timedOut: true, budgetMs }),
           { attempts, timedOut: true },
         );
         traceAttempt('timeout', err);
@@ -1355,7 +1389,7 @@ async function runFallbackLoopAttempts(hooks: FallbackHooks, trace: RequestTrace
   }
 
   hooks.onExhausted(
-    exhaustedRetryError(lastError, maxRetries, { attempts }),
+    exhaustedRetryError(lastError, maxRetries, exhaustionCtx),
     { attempts, timedOut: false },
   );
 }

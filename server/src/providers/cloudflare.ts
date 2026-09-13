@@ -3,7 +3,7 @@ import type {
   ChatCompletionResponse,
   ChatCompletionChunk,
 } from '@freellmapi/shared/types.js';
-import { BaseProvider, providerHttpError, type CompletionOptions, type KeyValidationResult, type KeyValidationFailure } from './base.js';
+import { BaseProvider, extractUpstreamErrorText, providerHttpError, type CompletionOptions, type KeyValidationResult, type KeyValidationFailure } from './base.js';
 import { extendedBodyParams, resolveMaxTokens } from '../lib/sampling-params.js';
 import { contentToString } from '../lib/content.js';
 import { extractThinkFromMessage } from '../lib/think-tags.js';
@@ -91,7 +91,7 @@ export class CloudflareProvider extends BaseProvider {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw providerHttpError(res, `Cloudflare API error ${res.status}: ${(err as any).error?.message ?? (err as any).errors?.[0]?.message ?? res.statusText}`, err);
+      throw providerHttpError(res, `Cloudflare API error ${res.status}: ${extractUpstreamErrorText(err, res)}`, err);
     }
 
     const data = await res.json() as ChatCompletionResponse;
@@ -148,7 +148,7 @@ export class CloudflareProvider extends BaseProvider {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw providerHttpError(res, `Cloudflare API error ${res.status}: ${(err as any).error?.message ?? (err as any).errors?.[0]?.message ?? res.statusText}`, err);
+      throw providerHttpError(res, `Cloudflare API error ${res.status}: ${extractUpstreamErrorText(err, res)}`, err);
     }
 
     // First-byte grace (#584): reuse the per-model chat timeout (GLM 4.7

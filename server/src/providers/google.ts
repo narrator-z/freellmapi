@@ -8,7 +8,7 @@ import type {
   TokenUsage,
   Platform,
 } from '@freellmapi/shared/types.js';
-import { BaseProvider, providerHttpError, type CompletionOptions, type KeyValidationResult } from './base.js';
+import { BaseProvider, extractUpstreamErrorText, providerHttpError, type CompletionOptions, type KeyValidationResult } from './base.js';
 import { contentToString } from '../lib/content.js';
 import { proxyFetch } from '../lib/proxy.js';
 import { recordQuotaObservationsFromResponse, type QuotaObservationContext } from '../services/provider-quota.js';
@@ -603,7 +603,7 @@ export class GoogleProvider extends BaseProvider {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw providerHttpError(res, `Google API error ${res.status}: ${(err as any).error?.message ?? res.statusText}`, err);
+      throw providerHttpError(res, `Google API error ${res.status}: ${extractUpstreamErrorText(err, res)}`, err);
     }
 
     const data = await res.json() as GeminiResponse;
@@ -684,7 +684,7 @@ export class GoogleProvider extends BaseProvider {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw providerHttpError(res, `Google API error ${res.status}: ${(err as any).error?.message ?? res.statusText}`, err);
+      throw providerHttpError(res, `Google API error ${res.status}: ${extractUpstreamErrorText(err, res)}`, err);
     }
 
     const reader = res.body?.getReader();

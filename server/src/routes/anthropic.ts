@@ -613,6 +613,10 @@ anthropicRouter.post('/messages', async (req: Request, res: Response) => {
     state,
     attemptLog,
     logIdentity: { surface: 'anthropic messages', requestedModel },
+    // Diagnostic only: lets a chain-wide "rejected as invalid" point at the
+    // tool schemas instead of the request body (see exhaustedRetryError).
+    hadTools: wantsTools,
+    toolCount: tools?.length ?? 0,
     clientGone: () => clientGone,
     abortInFlight: () => hedgeAbort.abort(newHedgeAbortError()),
     route: () => {
