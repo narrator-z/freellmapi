@@ -90,6 +90,15 @@ const FALLBACK_PLATFORMS: PlatformEntry[] = [
   { value: 'xfyun', label: 'iFlytek Spark (free Lite, needs cn real-name)', url: 'https://console.xfyun.cn' },
 ]
 
+// Static platform registry consumed by upstream-derived pure helpers such as
+// `groupProviders` in client/src/lib/providers.ts, which iterate a fixed
+// PLATFORMS list to seed the grouped provider view. The fork stays
+// registry-driven at runtime via `usePlatforms()` (GET /api/keys/platforms,
+// falling back to this same list), but the static alias is required so those
+// helpers keep working without an async hook. Shape matches upstream's
+// PLATFORMS exactly.
+export const PLATFORMS = FALLBACK_PLATFORMS
+
 // Sort platforms alphabetically by label so long lists (Search / Add key
 // dropdown) are scannable instead of in raw provider-registry order.
 function sortPlatforms(ps: PlatformEntry[]): PlatformEntry[] {
