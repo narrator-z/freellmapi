@@ -41,7 +41,6 @@ import CatalogPage from '@/pages/CatalogPage'
 import LogsPage from '@/pages/LogsPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import AgentsPage from '@/pages/AgentsPage'
-import ProvidersPage from '@/pages/ProvidersPage'
 
 // Every failed mutation surfaces as an error toast, so no action fails
 // silently. A page that already shows the failure inline can opt out with
@@ -66,7 +65,6 @@ const queryClient = new QueryClient({
 
 const navItems = [
   { to: '/models', labelKey: 'nav.models' },
-  { to: '/providers', labelKey: 'nav.providers' },
   { to: '/playground', labelKey: 'nav.playground' },
   { to: '/keys', labelKey: 'nav.keys' },
   { to: '/agents', labelKey: 'nav.agents' },
@@ -415,7 +413,6 @@ function App() {
                       <Route path="/models/audio" element={<AudioPage />} />
                       <Route path="/models/audio/:id" element={<MediaDetailPage modality="audio" />} />
                       <Route path="/models/transcription/:id" element={<MediaDetailPage modality="transcription" />} />
-                      <Route path="/providers" element={<ProvidersPage />} />
                       <Route path="/playground" element={<PlaygroundPage />} />
                       <Route path="/keys" element={<KeysPage />} />
                       <Route path="/agents" element={<AgentsPage />} />
