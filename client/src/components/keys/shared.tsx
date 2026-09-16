@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
-import type { ApiKeyModel, ProviderQuotaState } from '../../../../shared/types'
+import type { ApiKeyModel, Platform, ProviderQuotaState } from '../../../../shared/types'
 import { ExternalLink } from 'lucide-react'
 import { useI18n } from '@/i18n'
 
@@ -95,9 +95,17 @@ const FALLBACK_PLATFORMS: PlatformEntry[] = [
 // PLATFORMS list to seed the grouped provider view. The fork stays
 // registry-driven at runtime via `usePlatforms()` (GET /api/keys/platforms,
 // falling back to this same list), but the static alias is required so those
-// helpers keep working without an async hook. Shape matches upstream's
-// PLATFORMS exactly.
-export const PLATFORMS = FALLBACK_PLATFORMS
+// helpers keep working without an async hook.
+//
+// Typed as upstream declares it — `{ value: Platform; ... }[]` — because the
+// upstream helpers assign `p.value` straight into `Platform`-typed fields
+// (ProviderSummary.platform / GroupedProvider.platform). The fork's own
+// `PlatformEntry.value` is deliberately the wider `string` (the API list can
+// carry catalog-auto-registered platforms outside the union), so the narrow
+// view is applied here, at the single point where upstream expects it.
+type StaticPlatformEntry = { value: Platform; label: string; url: string; keyless?: boolean }
+export const PLATFORMS: StaticPlatformEntry[] =
+  FALLBACK_PLATFORMS as unknown as StaticPlatformEntry[]
 
 // Sort platforms alphabetically by label so long lists (Search / Add key
 // dropdown) are scannable instead of in raw provider-registry order.
