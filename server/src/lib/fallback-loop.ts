@@ -1389,7 +1389,7 @@ async function runFallbackLoopAttempts(hooks: FallbackHooks, trace: RequestTrace
       // the original timeout diagnosis when the base budget is already spent.
       if (attempt > 1 && baseBudgetMs > 0 && Date.now() - startedAt >= baseBudgetMs) {
         hooks.onExhausted(
-          exhaustedRetryError(lastError, maxRetries, { attempts, timedOut: true, budgetMs: baseBudgetMs }),
+          exhaustedRetryError(lastError, maxRetries, { ...exhaustionCtx, timedOut: true, budgetMs: baseBudgetMs }),
           { attempts, timedOut: true },
         );
         return;
@@ -1418,7 +1418,7 @@ async function runFallbackLoopAttempts(hooks: FallbackHooks, trace: RequestTrace
     // lease, so even a candidate rejected here must pass through finally.
     if (attempt > 1 && budgetMs > 0 && Date.now() - startedAt >= budgetMs) {
       hooks.onExhausted(
-        exhaustedRetryError(lastError, maxRetries, { attempts, timedOut: true, budgetMs }),
+        exhaustedRetryError(lastError, maxRetries, { ...exhaustionCtx, timedOut: true, budgetMs }),
         { attempts, timedOut: true },
       );
       return;
