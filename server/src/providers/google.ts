@@ -571,7 +571,7 @@ export class GoogleProvider extends BaseProvider {
       contents: request.contents,
       generationConfig: {
         temperature: options?.temperature,
-        maxOutputTokens: resolveMaxTokens(this.platform, options?.max_tokens),
+        maxOutputTokens: resolveMaxTokens(this.platform, options?.max_tokens, options?.contextBudget),
         topP: options?.top_p,
         stopSequences: toGeminiStopSequences(options?.stop),
         ...toGeminiExtendedConfig(options),
@@ -654,7 +654,7 @@ export class GoogleProvider extends BaseProvider {
       contents: request.contents,
       generationConfig: {
         temperature: options?.temperature,
-        maxOutputTokens: resolveMaxTokens(this.platform, options?.max_tokens),
+        maxOutputTokens: resolveMaxTokens(this.platform, options?.max_tokens, options?.contextBudget),
         topP: options?.top_p,
         stopSequences: toGeminiStopSequences(options?.stop),
         ...toGeminiExtendedConfig(options),

@@ -208,6 +208,7 @@
     "noKey": "沒有鑰匙",
     "dragToReorder": "拖曳以重新排序",
     "dragToReorderGroup": "拖曳至重排序模型",
+    "moveToRank": "跳轉到排名",
     "providerCount": "{count}提供者",
     "servedBy": "由{providers}服務",
     "viewProviders": "查看供應商",
