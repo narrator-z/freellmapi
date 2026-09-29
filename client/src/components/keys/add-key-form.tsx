@@ -55,6 +55,8 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
 
   const needsAccountId = platform === 'cloudflare'
   const platforms = usePlatforms()
+  // Key-optional providers (Kilo, OVH, AI Horde) work anonymously, but accept a
+  // real key too (#1331): the field stays editable and may be left blank.
   const isKeyless = platforms.find(p => p.value === platform)?.keyless ?? false
 
   // Field-level validation: the submit stays clickable and reveals what is
@@ -70,8 +72,10 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
       return
     }
     setAddAttempted(false)
-    // Keyless providers submit an empty key; the backend stores a sentinel.
-    const key = isKeyless ? '' : (needsAccountId ? `${accountId}:${apiKey}` : apiKey)
+    // A blank key on a key-optional provider enables its anonymous tier; the
+    // backend stores a sentinel and sends no Authorization header. A real key
+    // saved there is an ordinary key (#1331).
+    const key = isKeyless ? apiKey.trim() : (needsAccountId ? `${accountId}:${apiKey}` : apiKey)
     addKey.mutate({ platform, key, label: label || undefined })
   }
 
@@ -113,17 +117,16 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
           <Label className="text-xs">{needsAccountId ? t('keys.apiToken') : t('keys.customApiKey')}</Label>
           <Input
             type="password"
-            value={isKeyless ? '' : apiKey}
+            value={apiKey}
             onChange={e => setApiKey(e.target.value)}
-            placeholder={isKeyless ? t('keys.noKeyNeededPlaceholder') : (needsAccountId ? t('keys.bearerTokenPlaceholder') : t('keys.pasteKeyPlaceholder'))}
+            placeholder={isKeyless ? t('keys.keyOptionalPlaceholder') : (needsAccountId ? t('keys.bearerTokenPlaceholder') : t('keys.pasteKeyPlaceholder'))}
             className="font-mono text-xs"
-            disabled={isKeyless}
             aria-invalid={addAttempted && !!keyError}
           />
           {addAttempted && <FieldError error={keyError} />}
           {isKeyless && (
             <p className="text-[11px] text-muted-foreground">
-              {t('keys.keylessHint')}
+              {t('keys.keyOptionalHint')}
             </p>
           )}
         </div>
@@ -137,7 +140,7 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
               className="w-[160px]"
             />
             <Button type="submit" size="sm" disabled={addKey.isPending}>
-              {addKey.isPending ? t('keys.adding') : isKeyless ? t('keys.enable') : t('keys.addKey')}
+              {addKey.isPending ? t('keys.adding') : isKeyless && !apiKey.trim() ? t('keys.enable') : t('keys.addKey')}
             </Button>
           </div>
         </div>

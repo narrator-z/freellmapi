@@ -20,6 +20,22 @@ export { sanitizeForGemini } from '../lib/gemini-wire.js';
 
 const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
+function googleHttpError(res: Response, body: any) {
+  const err = providerHttpError(res, `Google API error ${res.status}: ${extractUpstreamErrorText(body, res)}`, body);
+  // Gemini's human-readable message can omit the quota window. Keep only the
+  // daily signal from QuotaFailure, not the complete upstream payload (#1339).
+  const details = body?.error?.details;
+  if (res.status === 429 && Array.isArray(details)) {
+    err.dailyQuotaExhausted = details.some(detail =>
+      detail?.['@type'] === 'type.googleapis.com/google.rpc.QuotaFailure'
+      && Array.isArray(detail.violations)
+      && detail.violations.some((violation: any) =>
+        typeof violation?.quotaId === 'string' && /PerDay/.test(violation.quotaId)),
+    );
+  }
+  return err;
+}
+
 // Gemini 3 REQUIRES the `thoughtSignature` that accompanied a function call to
 // be echoed back whenever that call appears in conversation history, or it
 // rejects the request with 400 "Function call is missing a thought_sig". But
@@ -603,7 +619,7 @@ export class GoogleProvider extends BaseProvider {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw providerHttpError(res, `Google API error ${res.status}: ${extractUpstreamErrorText(err, res)}`, err);
+      throw googleHttpError(res, err);
     }
 
     const data = await res.json() as GeminiResponse;
@@ -684,7 +700,7 @@ export class GoogleProvider extends BaseProvider {
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw providerHttpError(res, `Google API error ${res.status}: ${extractUpstreamErrorText(err, res)}`, err);
+      throw googleHttpError(res, err);
     }
 
     const reader = res.body?.getReader();

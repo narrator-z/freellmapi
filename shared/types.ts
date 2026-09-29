@@ -259,7 +259,9 @@ export interface Model {
   enabled: boolean;
   supportsVision: boolean;
   supportsTools: boolean;
-  source?: 'catalog' | 'custom';
+  /** 'discovered': fetched from a built-in provider's own /models because the
+   *  catalog carries no models for it (#1348). */
+  source?: 'catalog' | 'custom' | 'discovered';
   keyId?: number | null;
   endpointScope?: string | null;
 }
@@ -318,7 +320,12 @@ export interface ApiKey {
   baseUrl: string | null;
   status: KeyStatus;
   enabled: boolean;
+  /** This row is the anonymous sentinel of a key-optional platform: there is
+   *  no credential to copy, scope or reveal. */
   keyless: boolean;
+  /** The platform works with or without a key (Kilo, OVH, AI Horde), so a key
+   *  can be added to or left off this row (#1331). */
+  keyOptional?: boolean;
   /** Whether an export file would actually contain this row. The server decides
    *  it so the dialog's "will export N keys" cannot drift from the export. */
   exportable: boolean;
@@ -328,10 +335,20 @@ export interface ApiKey {
   /** Model ids this key is limited to; null = serves every model of its
    *  platform (#657). */
   modelScope?: string[] | null;
+  /** Per-key monthly request cap (0 = unlimited, #1158). */
+  monthlyRequestCap?: number;
+  /** Per-key monthly token cap (0 = unlimited, #1158). */
+  monthlyTokenCap?: number;
+  /** Current UTC month's successful usage against the caps above, with the
+   *  ISO time of the next monthly reset. */
+  monthlyUsage?: { requests: number; tokens: number; resetsAt: string };
   /** The per-key proxy override with its password masked (#590); '' = none. */
   maskedProxyUrl?: string;
   models?: ApiKeyModel[];
   cooldowns?: ApiKeyCooldown[];
+  /** True for a built-in provider key whose platform the catalog carries no
+   *  models for, so the dashboard offers Fetch models on it (#1348). */
+  modelDiscovery?: boolean;
 }
 
 export interface ApiKeyCreate {
