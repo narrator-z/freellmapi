@@ -25,8 +25,13 @@ export function GetKeyLink({ url }: { url: string }) {
 
 // Platform list fetched from server (GET /api/keys/platforms). Driven by the
 // provider registry: upstream hand-maintained providers + catalog auto-registered.
-// Falls back to a static list while the request is in flight.
+// Falls back to a static list while the request is in flight. New upstream
+// providers (aclide, speka, llmtr, moondream) merged in from v0.13.x.
 const FALLBACK_PLATFORMS: PlatformEntry[] = [
+  { value: 'aclide', label: 'ACLIDE (shared monthly credits)', url: 'https://aclide.com/en/dashboard/api-keys' },
+  { value: 'speka', label: 'Speka ($1 shared monthly credits)', url: 'https://speka.me/dashboard/keys' },
+  { value: 'llmtr', label: 'LLMTR (daily free-model quotas)', url: 'https://llmtr.com' },
+  { value: 'moondream', label: 'Moondream ($5 shared monthly credits)', url: 'https://moondream.ai/c/cloud/api-keys' },
   { value: 'google', label: 'Google AI Studio', url: 'https://aistudio.google.com/apikey' },
   { value: 'groq', label: 'Groq', url: 'https://console.groq.com/keys' },
   { value: 'cerebras', label: 'Cerebras', url: 'https://cloud.cerebras.ai' },

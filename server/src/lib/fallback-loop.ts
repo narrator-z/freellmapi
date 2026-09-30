@@ -61,6 +61,7 @@ import { getRequestTrace, newRequestTrace, runWithRequestTrace, type AttemptOutc
 import { logRequest, persistRequestAttempts } from './request-log.js';
 import { withKeyProxy } from './proxy.js';
 import { getEndpointTimeBudgetMs } from './ttfb-budget.js';
+import { learnOutputCapFromError, learnedOutputCap } from './output-cap.js';
 
 // Every surface caps failover hops at the same number.
 export const FALLBACK_MAX_RETRIES = 20;
@@ -498,6 +499,33 @@ export function recordRetryableFailure(route: RouteResult, err: any, state: Fall
   // that outlives the request.
   if (isProviderLevelError(err)) {
     state.skipPlatforms.add(route.platform);
+  }
+  // Too big for this model is a fact about the REQUEST, not the model's
+  // health: it still serves every smaller request. Skip it for this request
+  // (above) and learn the reported ceiling so the router sizes it out next
+  // time, but no cooldown and no penalty. Benching it let one oversized agent
+  // turn (Claude Code ships ~16k tokens of tool schemas) sink every small-TPM
+  // model it touched, so later ordinary requests found the pool rate limited.
+  if (isContextTooLargeError(err)) {
+    learnLimitFromError(route.modelDbId, err);
+    return false;
+  }
+  // A max_tokens above this model's output ceiling (Claude Code asks for
+  // 128000; Groq gpt-oss and Ollama Cloud's Nemotron stop at 65536) is the
+  // request's shape, not the model's health and not missing tool support, so
+  // it stays off the cooldown, penalty and tool-rejection books. A ceiling
+  // learned just now makes the same route usable again at once (the next
+  // attempt is clamped to it); one that was already applied and still got
+  // rejected rules the model out for this request.
+  const capBefore = learnedOutputCap(route.platform, route.modelId);
+  const ceiling = learnOutputCapFromError(route, err);
+  if (ceiling != null) {
+    if (capBefore == null || ceiling < capBefore) {
+      state.skipKeys.delete(`${route.platform}:${route.modelId}:${route.keyId}`);
+    } else {
+      state.skipModels.add(route.modelDbId);
+    }
+    return false;
   }
   if (consumeSkipBenchExemption(route, err)) return true;
   const decision = cooldownDecisionForError(route, err);
