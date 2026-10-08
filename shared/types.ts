@@ -72,9 +72,16 @@ export type Platform =
   | 'aclide'
   // OpenAI-compatible chat and embeddings; one shared $1 monthly allowance.
   | 'speka'
+  // Ongoing free research API for chat and speech recognition; catalog only.
+  | 'typhoon'
+  // Permanent free chat aliases, shared fair-use quota; signed catalog only.
+  | 'plugsky'
   // Selected zero-priced routes have daily/rolling quotas without a top-up;
   // signed catalog only. The public roster also includes paid/promotional IDs.
   | 'llmtr'
+  // Catalog-managed free routes: monthly request quota / ongoing $0 models.
+  | 'gizmo'
+  | 'blockrun'
   // Hosted vision API: $5/workspace in recurring monthly credits, shared
   // across models. Signed catalog only; no bundled model seeds.
   | 'moondream'
