@@ -4,8 +4,6 @@
     "playground": "O'yin maydonchasi",
     "keys": "Kalitlar",
     "analytics": "Analitika",
-    "premium": "Premium",
-    "upgrade": "Yangilash",
     "settings": "Sozlamalar",
     "signOut": "Chiqish",
     "openMenu": "Navigatsiya menyusini oching",
@@ -16,7 +14,8 @@
     "modelsMenu": "Model turlarini ko'rib chiqing",
     "agents": "Agentlar",
     "logs": "Jurnal",
-    "analyticsMenu": "Analitika sahifalari"
+    "analyticsMenu": "Analitika sahifalari",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "Hisob qaydnomangizni yarating",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "Search models…",
     "providerFilterLabel": "Filter by provider",
     "providerAll": "All providers",
-    "noMatch": "No models match your search."
-  },
-  "premium": {
-    "title": "Premium",
-    "description": "Har bir qurilmada jonli modellar katalogi.",
-    "loading": "Yuklanmoqda…",
-    "checkForUpdates": "Yangilanishlarni tekshiring",
-    "syncing": "Sinxronlanmoqda…",
-    "catalogFeed": "Katalog tasmasi",
-    "liveFeed": "Jonli tasma",
-    "monthlySnapshot": "Oylik surat",
-    "lastChecked": "Oxirgi tekshirilgan: {when}",
-    "liveDescription": "Yangi bepul modellar, kvotani o'zgartirish va g'alati tuzatishlar yuborilganidan keyin bir necha soat ichida bu erga tushadi. Ilova avtomatik ravishda kuniga ikki marta tekshiradi; qiladigan hech narsa.",
-    "snapshotDescription": "Bepul daraja: katalog oylik suratdan yangilanadi, kuniga ikki marta avtomatik tekshiriladi. Premium buni har 2-3 kunda yangilanadigan jonli tasmaga oʻtkazadi.",
-    "lastSyncProblem": "Oxirgi sinxronlash muammosi: {error}",
-    "license": "Litsenziya",
-    "planAnnual": "Premium yillik",
-    "planLifetime": "Premium umr",
-    "expired": "Muddati tugagan",
-    "inactive": "Faol emas",
-    "lifetimeNote": "Bir umrlik litsenziya: muddati tugamaydi.",
-    "renewsOn": "{date} da yangilanadi.",
-    "willNotRenew": "Yangilanmaydi. {date} gacha Premium, keyin bu o'rnatish oylik bepul katalogga qaytadi.",
-    "keyInactive": "Bu kalit endi faol emas. Ilova oylik bepul katalog ustida ishlashda davom etadi.",
-    "manageSubscription": "Obunani boshqarish",
-    "openingPortal": "Ochilyapti…",
-    "removeKey": "Ushbu qurilmadan kalitni olib tashlang",
-    "manageHint": "Obunani boshqarish Stripe billing portalini ochadi: bekor qiling, kartangizni yangilang yoki hisob-fakturalarni yuklab oling. Kalitni olib tashlash faqat ushbu qurilmani o'chiradi; xaridingiz daxlsiz.",
-    "licenseKey": "Litsenziya kaliti",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "Faollashtirish",
-    "activating": "Faollashtirilmoqda…",
-    "keyHint": "Sizning kalitingiz xaridingiz elektron pochtasida va to'lovdan keyingi sahifada. Yo'qotdingizmi?",
-    "recoverKey": "Uni veb-saytda tiklang",
-    "upsellTitle": "Yiliga 19 dollarga jonli efirga chiqing",
-    "upsellDescription": "Yangi bepul modellar 30 kundan keyin emas, balki mavjud bo'lgan paytda paydo bo'ladi. Bitta kalit, har bir qurilma. Istalgan vaqtda bekor qilish; router abadiy bepul qoladi.",
-    "goPremium": "Premiumga o'ting",
-    "bundled": "to'plangan",
-    "planGeneric": "Premium"
+    "noMatch": "No models match your search.",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "Reliz eslatmalari",
     "tryAgain": "Qayta urinish",
     "offline": "Internet aloqangizni tekshirib, qayta urinib ko‘ring."
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }

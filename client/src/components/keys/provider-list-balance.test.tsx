@@ -80,6 +80,11 @@ function mockBackend(keys: ApiKey[], quotaStates: ProviderQuotaState[]) {
     if (path === '/api/health') return { platforms: [], keys: [], quotaStates }
     if (path === '/api/settings/proxy') return { proxyUrl: '', enabled: false, bypassPlatforms: [], active: false }
     if (path === '/api/keys/providers') return []
+    // The fork loads the platform list dynamically (usePlatforms), so
+    // ProviderList also calls this route. It must return the groq group for
+    // the key rows to render — an empty array would leave keys grouped under
+    // nothing, and {} would crash sortPlatforms (a non-iterable).
+    if (path === '/api/keys/platforms') return [{ value: 'groq', label: 'Groq', url: '' }]
     return {}
   })
 }

@@ -4,8 +4,6 @@
     "playground": "Παιδική χαρά",
     "keys": "Κλειδιά",
     "analytics": "Ανάλυση",
-    "premium": "Ασφάλιστρο",
-    "upgrade": "Αναβάθμιση",
     "settings": "Ρυθμίσεις",
     "signOut": "Αποσύνδεση",
     "openMenu": "Άνοιγμα μενού πλοήγησης",
@@ -16,7 +14,8 @@
     "modelsMenu": "Αναζήτηση τύπων μοντέλων",
     "agents": "Πράκτορες",
     "logs": "Καταγραφές",
-    "analyticsMenu": "Σελίδες ανάλυσης"
+    "analyticsMenu": "Σελίδες ανάλυσης",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "Δημιουργήστε τον λογαριασμό σας",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "Search models…",
     "providerFilterLabel": "Filter by provider",
     "providerAll": "All providers",
-    "noMatch": "No models match your search."
-  },
-  "premium": {
-    "title": "Ασφάλιστρο",
-    "description": "Ο ζωντανός κατάλογος μοντέλων, σε κάθε συσκευή.",
-    "loading": "Φόρτωση...",
-    "checkForUpdates": "Έλεγχος για ενημερώσεις",
-    "syncing": "Συγχρονισμός...",
-    "catalogFeed": "Τροφοδοσία καταλόγου",
-    "liveFeed": "Ζωντανή ροή",
-    "monthlySnapshot": "Μηνιαία σύνοψη",
-    "lastChecked": "Τελευταίος έλεγχος: {when}",
-    "liveDescription": "Νέα δωρεάν μοντέλα, αλλαγές ποσοστώσεων και διορθώσεις ιδιορρυθμιών προσγειώνονται εδώ μέσα σε λίγες ώρες από την αποστολή. Η εφαρμογή ελέγχει αυτόματα δύο φορές την ημέρα. Τίποτα να κάνουμε.",
-    "snapshotDescription": "Δωρεάν επίπεδο: ο κατάλογος ανανεώνεται από ένα μηνιαίο στιγμιότυπο, ελέγχεται αυτόματα δύο φορές την ημέρα. Το Premium το αλλάζει στη ζωντανή ροή, η οποία ενημερώνεται κάθε 2-3 ημέρες.",
-    "lastSyncProblem": "Τελευταίο πρόβλημα συγχρονισμού: {error}",
-    "license": "Άδεια",
-    "planAnnual": "Premium Ετήσιο",
-    "planLifetime": "Premium Διάρκεια ζωής",
-    "expired": "Έληξε",
-    "inactive": "Ανενεργός",
-    "lifetimeNote": "Άδεια ζωής: δεν λήγει ποτέ.",
-    "renewsOn": "Ανανεώνεται στις {date}.",
-    "willNotRenew": "Δεν θα ανανεωθεί. Premium μέχρι {date}, τότε αυτή η εγκατάσταση επιστρέφει στον δωρεάν μηνιαίο κατάλογο.",
-    "keyInactive": "Αυτό το κλειδί δεν είναι πλέον ενεργό. Η εφαρμογή συνεχίζει να λειτουργεί στον δωρεάν μηνιαίο κατάλογο.",
-    "manageSubscription": "Διαχείριση συνδρομής",
-    "openingPortal": "Εγκαίνια...",
-    "removeKey": "Αφαιρέστε το κλειδί από αυτήν τη συσκευή",
-    "manageHint": "Η Διαχείριση συνδρομής ανοίγει την πύλη χρέωσης του Stripe: ακυρώστε, ενημερώστε την κάρτα σας ή κατεβάστε τιμολόγια. Η αφαίρεση του κλειδιού απενεργοποιεί μόνο αυτήν τη συσκευή. Η αγορά σας είναι ανέγγιχτη.",
-    "licenseKey": "Κλειδί άδειας χρήσης",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "Ενεργοποίηση",
-    "activating": "Ενεργοποίηση...",
-    "keyHint": "Το κλειδί σας βρίσκεται στο email αγοράς και στη σελίδα μετά την ολοκλήρωση της αγοράς. Το χάσατε;",
-    "recoverKey": "Ανακτήστε το στον ιστότοπο",
-    "upsellTitle": "Βγείτε ζωντανά με 19 $ το χρόνο",
-    "upsellDescription": "Νέα δωρεάν μοντέλα τη στιγμή που υπάρχουν, αντί για 30 ημέρες αργότερα. Ένα κλειδί, κάθε συσκευή. Ακύρωση ανά πάσα στιγμή. Ο δρομολογητής παραμένει ελεύθερος για πάντα.",
-    "goPremium": "Πηγαίνετε Premium",
-    "bundled": "ομαδοποιημένο",
-    "planGeneric": "Ασφάλιστρο"
+    "noMatch": "No models match your search.",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "Σημειώσεις έκδοσης",
     "tryAgain": "Δοκιμάστε ξανά",
     "offline": "Ελέγξτε τη σύνδεσή σας στο διαδίκτυο και δοκιμάστε ξανά."
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }

@@ -4,8 +4,6 @@
     "playground": "Spielplatz",
     "keys": "Schlüssel",
     "analytics": "Analytik",
-    "premium": "Premium",
-    "upgrade": "Upgrade",
     "settings": "Einstellungen",
     "signOut": "Abmelden",
     "openMenu": "Navigationsmenü öffnen",
@@ -16,7 +14,8 @@
     "modelsMenu": "Durchsuchen Sie Modelltypen",
     "agents": "Agenten",
     "logs": "Protokoll",
-    "analyticsMenu": "Analytik-Seiten"
+    "analyticsMenu": "Analytik-Seiten",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "Erstellen Sie Ihr Konto",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "Search models…",
     "providerFilterLabel": "Filter by provider",
     "providerAll": "All providers",
-    "noMatch": "No models match your search."
-  },
-  "premium": {
-    "title": "Premium",
-    "description": "Der Live-Modellkatalog auf jedem Gerät.",
-    "loading": "Laden…",
-    "checkForUpdates": "Suchen Sie nach Updates",
-    "syncing": "Synchronisierung…",
-    "catalogFeed": "Katalog-Feed",
-    "liveFeed": "Live-Feed",
-    "monthlySnapshot": "Monatlicher Schnappschuss",
-    "lastChecked": "Zuletzt überprüft: {when}",
-    "liveDescription": "Neue kostenlose Modelle, Kontingentänderungen und Fehlerbehebungen werden hier innerhalb weniger Stunden nach der Auslieferung bereitgestellt. Die App prüft automatisch zweimal täglich; nichts zu tun.",
-    "snapshotDescription": "Kostenloses Kontingent: Der Katalog wird anhand eines monatlichen Snapshots aktualisiert und zweimal täglich automatisch überprüft. Premium stellt dies auf den Live-Feed um, der alle 2–3 Tage aktualisiert wird.",
-    "lastSyncProblem": "Letztes Synchronisierungsproblem: {error}",
-    "license": "Lizenz",
-    "planAnnual": "Premium-Jahrbuch",
-    "planLifetime": "Premium-Lebenszeit",
-    "expired": "Abgelaufen",
-    "inactive": "Inaktiv",
-    "lifetimeNote": "Lebenslange Lizenz: läuft nie ab.",
-    "renewsOn": "Verlängert am {date}.",
-    "willNotRenew": "Wird nicht verlängert. Premium bis {date}, dann fällt diese Installation auf den kostenlosen monatlichen Katalog zurück.",
-    "keyInactive": "Dieser Schlüssel ist nicht mehr aktiv. Die App arbeitet weiterhin am kostenlosen Monatskatalog.",
-    "manageSubscription": "Abonnement verwalten",
-    "openingPortal": "Eröffnung…",
-    "removeKey": "Entfernen Sie den Schlüssel von diesem Gerät",
-    "manageHint": "Abonnement verwalten öffnet das Abrechnungsportal von Stripe: Kündigen, Ihre Karte aktualisieren oder Rechnungen herunterladen. Durch das Abziehen des Schlüssels wird dieses Gerät lediglich deaktiviert; Ihr Kauf bleibt unberührt.",
-    "licenseKey": "Lizenzschlüssel",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "Aktivieren",
-    "activating": "Aktivieren…",
-    "keyHint": "Ihr Schlüssel befindet sich in Ihrer Kauf-E-Mail und auf der Post-Checkout-Seite. Verloren?",
-    "recoverKey": "Stellen Sie es auf der Website wieder her",
-    "upsellTitle": "Gehen Sie für 19 $ pro Jahr live",
-    "upsellDescription": "Neue kostenlose Modelle, sobald sie verfügbar sind, statt 30 Tage später. Ein Schlüssel, jedes Gerät. Jederzeit kündbar; Der Router bleibt für immer frei.",
-    "goPremium": "Gehen Sie Premium",
-    "bundled": "gebündelt",
-    "planGeneric": "Premium"
+    "noMatch": "No models match your search.",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "Versionshinweise",
     "tryAgain": "Erneut versuchen",
     "offline": "Prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut."
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }

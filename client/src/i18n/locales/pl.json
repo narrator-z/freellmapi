@@ -4,8 +4,6 @@
     "playground": "Plac zabaw",
     "keys": "Klucze",
     "analytics": "Analityka",
-    "premium": "Premium",
-    "upgrade": "Uaktualnij",
     "settings": "Ustawienia",
     "signOut": "Wyloguj się",
     "openMenu": "Otwórz menu nawigacyjne",
@@ -16,7 +14,8 @@
     "modelsMenu": "Przeglądaj typy modeli",
     "agents": "Agenci",
     "logs": "Logi",
-    "analyticsMenu": "Strony analityki"
+    "analyticsMenu": "Strony analityki",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "Utwórz swoje konto",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "Search models…",
     "providerFilterLabel": "Filter by provider",
     "providerAll": "All providers",
-    "noMatch": "No models match your search."
-  },
-  "premium": {
-    "title": "Premium",
-    "description": "Katalog modeli na żywo na każdym urządzeniu.",
-    "loading": "Ładowanie…",
-    "checkForUpdates": "Sprawdź aktualizacje",
-    "syncing": "Synchronizowanie…",
-    "catalogFeed": "Kanał katalogu",
-    "liveFeed": "Transmisja na żywo",
-    "monthlySnapshot": "Miesięczna migawka",
-    "lastChecked": "Ostatnio sprawdzane: {when}",
-    "liveDescription": "Nowe bezpłatne modele, zmiany limitów i poprawki dziwactw trafiają tutaj w ciągu kilku godzin od wysyłki. Aplikacja sprawdza automatycznie dwa razy dziennie; nic do zrobienia.",
-    "snapshotDescription": "Poziom bezpłatny: katalog odświeża się z miesięcznej migawki, sprawdzanej automatycznie dwa razy dziennie. Premium przełącza to na kanał na żywo, aktualizowany co 2-3 dni.",
-    "lastSyncProblem": "Ostatni problem z synchronizacją: {error}",
-    "license": "Licencja",
-    "planAnnual": "Premia roczna",
-    "planLifetime": "Dożywotnia premia",
-    "expired": "Wygasło",
-    "inactive": "Nieaktywny",
-    "lifetimeNote": "Licencja dożywotnia: nigdy nie wygasa.",
-    "renewsOn": "Odnawia się w dniu {date}.",
-    "willNotRenew": "Nie odnowi. Premium do {date}, następnie ta instalacja powraca do bezpłatnego katalogu miesięcznego.",
-    "keyInactive": "Ten klucz nie jest już aktywny. Aplikacja cały czas pracuje nad bezpłatnym miesięcznym katalogiem.",
-    "manageSubscription": "Zarządzaj subskrypcją",
-    "openingPortal": "Otwieranie…",
-    "removeKey": "Usuń klucz z tego urządzenia",
-    "manageHint": "Zarządzaj subskrypcją otwiera portal rozliczeniowy Stripe: anuluj, zaktualizuj swoją kartę lub pobierz faktury. Wyjęcie klucza powoduje jedynie dezaktywację tego urządzenia; Twój zakup pozostaje nietknięty.",
-    "licenseKey": "Klucz licencyjny",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "Aktywuj",
-    "activating": "Aktywuję…",
-    "keyHint": "Twój klucz znajduje się w e-mailu dotyczącym zakupu i na stronie po dokonaniu płatności. Zgubiłeś to?",
-    "recoverKey": "Odzyskaj go na stronie internetowej",
-    "upsellTitle": "Wejdź na żywo za 19 USD rocznie",
-    "upsellDescription": "Nowe bezpłatne modele od razu po ich pojawieniu się, a nie 30 dni później. Jeden klucz, każde urządzenie. Anuluj w dowolnym momencie; router pozostaje darmowy na zawsze.",
-    "goPremium": "Przejdź na Premium",
-    "bundled": "w pakiecie",
-    "planGeneric": "Premium"
+    "noMatch": "No models match your search.",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "Informacje o wydaniu",
     "tryAgain": "Spróbuj ponownie",
     "offline": "Sprawdź połączenie z internetem i spróbuj ponownie."
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }

@@ -4,8 +4,6 @@
     "playground": "מגרש משחקים",
     "keys": "מפתחות",
     "analytics": "אנליטיקה",
-    "premium": "פרימיום",
-    "upgrade": "שדרוג",
     "settings": "הגדרות",
     "signOut": "התנתק",
     "openMenu": "תפריט ניווט פתוח",
@@ -16,7 +14,8 @@
     "modelsMenu": "דפדוף בסוגי דגמים",
     "agents": "סוכנים",
     "logs": "יומן",
-    "analyticsMenu": "דפי אנליטיקה"
+    "analyticsMenu": "דפי אנליטיקה",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "צור את החשבון שלך",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "Search models…",
     "providerFilterLabel": "Filter by provider",
     "providerAll": "All providers",
-    "noMatch": "No models match your search."
-  },
-  "premium": {
-    "title": "פרימיום",
-    "description": "קטלוג הדגמים החיים, בכל מכשיר.",
-    "loading": "טוען...",
-    "checkForUpdates": "בדוק עדכונים",
-    "syncing": "מסנכרן...",
-    "catalogFeed": "הזנת קטלוג",
-    "liveFeed": "שידור חי",
-    "monthlySnapshot": "תמונת מצב חודשית",
-    "lastChecked": "נבדק לאחרונה: {when}",
-    "liveDescription": "דגמים חינמיים חדשים, שינויים במכסה ותיקוני קווירק מגיעים לכאן תוך שעות מהמשלוח. האפליקציה בודקת אוטומטית פעמיים ביום; אין מה לעשות.",
-    "snapshotDescription": "רמה חינמית: הקטלוג מתעדכן מתמונת מצב חודשית, שנבדק אוטומטית פעמיים ביום. פרימיום מעביר את זה לשידור החי, שמתעדכן כל 2-3 ימים.",
-    "lastSyncProblem": "בעיית הסינכרון האחרון: {error}",
-    "license": "רישיון",
-    "planAnnual": "שנתי פרימיום",
-    "planLifetime": "חיי פרימיום",
-    "expired": "פג תוקפו",
-    "inactive": "לא פעיל",
-    "lifetimeNote": "רישיון לכל החיים: אף פעם לא פג תוקף.",
-    "renewsOn": "חידוש ב-{date}.",
-    "willNotRenew": "לא יחדש. פרימיום עד {date}, ואז ההתקנה הזו חוזרת לקטלוג החודשי החינמי.",
-    "keyInactive": "המפתח הזה כבר אינו פעיל. האפליקציה ממשיכה לעבוד על הקטלוג החודשי החינמי.",
-    "manageSubscription": "ניהול מנוי",
-    "openingPortal": "נפתח...",
-    "removeKey": "הסר מפתח מהמכשיר הזה",
-    "manageHint": "ניהול מנוי פותח את פורטל החיוב של Stripe: לבטל, לעדכן את הכרטיס, או להוריד חשבוניות. הסרת המפתח רק מבטלת את המכשיר הזה; הרכישה שלך לא נפגעה.",
-    "licenseKey": "מפתח רישיון",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "הפעל",
-    "activating": "מפעיל...",
-    "keyHint": "המפתח שלך נמצא במייל הרכישה ובדף שלאחר התשלום. איבדת את זה?",
-    "recoverKey": "שחזר את זה באתר",
-    "upsellTitle": "תצא לשידור חי ב-19 דולר בשנה",
-    "upsellDescription": "דגמים חינמיים חדשים מהרגע שהם קיימים, במקום 30 יום לאחר מכן. מפתח אחד, כל מכשיר. בטל בכל עת; הנתב נשאר חופשי לנצח.",
-    "goPremium": "גו פרימיום",
-    "bundled": "חבילה",
-    "planGeneric": "פרימיום"
+    "noMatch": "No models match your search.",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "הערות גרסה",
     "tryAgain": "נסו שוב",
     "offline": "בדקו את החיבור לאינטרנט ונסו שוב."
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }

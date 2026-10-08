@@ -4,8 +4,6 @@
     "playground": "Uşaq meydançası",
     "keys": "Açarlar",
     "analytics": "Analitika",
-    "premium": "Premium",
-    "upgrade": "Yeniləmə",
     "settings": "Parametrlər",
     "signOut": "Çıxış",
     "openMenu": "Naviqasiya menyusunu aç",
@@ -16,7 +14,8 @@
     "modelsMenu": "Model tiplərinə baxın",
     "agents": "Agentlər",
     "logs": "Loglar",
-    "analyticsMenu": "Analitika səhifələri"
+    "analyticsMenu": "Analitika səhifələri",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "Hesabınızı yaradın",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "Search models…",
     "providerFilterLabel": "Filter by provider",
     "providerAll": "All providers",
-    "noMatch": "No models match your search."
-  },
-  "premium": {
-    "title": "Premium",
-    "description": "Hər cihazda canlı model kataloqu.",
-    "loading": "Yüklənir...",
-    "checkForUpdates": "Yeniləmələri yoxlayın",
-    "syncing": "Sinxronizasiya...",
-    "catalogFeed": "Kataloq lenti",
-    "liveFeed": "Canlı yayım",
-    "monthlySnapshot": "Aylıq anlıq görüntü",
-    "lastChecked": "Son yoxlama: {when}",
-    "liveDescription": "Yeni pulsuz modellər, kvota dəyişiklikləri və quirk düzəlişləri göndərildikdən bir neçə saat sonra buraya gəlir. Tətbiq gündə iki dəfə avtomatik yoxlayır; Heç bir iş yoxdur.",
-    "snapshotDescription": "Pulsuz səviyyə: kataloq aylıq snapshotdan yenilənir, gündə iki dəfə avtomatik yoxlanılır. Premium bunu canlı yayıma keçirir, hər 2-3 gündə bir yenilənir.",
-    "lastSyncProblem": "Son sinxronizasiya problemi: {error}",
-    "license": "Lisenziya",
-    "planAnnual": "Premium İllik",
-    "planLifetime": "Premium Ömür Boyu",
-    "expired": "Müddəti bitib",
-    "inactive": "Qeyri-aktiv",
-    "lifetimeNote": "Ömürlük lisenziya: heç vaxt bitmir.",
-    "renewsOn": "{date} yeniləyir.",
-    "willNotRenew": "Yenilənməyəcək. Premium {date}-cı ilə qədər, sonra bu quraşdırma yenidən pulsuz aylıq kataloqa qayıdır.",
-    "keyInactive": "Bu açar artıq aktiv deyil. Tətbiq pulsuz aylıq kataloq üzərində işləməyə davam edir.",
-    "manageSubscription": "Abunəliyi idarə et",
-    "openingPortal": "Açılır...",
-    "removeKey": "Bu cihazdan açarı çıxar",
-    "manageHint": "Abunəliyi idarə etmək Stripe-nin ödəniş portalını açır: kartınızı ləğv edin, yeniləyin və ya fakturaları yükləyin. Açarı çıxarmaq yalnız bu cihazı deaktiv edir; Sizin alışınız toxunulmazdır.",
-    "licenseKey": "Lisenziya açarı",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "Aktivləşdir",
-    "activating": "Aktivləşdirirəm...",
-    "keyHint": "Açarınız alış e-poçtunda və ödənişdən sonrakı səhifədədir. İtirdin?",
-    "recoverKey": "Saytda bərpa edin",
-    "upsellTitle": "İldə 19 dollara yaşa",
-    "upsellDescription": "Yeni pulsuz modellər mövcud olduğu anda, 30 gün sonra yox. Bir açar, hər cihaz. İstənilən vaxt ləğv edə bilərsiniz; Router həmişə boş qalır.",
-    "goPremium": "Go Premium",
-    "bundled": "paketlənmiş",
-    "planGeneric": "Premium"
+    "noMatch": "No models match your search.",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "Buraxılış qeydləri",
     "tryAgain": "Yenidən cəhd et",
     "offline": "İnternet bağlantınızı yoxlayın və yenidən cəhd edin."
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }

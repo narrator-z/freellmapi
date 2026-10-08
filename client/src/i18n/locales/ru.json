@@ -4,8 +4,6 @@
     "playground": "Детская площадка",
     "keys": "Ключи",
     "analytics": "Аналитика",
-    "premium": "Премиум",
-    "upgrade": "Обновление",
     "settings": "Настройки",
     "signOut": "Выйти",
     "openMenu": "Открыть меню навигации",
@@ -16,7 +14,8 @@
     "modelsMenu": "Просмотр типов моделей",
     "agents": "Агенты",
     "logs": "Журнал",
-    "analyticsMenu": "Страницы аналитики"
+    "analyticsMenu": "Страницы аналитики",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "Создайте свою учетную запись",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "Search models…",
     "providerFilterLabel": "Filter by provider",
     "providerAll": "All providers",
-    "noMatch": "No models match your search."
-  },
-  "premium": {
-    "title": "Премиум",
-    "description": "Живой каталог моделей на каждом устройстве.",
-    "loading": "Загрузка…",
-    "checkForUpdates": "Проверьте наличие обновлений",
-    "syncing": "Синхронизация…",
-    "catalogFeed": "Лента каталога",
-    "liveFeed": "Прямая трансляция",
-    "monthlySnapshot": "Ежемесячный снимок",
-    "lastChecked": "Последняя проверка: {when}",
-    "liveDescription": "Новые бесплатные модели, изменения квот и исправления особенностей появляются здесь в течение нескольких часов после отправки. Приложение проверяет автоматически два раза в день; нечего делать.",
-    "snapshotDescription": "Уровень бесплатного пользования: каталог обновляется на основе ежемесячного снимка, который проверяется автоматически два раза в день. Премиум переключает это на прямую трансляцию, обновляемую каждые 2-3 дня.",
-    "lastSyncProblem": "Последняя проблема с синхронизацией: {error}",
-    "license": "Лицензия",
-    "planAnnual": "Премиум годовой",
-    "planLifetime": "Премиум на всю жизнь",
-    "expired": "Срок действия истек",
-    "inactive": "Неактивный",
-    "lifetimeNote": "Пожизненная лицензия: срок действия никогда не истекает.",
-    "renewsOn": "Обновление на {date}.",
-    "willNotRenew": "Не будет продлеваться. Премиум до {date}, затем эта установка возвращается к бесплатному ежемесячному каталогу.",
-    "keyInactive": "Этот ключ больше не активен. Приложение продолжает работать над бесплатным ежемесячным каталогом.",
-    "manageSubscription": "Управление подпиской",
-    "openingPortal": "Открытие…",
-    "removeKey": "Удалить ключ с этого устройства",
-    "manageHint": "Управление подпиской открывает платежный портал Stripe: отмените, обновите карту или загрузите счета. Удаление ключа только деактивирует это устройство; ваша покупка нетронута.",
-    "licenseKey": "Лицензионный ключ",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "Активировать",
-    "activating": "Активация…",
-    "keyHint": "Ваш ключ находится в электронном письме о покупке и на странице после оформления заказа. Потеряли?",
-    "recoverKey": "Восстановить его на сайте",
-    "upsellTitle": "Начните жить за 19 долларов в год",
-    "upsellDescription": "Новые бесплатные модели сразу после их появления, а не 30 дней спустя. Один ключ для каждого устройства. Отменить в любое время; маршрутизатор остается бесплатным навсегда.",
-    "goPremium": "Перейти Премиум",
-    "bundled": "в комплекте",
-    "planGeneric": "Премиум"
+    "noMatch": "No models match your search.",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "Примечания к выпуску",
     "tryAgain": "Повторить",
     "offline": "Проверьте подключение к интернету и повторите попытку."
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }

@@ -4,8 +4,6 @@
     "playground": "ක්රීඩා පිටිය",
     "keys": "යතුරු",
     "analytics": "විශ්ලේෂණ",
-    "premium": "වාරික",
-    "upgrade": "උත්ශ්‍රේණි කරන්න",
     "settings": "සැකසීම්",
     "signOut": "වරනය වන්න",
     "openMenu": "සංචාලන මෙනුව විවෘත කරන්න",
@@ -16,7 +14,8 @@
     "modelsMenu": "ආකෘති වර්ග පිරික්සන්න",
     "agents": "නියෝජිතයන්",
     "logs": "ලොග",
-    "analyticsMenu": "විශ්ලේෂණ පිටු"
+    "analyticsMenu": "විශ්ලේෂණ පිටු",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "ඔබගේ ගිණුම සාදන්න",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "Search models…",
     "providerFilterLabel": "Filter by provider",
     "providerAll": "All providers",
-    "noMatch": "No models match your search."
-  },
-  "premium": {
-    "title": "වාරික",
-    "description": "සජීවී මාදිලි නාමාවලිය, සෑම උපාංගයකම.",
-    "loading": "පූරණය වෙමින්...",
-    "checkForUpdates": "යාවත්කාලීන සඳහා පරීක්ෂා කරන්න",
-    "syncing": "සමමුහුර්ත කරමින්...",
-    "catalogFeed": "නාමාවලි පෝෂණය",
-    "liveFeed": "සජීවී පෝෂණය",
-    "monthlySnapshot": "මාසික ස්නැප්ෂොට්",
-    "lastChecked": "අවසන් වරට පරීක්ෂා කළේ: {when}",
-    "liveDescription": "නව නොමිලේ ආකෘති, කෝටා වෙනස් කිරීම් සහ quirk නැව්ගත කර පැය කිහිපයක් ඇතුළත මෙහි ඉඩම නිවැරදි කරයි. යෙදුම දිනකට දෙවරක් ස්වයංක්රීයව පරීක්ෂා කරයි; කරන්න දෙයක් නෑ.",
-    "snapshotDescription": "නිදහස් ස්ථරය: නාමාවලිය මාසික ස්නැප්ෂොට් එකකින් නැවුම් කරයි, දිනකට දෙවරක් ස්වයංක්‍රීයව පරීක්ෂා කෙරේ. වාරිකය මෙය සජීවී සංග්‍රහයට මාරු කරයි, සෑම දින 2-3කට වරක් යාවත්කාලීන වේ.",
-    "lastSyncProblem": "අවසන් සමමුහුර්ත ගැටලුව: {error}",
-    "license": "බලපත්රය",
-    "planAnnual": "වාරික වාර්ෂික",
-    "planLifetime": "වාරික ජීවිත කාලය",
-    "expired": "කල් ඉකුත් වී ඇත",
-    "inactive": "අක්රියයි",
-    "lifetimeNote": "ජීවිත කාලය බලපත්‍රය: කිසිදා කල් ඉකුත් නොවේ.",
-    "renewsOn": "{date} මත අලුත් කරයි.",
-    "willNotRenew": "අලුත් වෙන්නේ නැහැ. {date} දක්වා වාරිකය, පසුව මෙම ස්ථාපනය නොමිලේ මාසික නාමාවලියට වැටේ.",
-    "keyInactive": "මෙම යතුර තවදුරටත් ක්රියාකාරී නොවේ. යෙදුම නොමිලේ මාසික නාමාවලිය මත වැඩ කරයි.",
-    "manageSubscription": "දායකත්වය කළමනාකරණය කරන්න",
-    "openingPortal": "විවෘත කරමින්...",
-    "removeKey": "මෙම උපාංගයෙන් යතුර ඉවත් කරන්න",
-    "manageHint": "දායකත්වය කළමනාකරණය කිරීම Stripe හි බිල්පත් ද්වාරය විවෘත කරයි: අවලංගු කරන්න, ඔබේ කාඩ්පත යාවත්කාලීන කරන්න, හෝ ඉන්වොයිසි බාගන්න. යතුර ඉවත් කිරීම පමණක් මෙම උපාංගය අක්රිය කරයි; ඔබේ මිලදී ගැනීම නොගැලපේ.",
-    "licenseKey": "බලපත්ර යතුර",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "සක්රිය කරන්න",
-    "activating": "සක්‍රිය කරමින්...",
-    "keyHint": "ඔබගේ යතුර ඔබගේ මිලදී ගැනීමේ විද්‍යුත් තැපෑලෙහි සහ පසු පිරික්සුම් පිටුවෙහි ඇත. නැති වුණාද?",
-    "recoverKey": "වෙබ් අඩවියේ එය නැවත ලබා ගන්න",
-    "upsellTitle": "වසරකට $19 සඳහා සජීවීව යන්න",
-    "upsellDescription": "දින 30කට පසුව වෙනුවට පවතින මොහොතේම නව නිදහස් මාදිලි. එක් යතුරක්, සෑම උපාංගයක්ම. ඕනෑම වේලාවක අවලංගු කරන්න; රවුටරය සදහටම නොමිලේ.",
-    "goPremium": "Premium යන්න",
-    "bundled": "බණ්ඩල් කර ඇත",
-    "planGeneric": "වාරික"
+    "noMatch": "No models match your search.",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "නිකුතු සටහන්",
     "tryAgain": "නැවත උත්සාහ කරන්න",
     "offline": "ඔබගේ අන්තර්ජාල සම්බන්ධතාවය පරීක්ෂා කර නැවත උත්සාහ කරන්න."
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }

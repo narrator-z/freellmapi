@@ -4,8 +4,6 @@
     "playground": "Taman Permainan",
     "keys": "Kunci",
     "analytics": "Analitik",
-    "premium": "Premium",
-    "upgrade": "Naik Taraf",
     "settings": "Tetapan",
     "signOut": "Log keluar",
     "openMenu": "Buka menu navigasi",
@@ -16,7 +14,8 @@
     "modelsMenu": "Semak jenis model",
     "agents": "Ejen",
     "logs": "Log",
-    "analyticsMenu": "Halaman analitik"
+    "analyticsMenu": "Halaman analitik",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "Cipta akaun anda",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "Search models…",
     "providerFilterLabel": "Filter by provider",
     "providerAll": "All providers",
-    "noMatch": "No models match your search."
-  },
-  "premium": {
-    "title": "Premium",
-    "description": "Katalog model langsung, pada setiap peranti.",
-    "loading": "Memuatkan...",
-    "checkForUpdates": "Semak kemas kini",
-    "syncing": "Menyelaraskan...",
-    "catalogFeed": "Suapan katalog",
-    "liveFeed": "Siaran langsung",
-    "monthlySnapshot": "Snapshot bulanan",
-    "lastChecked": "Terakhir diperiksa: {when}",
-    "liveDescription": "Model percuma baru, perubahan kuota, dan pembaikan quirk akan tiba di sini dalam beberapa jam selepas dihantar. Aplikasi ini memeriksa secara automatik dua kali sehari; Tiada apa yang boleh dibuat.",
-    "snapshotDescription": "Tahap percuma: katalog dikemas kini daripada snapshot bulanan, diperiksa secara automatik dua kali sehari. Premium menukar ini ke siaran langsung, dikemas kini setiap 2-3 hari.",
-    "lastSyncProblem": "Masalah penyelarasan terakhir: {error}",
-    "license": "Lesen",
-    "planAnnual": "Premium Tahunan",
-    "planLifetime": "Jangka Hayat Premium",
-    "expired": "Tamat Tempoh",
-    "inactive": "Tidak Aktif",
-    "lifetimeNote": "Lesen seumur hidup: tidak pernah tamat tempoh.",
-    "renewsOn": "Diperbaharui pada {date}.",
-    "willNotRenew": "Tidak akan memperbaharui. Premium sehingga {date}, kemudian pemasangan ini kembali ke katalog bulanan percuma.",
-    "keyInactive": "Kunci ini tidak lagi aktif. Aplikasi ini terus berfungsi pada katalog bulanan percuma.",
-    "manageSubscription": "Urus langganan",
-    "openingPortal": "Membuka...",
-    "removeKey": "Buang kunci dari peranti ini",
-    "manageHint": "Urus langganan membuka portal pengebilan Stripe: batalkan, kemas kini kad anda, atau muat turun invois. Mengeluarkan kunci hanya akan mematikan peranti ini; Pembelian anda tidak disentuh.",
-    "licenseKey": "Kunci lesen",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "Aktifkan",
-    "activating": "Mengaktifkan...",
-    "keyHint": "Kunci anda ada dalam emel pembelian dan di halaman selepas pembayaran. Hilang?",
-    "recoverKey": "Pulihkan di laman web",
-    "upsellTitle": "Siaran langsung dengan harga $19 setahun",
-    "upsellDescription": "Model percuma baru sebaik sahaja ia wujud, bukannya 30 hari kemudian. Satu kunci, setiap peranti. Batalkan bila-bila masa; Router kekal kosong selama-lamanya.",
-    "goPremium": "Pilih Premium",
-    "bundled": "dibundel",
-    "planGeneric": "Premium"
+    "noMatch": "No models match your search.",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "Nota keluaran",
     "tryAgain": "Cuba lagi",
     "offline": "Semak sambungan internet anda dan cuba lagi."
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }

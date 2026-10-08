@@ -4,8 +4,6 @@
     "playground": "खेल का मैदान",
     "keys": "चाबियाँ",
     "analytics": "विश्लेषिकी",
-    "premium": "प्रीमियम",
-    "upgrade": "अपग्रेड करें",
     "settings": "सेटिंग्स",
     "signOut": "साइन आउट करें",
     "openMenu": "नेविगेशन मेनू खोलें",
@@ -16,7 +14,8 @@
     "modelsMenu": "मॉडल प्रकार ब्राउज़ करें",
     "agents": "एजेंट",
     "logs": "लॉग",
-    "analyticsMenu": "विश्लेषिकी पेज"
+    "analyticsMenu": "विश्लेषिकी पेज",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "अपना खाता बनाएं",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "Search models…",
     "providerFilterLabel": "Filter by provider",
     "providerAll": "All providers",
-    "noMatch": "No models match your search."
-  },
-  "premium": {
-    "title": "प्रीमियम",
-    "description": "हर डिवाइस पर लाइव मॉडल कैटलॉग।",
-    "loading": "लोड हो रहा है...",
-    "checkForUpdates": "अपडेट के लिए जांचें",
-    "syncing": "सिंक हो रहा है...",
-    "catalogFeed": "कैटलॉग फ़ीड",
-    "liveFeed": "लाइव फ़ीड",
-    "monthlySnapshot": "मासिक स्नैपशॉट",
-    "lastChecked": "अंतिम बार जाँच की गई: {when}",
-    "liveDescription": "नए मुफ़्त मॉडल, कोटा परिवर्तन और विचित्र फिक्स शिप किए जाने के कुछ घंटों के भीतर यहां पहुंच जाते हैं। ऐप दिन में दो बार स्वचालित रूप से जांच करता है; कुछ भी नहीं करना।",
-    "snapshotDescription": "फ्री टियर: कैटलॉग मासिक स्नैपशॉट से ताज़ा होता है, दिन में दो बार स्वचालित रूप से जांचा जाता है। प्रीमियम इसे लाइव फ़ीड पर स्विच करता है, हर 2-3 दिनों में अपडेट किया जाता है।",
-    "lastSyncProblem": "अंतिम सिंक समस्या: {error}",
-    "license": "लाइसेंस",
-    "planAnnual": "प्रीमियम वार्षिक",
-    "planLifetime": "प्रीमियम लाइफटाइम",
-    "expired": "समाप्त हो गया",
-    "inactive": "निष्क्रिय",
-    "lifetimeNote": "आजीवन लाइसेंस: कभी समाप्त नहीं होता।",
-    "renewsOn": "{date} पर नवीनीकरण।",
-    "willNotRenew": "नवीनीकरण नहीं होगा. {date} तक प्रीमियम, फिर यह इंस्टॉल मुफ़्त मासिक कैटलॉग पर वापस आ जाता है।",
-    "keyInactive": "यह कुंजी अब सक्रिय नहीं है. ऐप मुफ़्त मासिक कैटलॉग पर काम करता रहता है।",
-    "manageSubscription": "सदस्यता प्रबंधित करें",
-    "openingPortal": "खुल रहा है...",
-    "removeKey": "इस डिवाइस से कुंजी निकालें",
-    "manageHint": "सदस्यता प्रबंधित करें Stripe का बिलिंग पोर्टल खुलता है: रद्द करें, अपना कार्ड अपडेट करें, या चालान डाउनलोड करें। कुंजी को हटाने से केवल यह उपकरण निष्क्रिय हो जाता है; आपकी खरीदारी अछूती है.",
-    "licenseKey": "लाइसेंस कुंजी",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "सक्रिय करें",
-    "activating": "सक्रिय किया जा रहा है...",
-    "keyHint": "आपकी कुंजी आपके खरीदारी ईमेल और पोस्ट-चेकआउट पृष्ठ पर है। इसे खो दिया?",
-    "recoverKey": "इसे वेबसाइट पर पुनर्प्राप्त करें",
-    "upsellTitle": "$19 प्रति वर्ष पर जियो",
-    "upsellDescription": "नए मुफ़्त मॉडल 30 दिन बाद के बजाय उसी क्षण उपलब्ध होंगे। एक कुंजी, हर उपकरण। किसी भी समय रद्द करें; राउटर हमेशा के लिए फ्री रहता है।",
-    "goPremium": "प्रीमियम जाओ",
-    "bundled": "बंडल",
-    "planGeneric": "प्रीमियम"
+    "noMatch": "No models match your search.",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "रिलीज़ नोट्स",
     "tryAgain": "फिर से कोशिश करें",
     "offline": "अपना इंटरनेट कनेक्शन जाँचें और फिर से कोशिश करें।"
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }

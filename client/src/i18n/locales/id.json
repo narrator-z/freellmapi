@@ -4,8 +4,6 @@
     "playground": "Taman bermain",
     "keys": "Kunci",
     "analytics": "Analisis",
-    "premium": "Premi",
-    "upgrade": "Tingkatkan",
     "settings": "Pengaturan",
     "signOut": "Keluar",
     "openMenu": "Buka menu navigasi",
@@ -16,7 +14,8 @@
     "modelsMenu": "Telusuri jenis model",
     "agents": "Agen",
     "logs": "Log",
-    "analyticsMenu": "Halaman analisis"
+    "analyticsMenu": "Halaman analisis",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "Buat akun Anda",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "Search models…",
     "providerFilterLabel": "Filter by provider",
     "providerAll": "All providers",
-    "noMatch": "No models match your search."
-  },
-  "premium": {
-    "title": "Premi",
-    "description": "Katalog model langsung, di setiap perangkat.",
-    "loading": "Memuat…",
-    "checkForUpdates": "Periksa pembaruan",
-    "syncing": "Menyinkronkan…",
-    "catalogFeed": "Umpan katalog",
-    "liveFeed": "Umpan langsung",
-    "monthlySnapshot": "Cuplikan bulanan",
-    "lastChecked": "Terakhir diperiksa: {when}",
-    "liveDescription": "Model gratis baru, perubahan kuota, dan perbaikan kekhasan hadir dalam beberapa jam setelah dikirimkan. Aplikasi ini memeriksa secara otomatis dua kali sehari; tidak ada hubungannya.",
-    "snapshotDescription": "Tingkat gratis: katalog disegarkan dari cuplikan bulanan, diperiksa secara otomatis dua kali sehari. Premium mengalihkannya ke umpan langsung, diperbarui setiap 2-3 hari.",
-    "lastSyncProblem": "Masalah sinkronisasi terakhir: {error}",
-    "license": "Lisensi",
-    "planAnnual": "Premium Tahunan",
-    "planLifetime": "Seumur Hidup Premium",
-    "expired": "Kedaluwarsa",
-    "inactive": "Tidak aktif",
-    "lifetimeNote": "Lisensi seumur hidup: tidak pernah kedaluwarsa.",
-    "renewsOn": "Diperbarui pada {date}.",
-    "willNotRenew": "Tidak akan memperbarui. Premium hingga {date}, lalu pemasangan ini kembali ke katalog bulanan gratis.",
-    "keyInactive": "Kunci ini sudah tidak aktif. Aplikasi ini terus mengerjakan katalog bulanan gratis.",
-    "manageSubscription": "Kelola langganan",
-    "openingPortal": "Pembukaan…",
-    "removeKey": "Hapus kunci dari perangkat ini",
-    "manageHint": "Kelola langganan membuka portal penagihan Stripe: batalkan, perbarui kartu Anda, atau unduh faktur. Menghapus kunci hanya akan menonaktifkan perangkat ini; pembelian Anda tidak tersentuh.",
-    "licenseKey": "Kunci lisensi",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "Aktifkan",
-    "activating": "Mengaktifkan…",
-    "keyHint": "Kunci Anda ada di email pembelian dan di halaman pasca-checkout. Kehilangannya?",
-    "recoverKey": "Pulihkan di situs web",
-    "upsellTitle": "Tayangkan seharga $19 setahun",
-    "upsellDescription": "Model gratis baru saat tersedia, bukan 30 hari kemudian. Satu kunci, setiap perangkat. Batalkan kapan saja; router tetap gratis selamanya.",
-    "goPremium": "Gunakan Premium",
-    "bundled": "dibundel",
-    "planGeneric": "Premi"
+    "noMatch": "No models match your search.",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "Catatan rilis",
     "tryAgain": "Coba lagi",
     "offline": "Periksa koneksi internet Anda lalu coba lagi."
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }

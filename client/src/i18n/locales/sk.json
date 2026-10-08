@@ -4,8 +4,6 @@
     "playground": "Ihrisko",
     "keys": "Kľúče",
     "analytics": "Analytika",
-    "premium": "Prémiové",
-    "upgrade": "Modernizácia",
     "settings": "Nastavenia",
     "signOut": "Odhlásiť sa",
     "openMenu": "Otvorte navigačné menu",
@@ -16,7 +14,8 @@
     "modelsMenu": "Prehliadať typy modelov",
     "agents": "Agenti",
     "logs": "Logy",
-    "analyticsMenu": "Stránky analytiky"
+    "analyticsMenu": "Stránky analytiky",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "Vytvorte si účet",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "Search models…",
     "providerFilterLabel": "Filter by provider",
     "providerAll": "All providers",
-    "noMatch": "No models match your search."
-  },
-  "premium": {
-    "title": "Prémiové",
-    "description": "Živý katalóg modelov, na každom zariadení.",
-    "loading": "Načítavam...",
-    "checkForUpdates": "Sledujte aktualizácie",
-    "syncing": "Synchronizujeme...",
-    "catalogFeed": "Katalógový kanál",
-    "liveFeed": "Živý prenos",
-    "monthlySnapshot": "Mesačný prehľad",
-    "lastChecked": "Naposledy kontrolované: {when}",
-    "liveDescription": "Nové bezplatné modely, zmeny kvót a opravy zvláštností prichádzajú sem už niekoľko hodín po odoslaní. Aplikácia kontroluje automaticky dvakrát denne; Nič na robenie.",
-    "snapshotDescription": "Bezplatná úroveň: katalóg sa obnovuje z mesačného snapshotu, ktorý sa automaticky kontroluje dvakrát denne. Premium to prepne na živý prenos, aktualizovaný každé 2-3 dni.",
-    "lastSyncProblem": "Problém s poslednou synchronizáciou: {error}",
-    "license": "Licencia",
-    "planAnnual": "Prémiový ročenec",
-    "planLifetime": "Životnosť poistného",
-    "expired": "Expirácia",
-    "inactive": "Neaktívny",
-    "lifetimeNote": "Doživotný vodičský preukaz: nikdy nevyprší.",
-    "renewsOn": "Obnovuje {date}.",
-    "willNotRenew": "Neobnovím zmluvu. Premium do {date}, potom sa táto inštalácia vracia k bezplatnému mesačnému katalógu.",
-    "keyInactive": "Tento kľúč už nie je aktívny. Aplikácia stále pracuje na bezplatnom mesačnom katalógu.",
-    "manageSubscription": "Spravovať predplatné",
-    "openingPortal": "Otvorenie...",
-    "removeKey": "Odstráňte kľúč z tohto zariadenia",
-    "manageHint": "Spravovať predplatné otvára fakturačný portál Stripe: zrušiť, aktualizovať kartu alebo stiahnuť faktúry. Odstránením kľúča sa toto zariadenie iba deaktivuje; Váš nákup zostáva nedotknutý.",
-    "licenseKey": "Licenčný kľúč",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "Aktivovať",
-    "activating": "Aktivujem...",
-    "keyHint": "Váš kľúč je v nákupnom e-maile a na stránke po odbavení. Stratil si to?",
-    "recoverKey": "Obnovte ho na webovej stránke",
-    "upsellTitle": "Choď naživo za 19 dolárov ročne",
-    "upsellDescription": "Nové bezplatné modely hneď, ako vzniknú, namiesto 30 dní neskôr. Jeden kľúč, každé zariadenie. Zrušiť kedykoľvek; Router zostáva voľný navždy.",
-    "goPremium": "Go Premium",
-    "bundled": "Zviazané",
-    "planGeneric": "Prémiové"
+    "noMatch": "No models match your search.",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "Poznámky k vydaniu",
     "tryAgain": "Skúsiť znova",
     "offline": "Skontrolujte pripojenie na internet a skúste to znova."
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }

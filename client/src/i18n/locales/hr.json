@@ -4,8 +4,6 @@
     "playground": "Igralište",
     "keys": "Ključevi",
     "analytics": "Analitika",
-    "premium": "Premija",
-    "upgrade": "Nadogradnja",
     "settings": "Postavke",
     "signOut": "Odjavite se",
     "openMenu": "Otvorite izbornik za navigaciju",
@@ -16,7 +14,8 @@
     "modelsMenu": "Pregledajte vrste modela",
     "agents": "Agenti",
     "logs": "Logovi",
-    "analyticsMenu": "Stranice analitike"
+    "analyticsMenu": "Stranice analitike",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "Kreirajte svoj račun",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "Search models…",
     "providerFilterLabel": "Filter by provider",
     "providerAll": "All providers",
-    "noMatch": "No models match your search."
-  },
-  "premium": {
-    "title": "Premija",
-    "description": "Katalog živih modela, na svakom uređaju.",
-    "loading": "Učitavanje...",
-    "checkForUpdates": "Provjerite ima li novosti",
-    "syncing": "Sinkronizacija...",
-    "catalogFeed": "Kataloški feed",
-    "liveFeed": "Prijenos uživo",
-    "monthlySnapshot": "Mjesečni pregled",
-    "lastChecked": "Zadnja provjera: {when}",
-    "liveDescription": "Novi besplatni modeli, promjene kvota i popravci neobičnosti stižu ovdje unutar nekoliko sati od isporuke. Aplikacija automatski provjerava dva puta dnevno; Nema što raditi.",
-    "snapshotDescription": "Free tier: katalog se osvježava iz mjesečnog snimka, koji se automatski provjerava dva puta dnevno. Premium to prebacuje na live feed, koji se ažurira svaka 2-3 dana.",
-    "lastSyncProblem": "Problem s posljednjom sinkronizacijom: {error}",
-    "license": "Licenca",
-    "planAnnual": "Godišnja premija",
-    "planLifetime": "Premium životni vijek",
-    "expired": "Istekao",
-    "inactive": "Neaktivan",
-    "lifetimeNote": "Doživotna licenca: nikad ne istječe.",
-    "renewsOn": "Obnavlja se {date}.",
-    "willNotRenew": "Neću obnoviti. Premium do {date}, a zatim se ova instalacija vraća na besplatni mjesečni katalog.",
-    "keyInactive": "Ovaj ključ više nije aktivan. Aplikacija i dalje radi na besplatnom mjesečnom katalogu.",
-    "manageSubscription": "Upravljanje pretplatom",
-    "openingPortal": "Otvaranje...",
-    "removeKey": "Uklonite ključ s ovog uređaja",
-    "manageHint": "Upravljanje pretplatom otvara Stripe-ov portal za naplatu: otkažite, ažurirajte karticu ili preuzmite račune. Vađenje ključa samo deaktivira ovaj uređaj; Vaša kupnja ostaje netaknuta.",
-    "licenseKey": "Licencni ključ",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "Aktiviraj",
-    "activating": "Aktiviram...",
-    "keyHint": "Vaš ključ nalazi se u e-mailu za kupnju i na stranici nakon plaćanja. Izgubio kontrolu?",
-    "recoverKey": "Pronađite ga na web stranici",
-    "upsellTitle": "Idite uživo za 19 dolara godišnje",
-    "upsellDescription": "Novi besplatni modeli čim se pojave, umjesto 30 dana kasnije. Jedan ključ, svaki uređaj. Otkažite u bilo koje vrijeme; Ruter ostaje slobodan zauvijek.",
-    "goPremium": "Go Premium",
-    "bundled": "Bundled",
-    "planGeneric": "Premija"
+    "noMatch": "No models match your search.",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "Bilješke o izdanju",
     "tryAgain": "Pokušaj ponovno",
     "offline": "Provjerite internetsku vezu i pokušajte ponovno."
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }

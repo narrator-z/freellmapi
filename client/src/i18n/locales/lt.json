@@ -4,8 +4,6 @@
     "playground": "Žaidimų aikštelė",
     "keys": "Raktai",
     "analytics": "Analizė",
-    "premium": "Premium",
-    "upgrade": "Atnaujinimas",
     "settings": "Nustatymai",
     "signOut": "Atsijungti",
     "openMenu": "Atidarykite navigacijos meniu",
@@ -16,7 +14,8 @@
     "modelsMenu": "Naršyti modelių tipus",
     "agents": "Agentai",
     "logs": "Žurnalas",
-    "analyticsMenu": "Analizės puslapiai"
+    "analyticsMenu": "Analizės puslapiai",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "Sukurkite savo paskyrą",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "Search models…",
     "providerFilterLabel": "Filter by provider",
     "providerAll": "All providers",
-    "noMatch": "No models match your search."
-  },
-  "premium": {
-    "title": "Premium",
-    "description": "Gyvų modelių katalogas, kiekviename įrenginyje.",
-    "loading": "Kraunama...",
-    "checkForUpdates": "Patikrinkite naujienas",
-    "syncing": "Sinchronizuojama...",
-    "catalogFeed": "Katalogo srautas",
-    "liveFeed": "Tiesioginė transliacija",
-    "monthlySnapshot": "Mėnesio apžvalga",
-    "lastChecked": "Paskutinį kartą tikrinta: {when}",
-    "liveDescription": "Nauji nemokami modeliai, kvotų pakeitimai ir keistenybių pataisymai čia pasirodo per kelias valandas po išsiuntimo. Programėlė tikrina automatiškai du kartus per dieną; Nėra ką veikti.",
-    "snapshotDescription": "Nemokamas lygis: katalogas atnaujinamas iš mėnesinės apžvalgos, kuri automatiškai tikrinama du kartus per dieną. Premium perjungia tai į tiesioginę transliaciją, atnaujinamą kas 2–3 dienas.",
-    "lastSyncProblem": "Paskutinė sinchronizacijos problema: {error}",
-    "license": "Licencija",
-    "planAnnual": "Metinė premija",
-    "planLifetime": "Premium Lifetime",
-    "expired": "Pasibaigė",
-    "inactive": "Neaktyvus",
-    "lifetimeNote": "Gyvenimo trukmės licencija: niekada nesibaigia.",
-    "renewsOn": "Atnaujinta {date}.",
-    "willNotRenew": "Neatnaujinsiu. Premium iki {date}, tada ši instaliacija grįžta į nemokamą mėnesinį katalogą.",
-    "keyInactive": "Šis raktas nebėra aktyvus. Programėlė toliau dirba su nemokamu mėnesiniu katalogu.",
-    "manageSubscription": "Valdyti prenumeratą",
-    "openingPortal": "Atidarau...",
-    "removeKey": "Išimkite raktą iš šio įrenginio",
-    "manageHint": "Valdyti prenumeratą atidaro Stripe atsiskaitymo portalą: atšaukite, atnaujinkite kortelę arba atsisiųskite sąskaitas faktūras. Ištraukus raktą, šis įrenginys tik deaktyvuojamas; Jūsų pirkinys liko nepaliestas.",
-    "licenseKey": "Licencijos raktas",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "Aktyvuoti",
-    "activating": "Aktyvuojama...",
-    "keyHint": "Jūsų raktas yra pirkimo el. pašte ir po atsiskaitymo puslapyje. Praradai?",
-    "recoverKey": "Atkurkite jį svetainėje",
-    "upsellTitle": "Paleisk už 19 dolerių per metus",
-    "upsellDescription": "Nauji nemokami modeliai iš karto, kai tik jie atsiranda, o ne po 30 dienų. Vienas raktas, kiekvienas įrenginys. Atšaukti bet kada; Maršrutizatorius lieka laisvas amžinai.",
-    "goPremium": "Go Premium",
-    "bundled": "Supakuota",
-    "planGeneric": "Premium"
+    "noMatch": "No models match your search.",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "Leidimo pastabos",
     "tryAgain": "Bandyti dar kartą",
     "offline": "Patikrinkite interneto ryšį ir bandykite dar kartą."
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }

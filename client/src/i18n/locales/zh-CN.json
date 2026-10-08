@@ -4,8 +4,6 @@
     "playground": "试验场",
     "keys": "密钥",
     "analytics": "分析",
-    "premium": "高级版",
-    "upgrade": "升级",
     "settings": "设置",
     "signOut": "退出登录",
     "openMenu": "打开导航菜单",
@@ -16,7 +14,8 @@
     "modelsMenu": "浏览模型类型",
     "agents": "智能体",
     "logs": "日志",
-    "analyticsMenu": "分析页面"
+    "analyticsMenu": "分析页面",
+    "catalog": "Catalog"
   },
   "auth": {
     "createYourAccount": "创建账号",
@@ -970,45 +969,8 @@
     "searchPlaceholder": "搜索模型…",
     "providerFilterLabel": "按提供商筛选",
     "providerAll": "全部提供商",
-    "noMatch": "没有匹配搜索条件的模型。"
-  },
-  "premium": {
-    "title": "高级版",
-    "description": "在任何设备上获得实时模型目录。",
-    "loading": "加载中…",
-    "checkForUpdates": "检查更新",
-    "syncing": "同步中…",
-    "catalogFeed": "目录源",
-    "liveFeed": "实时源",
-    "monthlySnapshot": "月度快照",
-    "lastChecked": "上次检查：{when}",
-    "liveDescription": "新的免费模型、配额调整与缺陷修复会在发布后数小时内到达这里。应用每天自动检查两次，无需手动操作。",
-    "snapshotDescription": "免费版：目录每月从快照刷新，每天自动检查两次。高级版切换到实时源，每 2–3 天更新一次。",
-    "lastSyncProblem": "上次同步问题：{error}",
-    "license": "许可证",
-    "planAnnual": "高级版 · 年度",
-    "planLifetime": "高级版 · 终身",
-    "expired": "已过期",
-    "inactive": "未激活",
-    "lifetimeNote": "终身许可证：永不过期。",
-    "renewsOn": "将于 {date} 续费。",
-    "willNotRenew": "不会续费。高级版可用至 {date}，之后此安装回退到免费月度目录。",
-    "keyInactive": "此密钥已失效。应用仍可继续使用免费月度目录。",
-    "manageSubscription": "管理订阅",
-    "openingPortal": "正在打开…",
-    "removeKey": "从本设备移除密钥",
-    "manageHint": "管理订阅会打开 Stripe 的账单门户：取消订阅、更新支付方式或下载发票。移除密钥仅停用本设备，不会影响您的购买。",
-    "licenseKey": "许可证密钥",
-    "licenseKeyPlaceholder": "fla_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    "activate": "激活",
-    "activating": "激活中…",
-    "keyHint": "您的密钥可在购买邮件与结账后页面找到。丢失了？",
-    "recoverKey": "在官网找回",
-    "upsellTitle": "每年 19 美元，升级到实时版",
-    "upsellDescription": "新免费模型上线即用，无需等待 30 天。一个密钥，所有设备。随时取消，路由器永久免费。",
-    "goPremium": "升级到高级版",
-    "bundled": "内置",
-    "planGeneric": "高级版"
+    "noMatch": "没有匹配搜索条件的模型。",
+    "loadError": "Failed to load config: {error}"
   },
   "languages": {
     "en": "English",
@@ -1216,5 +1178,18 @@
     "releaseNotes": "发行说明",
     "tryAgain": "重试",
     "offline": "请检查网络连接后重试。"
+  },
+  "catalog": {
+    "title": "Catalog Sync",
+    "description": "The augmented catalog is maintained and hosted by narratorz. New models, quota changes, and quirk fixes land here within hours. This server syncs automatically every 12 hours.",
+    "loading": "Loading…",
+    "checkForUpdates": "Check for updates",
+    "syncing": "Syncing…",
+    "catalogFeed": "Catalog feed",
+    "feedLabel": "Augmented catalog",
+    "lastChecked": "Last checked: {when}",
+    "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
+    "lastSyncProblem": "Last sync problem: {error}",
+    "bundled": "bundled"
   }
 }
