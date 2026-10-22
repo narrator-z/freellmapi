@@ -16,6 +16,7 @@ import { getMonthlyBudgetCaps, getMonthlyUsage, nextMonthResetAt } from '../serv
 import { resolveCustomEndpointKey, customEndpointKeyIds, siblingEndpointKeyId, endpointHasCredential, normalizeGroupLabel, setCustomEndpointGroup } from '../services/custom-endpoint.js';
 import { registerCustomModels, registerCustomChatModels } from '../services/custom-model-register.js';
 import { registerCustomMediaModel } from '../services/custom-media-register.js';
+import { isSearchPlatform } from '../lib/search-platforms.js';
 import { discoverEndpointModels, probeEndpointModel, classifyModelId, ModelDiscoveryError } from '../services/model-discovery.js';
 import { probeEmbeddingDimensions, registerCustomEmbeddingModel } from '../services/embeddings.js';
 import { endpointScopeForBaseUrl, normalizeBaseUrl } from '../lib/endpoint-scope.js';
@@ -37,10 +38,19 @@ import { KEY_PROXY_URL_ERROR, KEY_PROXY_URL_MAX, decryptProxyUrl, encryptProxyUr
 
 export const keysRouter = Router();
 
+// Providers that stopped offering free API access but keep their adapter so
+// existing keys still work if the catalog re-enables them. The setup
+// checklist stops suggesting them to anyone who has no key yet; the dashboard
+// pickers hide them through `hidden` in client/src/components/keys/shared.tsx.
+// Empty since Auray was removed outright (#1583).
+const UNLISTED_PLATFORMS = new Set<string>();
+
 // Active providers — must match providers/index.ts registrations + shared/types.ts Platform.
 // Moonshot and MiniMax direct integrations were dropped in V4. HuggingFace
 // was dropped in V4 and re-added in V13 via the router.huggingface.co route.
-// SambaNova was dropped in V23 (free tier permanently retired).
+// SambaNova was dropped in V23 (free tier permanently retired). GitHub Models
+// was dropped after its retirement on 30 July 2026 (#1557). Auray was removed
+// at the provider's request after it started charging for API access (#1583).
 const PLATFORMS = [
   'aclide',
   'speka',
@@ -52,9 +62,13 @@ const PLATFORMS = [
   'gizmo',
   'blockrun',
   'moondream',
+  'beatapi',
+  'apinex',
+  'onomeo',
+  'serpsearch',
   'freeai',
   'google', 'groq', 'cerebras', 'sail', 'electronhub', 'experiential', 'router9', 'septor', 'clod', 'speechify', 'blaze', 'lucidity', 'airforce', 'dreamprompting', 'waterfall', 'logfare', 'bai', 'radeon', 'nvidia', 'mistral',
-  'openrouter', 'github', 'cohere', 'cloudflare', 'zhipu', 'ollama',
+  'openrouter', 'cohere', 'tavily', 'exa', 'firecrawl', 'linkup', 'parallel', 'cloudflare', 'zhipu', 'ollama',
   'kilo', 'pollinations', 'llm7', 'huggingface', 'opencode', 'ovh', 'agnes', 'reka', 'siliconflow',
   'routeway', 'bazaarlink', 'ainative', 'aion', 'anyapi', 'requesty', 'navy', 'nara', 'sealion', 'orcarouter', 'unorouter', 'xkiro', 'modelscope',
   'qianfan', 'volcengine', 'longcat', 'xfyun', 'aihorde', 'custom',
@@ -254,6 +268,12 @@ function openAICompatBaseUrl(platform: string): string | null {
 // the base URL, and only offers the custom-provider route where it works.
 function noModelsNotice(platform: string): string | undefined {
   if (enabledModelCount(platform) > 0) return undefined;
+  // Search keys have engines, not models (#1174): a key whose engine is off
+  // or not in this catalog gets told where engines live instead of the chat
+  // advice below.
+  if (isSearchPlatform(platform)) {
+    return `Key saved, but no ${platform} search engine is turned on. Turn it on from Models → Search.`;
+  }
   // #1348: a built-in provider the catalog does not carry fills its model list
   // from its own /models, so the Premium and custom-provider advice below
   // would send the operator the wrong way.
@@ -309,12 +329,16 @@ keysRouter.get('/providers', (_req: Request, res: Response) => {
       return {
         platform: p.platform,
         name: p.name,
+        // 'search' keys serve /v1/search and the agents' web_search tools,
+        // never chat (#1174); the dashboard groups them separately.
+        kind: isSearchPlatform(p.platform) ? 'search' as const : 'chat' as const,
         keyless: p.keyless,
         configured: keyCount > 0,
         keyCount,
         enabledKeyCount: counts?.enabled_keys ?? 0,
       };
     })
+    .filter(p => p.configured || !UNLISTED_PLATFORMS.has(p.platform))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   const configured = providers.filter(p => p.configured).length;
@@ -332,6 +356,11 @@ keysRouter.get('/providers', (_req: Request, res: Response) => {
 keysRouter.get('/', (_req: Request, res: Response) => {
   const db = getDb();
   const rows = db.prepare('SELECT * FROM api_keys ORDER BY created_at DESC').all() as any[];
+  const modelCounts = new Map<string, number>();
+  const modelCountFor = (platform: string): number => {
+    if (!modelCounts.has(platform)) modelCounts.set(platform, enabledModelCount(platform));
+    return modelCounts.get(platform)!;
+  };
 
   const customModels = [
     ...db.prepare(`
@@ -434,10 +463,24 @@ keysRouter.get('/', (_req: Request, res: Response) => {
       // key-optional platform is an ordinary key row (#1331).
       keyOptional: resolveProvider(row.platform)?.keyless === true,
       keyless: resolveProvider(row.platform)?.keyless === true && isAnonymousCredential(realKey),
+      // #1459: false for a provider that forbids automated key checks (LLMTR).
+      // Its keys stay 'unknown' until they serve a request, and "Check now"
+      // sends nothing, so the dashboard explains that instead of showing an
+      // unexplained "unchecked". modelsAvailable says whether this install has
+      // any of the provider's models to serve that first request with.
+      autoHealthCheck: resolveProvider(row.platform)?.supportsKeyValidation !== false,
+      // Search keys serve engines, not models, so they never count as missing models.
+      ...(resolveProvider(row.platform)?.supportsKeyValidation === false && !isSearchPlatform(row.platform)
+        ? { modelsAvailable: modelCountFor(row.platform) }
+        : {}),
       // Lets the export dialog count exactly what the export will write.
       exportable: isExportableKey({ platform: row.platform, baseUrl: row.base_url ?? null, key: realKey }),
       createdAt: row.created_at,
       lastCheckedAt: row.last_checked_at,
+      // #1493: last time this key was proven to work (valid probe or served
+      // request) — distinct from lastCheckedAt, which a transport error also
+      // refreshes.
+      lastHealthyAt: row.last_healthy_at ?? null,
       lastHealthError: row.last_health_error ?? null,
       // The model_id list this key is limited to; null = serves everything (#657).
       modelScope: scope ? [...scope] : null,
@@ -1727,6 +1770,15 @@ keysRouter.delete('/:id', (req: Request, res: Response) => {
         }
       }
     }
+    // #1516: key-bound rows on ANY platform die with their key. The custom
+    // branch above already removed this endpoint's rows (plus tombstones and
+    // the legacy sweep); this covers key_id-pinned rows on standard
+    // platforms, which the catalog prune (key_id IS NULL only) never touches.
+    // Shared catalog rows (key_id NULL) are untouched.
+    db.prepare('DELETE FROM fallback_config WHERE model_db_id IN (SELECT id FROM models WHERE key_id = ?)').run(id);
+    db.prepare('DELETE FROM models WHERE key_id = ?').run(id);
+    db.prepare('DELETE FROM embedding_models WHERE key_id = ?').run(id);
+    db.prepare('DELETE FROM media_models WHERE key_id = ?').run(id);
   });
   remove();
 
@@ -1821,6 +1873,10 @@ keysRouter.patch('/:id', (req: Request, res: Response) => {
     const { encrypted, iv, authTag } = encrypt(changedKey);
     updates.push('encrypted_key = ?', 'iv = ?', 'auth_tag = ?', "status = 'unknown'", 'last_checked_at = NULL', 'last_health_error = NULL');
     values.push(encrypted, iv, authTag);
+    // #1459: pasting in a new key means "use this key". A row the health
+    // checker auto-disabled would otherwise stay off with a fresh credential
+    // and never serve a request. An explicit `enabled` in the same call wins.
+    if (enabled === undefined) updates.push('enabled = 1');
   }
   if (label !== undefined) {
     updates.push('label = ?');

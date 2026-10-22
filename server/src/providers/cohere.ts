@@ -2,7 +2,6 @@ import type {
   ChatMessage,
   ChatCompletionResponse,
   ChatCompletionChunk,
-  ChatToolDefinition,
 } from '@freellmapi/shared/types.js';
 import { BaseProvider, extractUpstreamErrorText, providerHttpError, type CompletionOptions, type KeyValidationResult } from './base.js';
 import { extendedBodyParams, resolveMaxTokens } from '../lib/sampling-params.js';

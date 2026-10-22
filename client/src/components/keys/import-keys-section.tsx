@@ -10,7 +10,7 @@ import type { ImportKey, ImportSelectedResponse, Platform, PreviewKey, PreviewRe
 import { Upload } from 'lucide-react'
 import { useI18n } from '@/i18n'
 import { toast } from '@/lib/toast'
-import { usePlatforms } from './shared'
+import { CUSTOM_GROUP, usePlatforms } from './shared'
 
 interface ImportRow extends PreviewKey {
   selected: boolean
@@ -30,7 +30,12 @@ export function ImportKeysSection({ onImported }: { onImported?: () => void } = 
   const [skipped, setSkipped] = useState<string[]>([])
 
   const platforms = usePlatforms()
-  const importablePlatforms = platforms.filter(p => !p.keyless)
+  // 'custom' is not one of the registry platforms — it is configured through
+  // its own form, so it is absent from the generic provider dropdown. An
+  // imported row is the one case where it belongs there: the file already
+  // names the endpoint, and without the option the row can never be selected
+  // and the endpoint can never be restored (#687).
+  const importablePlatforms = [...platforms.filter(p => !p.keyless), CUSTOM_GROUP]
 
   function platformFromPreview(key: PreviewKey): Platform | '' {
     return importablePlatforms.some(p => p.value === key.detectedPlatform)

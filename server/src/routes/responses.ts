@@ -9,7 +9,9 @@ import type {
   ChatToolChoice,
   Platform,
 } from '@freellmapi/shared/types.js';
-import { routeRequest, hasEnabledVisionModel, hasEnabledToolsModel, resolveStickyPreference, routingReserveTokens, resolveModelGroupCandidates, normalizeAutoAlias, resolveRoutingChain, type RouteResult, type ResolvedChain, type ChainRow } from '../services/router.js';
+// #fork: normalizeAutoAlias kept alongside the upstream import so the
+// `freellmauto` alias keeps routing identically to `auto` (see isAutoModel).
+import { routeRequest, hasEnabledVisionModel, hasEnabledToolsModel, resolveStickyPreference, routingReserveTokens, resolveModelGroupCandidates, resolveRoutingChain, failureAttributionFor, normalizeAutoAlias, type RouteResult, type ResolvedChain, type ChainRow } from '../services/router.js';
 import { getDb } from '../db/index.js';
 import { resolveAuth, prependSystemPrompt } from '../lib/system-prompt.js';
 import { isUnifyEnabled, getModelGroups, resolveRequestedIdForDispatch } from '../services/model-groups.js';
@@ -39,6 +41,7 @@ import { sanitizeProviderErrorMessage } from '../lib/error-redaction.js';
 import { isClientAbortError, newClientAbortError, newHedgeAbortError } from '../lib/error-classify.js';
 import { inferQuotaPoolKey, type QuotaObservationContext } from '../services/provider-quota.js';
 import { compressRequest, formatCompressionHeader } from '../services/compression/pipeline.js';
+import { maybeServeResponsesWebSearch, webSearchCallToText } from '../lib/responses-web-search.js';
 import {
   FUSION_MODEL_ID,
   FusionError,
@@ -47,6 +50,8 @@ import {
   runFusion,
   type FusionResult,
 } from '../services/fusion.js';
+import { applyDecisionRouting, routingStrategyHeader } from '../services/routing-decision.js';
+import { resolveListedClaudeAlias } from '../services/anthropic-map.js';
 
 export const responsesRouter = Router();
 
@@ -54,6 +59,8 @@ const AUTO_MODEL_ID = 'auto';
 
 function isAutoModel(modelId: string | undefined): boolean {
   if (!modelId) return true;
+  // #fork: `freellmauto` is an exact alias of `auto`; normalize before the
+  // auto checks so both ids route through the same virtual model.
   const normalized = normalizeAutoAlias(modelId);
   if (!normalized) return true;
   const lower = normalized.toLowerCase();
@@ -354,10 +361,29 @@ export function toChatMessages(req: ResponsesRequest): ChatMessage[] {
   }
 
   const messages: ChatMessage[] = [];
+  // Replayed web_search_call items (served by the gateway's search pool, or
+  // by OpenAI) become a short note on the assistant turn that follows, so the
+  // model keeps the context of what it searched without an extra assistant
+  // turn (consecutive assistant turns 400 on strict upstreams, #96).
+  let pendingSearchNotes: string[] = [];
+  const flushSearchNotes = () => {
+    if (pendingSearchNotes.length === 0) return;
+    messages.push({ role: 'assistant', content: pendingSearchNotes.join('\n') });
+    pendingSearchNotes = [];
+  };
 
   const items = req.input;
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
+
+    if ('type' in item && item.type === 'web_search_call') {
+      const note = webSearchCallToText(item as Record<string, unknown>);
+      if (note) pendingSearchNotes.push(note);
+      continue;
+    }
+    if (!('type' in item && item.type === 'message' && (item as { role?: string }).role === 'assistant')) {
+      flushSearchNotes();
+    }
 
     if ('type' in item && item.type === 'function_call') {
       // Parallel tool calls replay as consecutive standalone function_call
@@ -401,7 +427,7 @@ export function toChatMessages(req: ResponsesRequest): ChatMessage[] {
     const m = item as z.infer<typeof messageItemSchema>;
     // 'developer' is the Responses-era system role.
     const role = m.role === 'developer' ? 'system' : m.role;
-    const content = partsToChatContent(m.content);
+    let content = partsToChatContent(m.content);
 
     if (role === 'system') {
       // Hoist system/developer messages to the start of the conversation:
@@ -413,6 +439,14 @@ export function toChatMessages(req: ResponsesRequest): ChatMessage[] {
     }
 
     if (role === 'assistant') {
+      const searchNotes = pendingSearchNotes;
+      pendingSearchNotes = [];
+      if (searchNotes.length > 0) {
+        const notes = searchNotes.join('\n');
+        content = typeof content === 'string'
+          ? (content.length > 0 ? `${notes}\n\n${content}` : notes)
+          : [{ type: 'text', text: notes }, ...content];
+      }
       // A Responses assistant turn is a message item followed by its
       // function_call items. Merge them into a single chat assistant message
       // (content + tool_calls); emitting consecutive assistant turns makes
@@ -446,6 +480,7 @@ export function toChatMessages(req: ResponsesRequest): ChatMessage[] {
 
     messages.push({ role, content });
   }
+  flushSearchNotes();
 
   return [...systemMessages, ...messages];
 }
@@ -623,7 +658,15 @@ function quotaContextForRoute(route: RouteResult, endpoint: string): QuotaObserv
   };
 }
 
+// A `web_search` tool is served through the search loop
+// (lib/responses-web-search.ts) when a search key exists; it re-enters
+// handleResponses once per model turn. Everything else goes straight through.
 responsesRouter.post('/responses', async (req: Request, res: Response) => {
+  if (await maybeServeResponsesWebSearch(handleResponses, req, res)) return;
+  await handleResponses(req, res);
+});
+
+export async function handleResponses(req: Request, res: Response): Promise<void> {
   const start = Date.now();
   const requestGroupId = getRequestGroupId(req);
   res.setHeader('X-Request-ID', requestGroupId);
@@ -774,6 +817,12 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
     ?? req.headers['x-session-id'];
   const sessionIdHeader = Array.isArray(rawSessionId) ? rawSessionId[0] : rawSessionId;
   const requestedModelLabel = reqData.model ?? 'auto';
+  // What routing acts on. Usually the id the client sent; a Claude alias from
+  // GET /v1/models routes through the Claude family map instead (a pinned
+  // model, auto, or a tier pool), the same as on /v1/messages.
+  const claudeAlias = resolveListedClaudeAlias(reqData.model);
+  const routedModel = claudeAlias?.kind === 'model' ? claudeAlias.modelId : claudeAlias ? 'auto' : requestedModelLabel;
+  const aliasTierChain = claudeAlias?.kind === 'tier' ? resolveModelGroupCandidates(claudeAlias.dbIds) : [];
 
   // Explicit `model` field pins routing. If the catalog has no enabled row
   // matching the requested id, return 400 — silently auto-routing to a
@@ -787,9 +836,15 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
   // stays on the unscoped key so existing session affinity is unchanged.
   let stickyStrategyKey: string | undefined;
 
-  if (isAutoModel(requestedModelLabel)) {
+  if (aliasTierChain.length > 0) {
+    // Strict over the tier's pool; an empty tier falls through to plain auto.
+    groupChain = aliasTierChain;
+    stickyStrategyKey = `tier:${aliasTierChain[0]!.model_db_id}`;
+    const sticky = getStickyModel(messages, sessionIdHeader, stickyStrategyKey);
+    preferredModel = (sticky != null && groupChain.some(r => r.model_db_id === sticky)) ? sticky : undefined;
+  } else if (isAutoModel(routedModel)) {
     try {
-      resolvedChain = resolveRoutingChain(requestedModelLabel);
+      resolvedChain = resolveRoutingChain(routedModel);
     } catch (err: any) {
       if (err?.status === 400) {
         res.status(400).json({
@@ -804,12 +859,12 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
       getStickyModel(messages, sessionIdHeader, stickyStrategyKey),
       resolvedChain.chain,
     );
-  } else if (isFusionModel(requestedModelLabel)) {
+  } else if (isFusionModel(routedModel)) {
     // Fusion is a virtual model, not a row in the catalog. Its panel and
     // judge each resolve through the normal router inside runFusion below.
   } else {
     const db = getDb();
-    const resolved = isUnifyEnabled() ? resolveRequestedIdForDispatch(requestedModelLabel, getModelGroups()) : null;
+    const resolved = isUnifyEnabled() ? resolveRequestedIdForDispatch(routedModel, getModelGroups()) : null;
     const members = resolved?.memberDbIds ?? null;
     if (members && members.length > 0) {
       groupChain = resolveModelGroupCandidates(members, resolved!.demotedDbIds);
@@ -819,25 +874,25 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
         const reason = anyEnabled ? 'has no providers with an enabled key' : 'is disabled';
         res.status(400).json({
           error: {
-            message: `Model '${requestedModelLabel}' ${reason}. Use 'auto' (or omit the 'model' field) to auto-route, or call /v1/models for the available list.`,
+            message: `Model '${routedModel}' ${reason}. Use 'auto' (or omit the 'model' field) to auto-route, or call /v1/models for the available list.`,
             type: 'invalid_request_error',
             code: 'model_not_found',
           },
         });
         return;
       }
-      const sticky = getStickyModel(messages, sessionIdHeader, requestedModelLabel);
+      const sticky = getStickyModel(messages, sessionIdHeader, routedModel);
       preferredModel = (sticky != null && groupChain.some(r => r.model_db_id === sticky)) ? sticky : undefined;
     } else {
-      const enabled = db.prepare('SELECT id FROM models WHERE model_id = ? AND enabled = 1').get(requestedModelLabel) as { id: number } | undefined;
+      const enabled = db.prepare('SELECT id FROM models WHERE model_id = ? AND enabled = 1').get(routedModel) as { id: number } | undefined;
       if (enabled) {
         preferredModel = enabled.id;
       } else {
-        const disabled = db.prepare('SELECT id FROM models WHERE model_id = ?').get(requestedModelLabel) as { id: number } | undefined;
+        const disabled = db.prepare('SELECT id FROM models WHERE model_id = ?').get(routedModel) as { id: number } | undefined;
         const reason = disabled ? 'is disabled' : 'is not in the catalog';
         res.status(400).json({
           error: {
-            message: `Model '${requestedModelLabel}' ${reason}. Use 'auto' (or omit the 'model' field) to auto-route, or call /v1/models for the available list.`,
+            message: `Model '${routedModel}' ${reason}. Use 'auto' (or omit the 'model' field) to auto-route, or call /v1/models for the available list.`,
             type: 'invalid_request_error',
             code: 'model_not_found',
           },
@@ -894,7 +949,7 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
   // virtual id before normal model dispatch; do the same here after the common
   // Responses translation/guardrails so Codex and other Responses clients can
   // opt into the exact same panel + judge behavior.
-  if (isFusionModel(requestedModelLabel)) {
+  if (isFusionModel(routedModel)) {
     const fusionConfig = reqData.fusion ?? {};
     const fusionOptions = { ...dispatchOpts };
 
@@ -1125,6 +1180,13 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
     res.write(`event: ${event}\n`);
     res.write(`data: ${JSON.stringify({ type: event, sequence_number: seq++, ...payload })}\n\n`);
   };
+
+  // Decision routing (#1354): with the 'decision' strategy on, a decision
+  // model picks which preset (Smartest / Fastest / Balanced / Most reliable)
+  // this turn routes with. Skipped when the client pinned a model or the
+  // conversation is sticky to one. Any doubt routes as Balanced.
+  const routingPick = await applyDecisionRouting(messages, { pinned: !isAutoModel(routedModel) || preferredModel != null, signal: clientAbort.signal });
+  if (routingPick && !res.headersSent) res.setHeader('X-FreeLLM-Routing-Strategy', routingStrategyHeader(routingPick));
 
   await runFallbackLoop({
     maxRetries: MAX_RETRIES,
@@ -1468,7 +1530,7 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
               latencyMs: Date.now() - start,
               error: safe,
             });
-            logRequest(route.platform, route.modelId, route.keyId, 'error', estimatedInputTokens, 0, Date.now() - start, safe, ttfbMs, null, null, 'http');
+            logRequest(route.platform, route.modelId, route.keyId, 'error', estimatedInputTokens, 0, Date.now() - start, safe, ttfbMs, null, null, 'http', failureAttributionFor(streamErr));
             sse('response.failed', { response: { id: responseId, object: 'response', status: 'failed', error: { message: `Provider error (${route.displayName}): stream interrupted`, type: 'stream_error' } } });
             res.end();
             return 'committed';
@@ -1593,7 +1655,7 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
         latencyMs: latency,
         error: safeError,
       });
-      logRequest(route.platform, route.modelId, route.keyId, 'error', estimatedInputTokens, 0, latency, safeError, null, null, null, 'http');
+      logRequest(route.platform, route.modelId, route.keyId, 'error', estimatedInputTokens, 0, latency, safeError, null, null, null, 'http', failureAttributionFor(err));
     },
     onFatal: (route, err, attempt) => {
       setFallbackHeaders(res, attempt, attemptLog);
@@ -1624,4 +1686,4 @@ responsesRouter.post('/responses', async (req: Request, res: Response) => {
       }
     },
   });
-});
+}

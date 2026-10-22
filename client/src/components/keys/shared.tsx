@@ -25,11 +25,13 @@ export function GetKeyLink({ url }: { url: string }) {
 
 // Platform list fetched from server (GET /api/keys/platforms). Driven by the
 // provider registry: upstream hand-maintained providers + catalog auto-registered.
-// Falls back to a static list while the request is in flight. New upstream
-// providers (aclide, speka, llmtr, moondream) merged in from v0.13.x.
+// Falls back to a static list while the request is in flight.
 const FALLBACK_PLATFORMS: PlatformEntry[] = [
   { value: 'aclide', label: 'ACLIDE (shared monthly credits)', url: 'https://aclide.com/en/dashboard/api-keys' },
   { value: 'speka', label: 'Speka ($1 shared monthly credits)', url: 'https://speka.me/dashboard/keys' },
+  { value: 'beatapi', label: 'BeatAPI (JEV decisions; temporary free offer)', url: 'https://beatapi.io' },
+  { value: 'apinex', label: 'APINex (shared daily free chat and decisions)', url: 'https://apinex.bond/keys' },
+  { value: 'onomeo', label: 'onomeo (30 free calls / 5 hours, shared)', url: 'https://onomeo.com/dashboard' },
   { value: 'typhoon', label: 'Typhoon (free research API)', url: 'https://playground.opentyphoon.ai' },
   { value: 'plugsky', label: 'Plugsky (free chat aliases)', url: 'https://plugsky.com/dashboard' },
   { value: 'inferbase', label: 'Inferbase (shared monthly and daily allowance)', url: 'https://inferbase.ai' },
@@ -60,7 +62,6 @@ const FALLBACK_PLATFORMS: PlatformEntry[] = [
   { value: 'nvidia', label: 'NVIDIA NIM', url: 'https://build.nvidia.com/settings/api-keys' },
   { value: 'mistral', label: 'Mistral', url: 'https://console.mistral.ai/api-keys/' },
   { value: 'openrouter', label: 'OpenRouter', url: 'https://openrouter.ai/keys' },
-  { value: 'github', label: 'GitHub Models', url: 'https://github.com/settings/tokens' },
   { value: 'cohere', label: 'Cohere', url: 'https://dashboard.cohere.com/api-keys' },
   { value: 'cloudflare', label: 'Cloudflare Workers AI', url: 'https://dash.cloudflare.com' },
   { value: 'zhipu', label: 'Zhipu AI (Z.ai)', url: 'https://z.ai/manage-apikey/apikey-list' },
@@ -118,6 +119,10 @@ const FALLBACK_PLATFORMS: PlatformEntry[] = [
 type StaticPlatformEntry = { value: Platform; label: string; url: string; keyless?: boolean }
 export const PLATFORMS: StaticPlatformEntry[] =
   FALLBACK_PLATFORMS as unknown as StaticPlatformEntry[]
+
+/** Providers a new user can pick. The fork keeps no `hidden` flag: the
+ *  registry (and the catalog behind it) decides what is offered. */
+export const LISTED_PLATFORMS: StaticPlatformEntry[] = PLATFORMS
 
 // Sort platforms alphabetically by label so long lists (Search / Add key
 // dropdown) are scannable instead of in raw provider-registry order.
@@ -191,6 +196,6 @@ export interface HealthPlatform {
 
 export interface HealthData {
   platforms: HealthPlatform[]
-  keys: { id: number; platform: string; status: string; lastCheckedAt: string | null; lastHealthError: string | null }[]
+  keys: { id: number; platform: string; status: string; lastCheckedAt: string | null; lastHealthyAt?: string | null; lastHealthError: string | null }[]
   quotaStates: ProviderQuotaState[]
 }
