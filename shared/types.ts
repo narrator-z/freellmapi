@@ -72,6 +72,8 @@ export type Platform =
   | 'aclide'
   // OpenAI-compatible chat and embeddings; one shared $1 monthly allowance.
   | 'speka'
+  // Named free chat/image routes share one renewable daily account allowance.
+  | 'kenari'
   // Decision-only JEV adapter; promotional availability is catalog-managed.
   | 'beatapi'
   // Free-category chat and decisions share one weighted daily allowance.
@@ -79,6 +81,9 @@ export type Platform =
   // OpenAI-compatible gateway; free models share a 30-calls/5-hour account
   // allowance on top of a site-wide pool (issue #1460).
   | 'onomeo'
+  // OpenAI-compatible gateway; the free tier is one account-wide monthly
+  // token allowance (30M, resets monthly; issue #1649).
+  | 'iteracompute'
   // Ongoing free research API for chat and speech recognition; catalog only.
   | 'typhoon'
   // Permanent free chat aliases, shared fair-use quota; signed catalog only.
@@ -142,6 +147,8 @@ export type Platform =
   | 'linkup'
   | 'parallel'
   | 'serpsearch'
+  | 'keenable'
+  | 'brave'
   | 'cloudflare'
   | 'zhipu'
   | 'ollama'
@@ -280,7 +287,7 @@ export type Platform =
  *  web_search tools), never chat. Search engine rows arrive through the
  *  catalog's `searchEngines` registry. The server keeps its own runtime copy in
  *  server/src/lib/search-platforms.ts (shared is type-only on the server). */
-export const SEARCH_PLATFORMS = ['tavily', 'exa', 'firecrawl', 'linkup', 'parallel', 'serpsearch'] as const;
+export const SEARCH_PLATFORMS = ['tavily', 'exa', 'firecrawl', 'linkup', 'parallel', 'serpsearch', 'keenable', 'brave'] as const;
 export type SearchPlatform = (typeof SEARCH_PLATFORMS)[number];
 
 export function isSearchPlatform(platform: string): platform is SearchPlatform {

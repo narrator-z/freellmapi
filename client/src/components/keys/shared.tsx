@@ -29,9 +29,11 @@ export function GetKeyLink({ url }: { url: string }) {
 const FALLBACK_PLATFORMS: PlatformEntry[] = [
   { value: 'aclide', label: 'ACLIDE (shared monthly credits)', url: 'https://aclide.com/en/dashboard/api-keys' },
   { value: 'speka', label: 'Speka ($1 shared monthly credits)', url: 'https://speka.me/dashboard/keys' },
+  { value: 'kenari', label: 'Kenari (shared daily free chat and images)', url: 'https://kenari.id' },
   { value: 'beatapi', label: 'BeatAPI (JEV decisions; temporary free offer)', url: 'https://beatapi.io' },
   { value: 'apinex', label: 'APINex (shared daily free chat and decisions)', url: 'https://apinex.bond/keys' },
   { value: 'onomeo', label: 'onomeo (30 free calls / 5 hours, shared)', url: 'https://onomeo.com/dashboard' },
+  { value: 'iteracompute', label: 'IteraCompute (30M free tokens / month, shared)', url: 'https://iteracompute.com/free/' },
   { value: 'typhoon', label: 'Typhoon (free research API)', url: 'https://playground.opentyphoon.ai' },
   { value: 'plugsky', label: 'Plugsky (free chat aliases)', url: 'https://plugsky.com/dashboard' },
   { value: 'inferbase', label: 'Inferbase (shared monthly and daily allowance)', url: 'https://inferbase.ai' },

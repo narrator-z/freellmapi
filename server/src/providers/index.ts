@@ -8,6 +8,7 @@ import { ExaProvider } from './exa.js';
 import { FirecrawlProvider } from './firecrawl.js';
 import { LinkupProvider } from './linkup.js';
 import { ParallelProvider } from './parallel.js';
+import { KeenableProvider } from './keenable.js';
 import { CloudflareProvider } from './cloudflare.js';
 import { AIHordeProvider } from './aihorde.js';
 import { ModelScopeProvider } from './modelscope.js';
@@ -16,6 +17,7 @@ import { ZhipuProvider } from './zhipu.js';
 import { SailProvider } from './sail.js';
 import { AclideProvider } from './aclide.js';
 import { SpekaProvider } from './speka.js';
+import { KenariProvider } from './kenari.js';
 import { TyphoonProvider } from './typhoon.js';
 import { PlugskyProvider } from './plugsky.js';
 import { InferbaseProvider } from './inferbase.js';
@@ -40,7 +42,9 @@ import { LogfareProvider } from './logfare.js';
 import { BeatApiProvider } from './beatapi.js';
 import { ApinexProvider } from './apinex.js';
 import { OnomeoProvider } from './onomeo.js';
+import { IteraComputeProvider } from './iteracompute.js';
 import { SerpSearchProvider } from './serpsearch.js';
+import { BraveProvider } from './brave.js';
 
 // Shape of platform entries in the augmented catalog's platforms[] array.
 // Kept here so the augmented-catalog sync can type its call to
@@ -119,6 +123,7 @@ register(new OpenAICompatProvider({
 register(new SailProvider());
 register(new AclideProvider());
 register(new SpekaProvider());
+register(new KenariProvider());
 register(new TyphoonProvider());
 register(new PlugskyProvider());
 register(new InferbaseProvider());
@@ -130,7 +135,11 @@ register(new MoondreamProvider());
 register(new BeatApiProvider());
 register(new ApinexProvider());
 register(new OnomeoProvider());
+// IteraCompute (#1649): free OpenAI-compatible gateway, one account-wide
+// monthly token allowance; no free credential probe (see adapter docs).
+register(new IteraComputeProvider());
 register(new SerpSearchProvider());
+register(new BraveProvider());
 
 // Free-plan grants are shared wallets, not free credits per model. Eligibility
 // and tested model rows belong in Oracle, never in bundled DB migrations.
@@ -261,6 +270,8 @@ register(new FirecrawlProvider());
 register(new LinkupProvider());
 // Keyless: anonymous Search MCP by default, REST API with a real key.
 register(new ParallelProvider());
+// Keyless: public endpoint by default, the keyed endpoint with a real key.
+register(new KeenableProvider());
 
 // Cloudflare Workers AI - OpenAI-compatible endpoint (key = "account_id:token")
 register(new CloudflareProvider());
