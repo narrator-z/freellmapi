@@ -126,7 +126,7 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
           </div>
         )}
         <div className="space-y-1.5 flex-1 min-w-[240px]">
-          <Label className="text-xs">{needsProjectId || needsAccountId ? t('keys.apiToken') : t('keys.customApiKey')}</Label>
+          <Label className="text-xs">{needsProjectId ? `${t('keys.apiToken')} (PAT)` : needsAccountId ? t('keys.apiToken') : t('keys.customApiKey')}</Label>
           <Input
             type="password"
             value={apiKey}
