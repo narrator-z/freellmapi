@@ -33,6 +33,7 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
   const [platform, setPlatform] = useState<Platform | ''>(initialPlatform ?? '')
   const [apiKey, setApiKey] = useState('')
   const [accountId, setAccountId] = useState('')
+  const [projectId, setProjectId] = useState('')
   const [label, setLabel] = useState('')
   const [addAttempted, setAddAttempted] = useState(false)
 
@@ -54,6 +55,7 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
   })
 
   const needsAccountId = platform === 'cloudflare'
+  const needsProjectId = platform === 'jamai'
   const platforms = usePlatforms()
   // Key-optional providers (Kilo, OVH, AI Horde) work anonymously, but accept a
   // real key too (#1331): the field stays editable and may be left blank.
@@ -64,18 +66,19 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
   const platformError = !platform ? t('validation.required') : null
   const keyError = !isKeyless && !apiKey.trim() ? t('validation.required') : null
   const accountIdError = needsAccountId && !accountId.trim() ? t('validation.required') : null
+  const projectIdError = needsProjectId && !projectId.trim() ? t('validation.required') : null
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (platformError || keyError || accountIdError) {
+    if (platformError || keyError || accountIdError || projectIdError) {
       setAddAttempted(true)
       return
     }
     setAddAttempted(false)
     // A blank key on a key-optional provider enables its anonymous tier; the
-    // backend stores a sentinel and sends no Authorization header. A real key
-    // saved there is an ordinary key (#1331).
-    const key = isKeyless ? apiKey.trim() : (needsAccountId ? `${accountId}:${apiKey}` : apiKey)
+    // backend stores a sentinel and sends no Authorization header.
+    const key = needsProjectId ? `${projectId.trim()}:${apiKey.trim()}`
+      : isKeyless ? apiKey.trim() : (needsAccountId ? `${accountId}:${apiKey}` : apiKey)
     addKey.mutate({ platform, key, label: label || undefined })
   }
 
@@ -100,6 +103,15 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
             return sel?.url ? <div className="pt-0.5"><GetKeyLink url={sel.url} /></div> : null
           })()}
         </div>
+        {needsProjectId && (
+          <div className="space-y-1.5">
+            <Label htmlFor="jamai-project-id" className="text-xs">{t('keys.projectId')}</Label>
+            <Input id="jamai-project-id" value={projectId} onChange={e => setProjectId(e.target.value)}
+              placeholder="proj_…" autoComplete="off" className="w-[220px] font-mono text-xs"
+              aria-invalid={addAttempted && !!projectIdError} />
+            {addAttempted && <FieldError error={projectIdError} />}
+          </div>
+        )}
         {needsAccountId && (
           <div className="space-y-1.5">
             <Label className="text-xs">{t('keys.accountId')}</Label>
@@ -114,12 +126,12 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
           </div>
         )}
         <div className="space-y-1.5 flex-1 min-w-[240px]">
-          <Label className="text-xs">{needsAccountId ? t('keys.apiToken') : t('keys.customApiKey')}</Label>
+          <Label className="text-xs">{needsProjectId || needsAccountId ? t('keys.apiToken') : t('keys.customApiKey')}</Label>
           <Input
             type="password"
             value={apiKey}
             onChange={e => setApiKey(e.target.value)}
-            placeholder={isKeyless ? t('keys.keyOptionalPlaceholder') : (needsAccountId ? t('keys.bearerTokenPlaceholder') : t('keys.pasteKeyPlaceholder'))}
+            placeholder={needsProjectId ? 'jamai_pat_…' : isKeyless ? t('keys.keyOptionalPlaceholder') : (needsAccountId ? t('keys.bearerTokenPlaceholder') : t('keys.pasteKeyPlaceholder'))}
             className="font-mono text-xs"
             aria-invalid={addAttempted && !!keyError}
           />
