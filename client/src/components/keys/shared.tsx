@@ -162,6 +162,8 @@ export const CUSTOM_MODEL_KIND_LABEL: Record<ApiKeyModel['kind'], string> = {
   image: 'keys.customTypeImage',
   audio: 'keys.customTypeAudio',
   transcription: 'keys.customTypeTranscription',
+  search: 'keys.customTypeSearch',
+  decision: 'keys.customTypeDecision',
 }
 
 export function customModelDeleteKey(model: ApiKeyModel): string {
