@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
+import { invalidateSearchQueries } from '@/lib/search'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -74,6 +75,7 @@ export function ImportKeysSection({ onImported }: { onImported?: () => void } = 
       }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['keys'] })
+      invalidateSearchQueries(queryClient)
       queryClient.invalidateQueries({ queryKey: ['health'] })
       queryClient.invalidateQueries({ queryKey: ['fallback'] })
       // The dialog closes on success, so surface the imported/failed counts as

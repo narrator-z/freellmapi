@@ -21,6 +21,7 @@ import { nextSanitizeLevel, sanitizeToolsForProvider, type SchemaSanitizeLevel }
 export interface ProviderHttpError extends Error {
   status?: number;
   retryAfterMs?: number;
+  providerRejection?: 'upstream' | 'request' | 'model';
   /** Explicit daily-window violation from structured upstream quota details. */
   dailyQuotaExhausted?: boolean;
 }
@@ -170,6 +171,7 @@ function safeStringify(value: unknown): string {
 export function providerHttpError(res: Response, message: string, body?: unknown): ProviderHttpError {
   const err = new Error(message) as ProviderHttpError;
   err.status = res.status;
+  err.providerRejection = 'upstream';
   const retryAfterMs = parseRetryAfterMs(res.headers?.get('retry-after')) ?? parseStatedRetryMs(body);
   if (retryAfterMs !== undefined) err.retryAfterMs = retryAfterMs;
   return err;
@@ -226,6 +228,9 @@ export function extractUpstreamErrorText(errBody: unknown, res: Response): strin
     text(e?.message) ??
     res.statusText
   );
+/** An adapter cannot serve this request or model, though another route may. */
+export function providerRequestError(message: string, kind: 'request' | 'model'): ProviderHttpError {
+  return Object.assign(new Error(message), { status: 400, providerRejection: kind });
 }
 
 // Extended sampling knobs (top_k, seed, penalties, logit_bias, logprobs,
@@ -257,6 +262,19 @@ export interface CompletionOptions extends ExtendedSamplingOptions {
    * finish. Composed with the per-attempt timeout in fetchWithTimeout; never
    * serialized into the request body. */
   signal?: AbortSignal;
+  /**
+   * Anthropic compatibility metadata from a `/v1/messages` caller (#1589):
+   * the request's `safeguards` field and `anthropic-beta` header, carried
+   * with the request through the routing loop so a future Anthropic-native
+   * upstream adapter can forward them. OpenAI-compatible adapters MUST NOT
+   * serialize this into the outbound body — strict upstreams 400 on unknown
+   * top-level fields — so it is kept out of the request payload by
+   * construction (providers build the body from known fields only).
+   */
+  anthropicCompat?: {
+    safeguards?: unknown;
+    anthropicBeta?: string;
+  };
 }
 
 /** Per-call abort/timeout wiring for fetchWithTimeout. */
@@ -362,6 +380,13 @@ export abstract class BaseProvider {
       }
     }
   }
+  /** Whether this built-in platform can serve chat completions (#1741). Search,
+   * speech and decision integrations register so their keys pool and
+   * health-check like every other platform, but their adapters refuse chat.
+   * False lets POST /api/models reject chat registrations up front and keeps
+   * the router from walking a chain entry that can only ever fail. Defaults to
+   * true; overridden by subclasses. */
+  readonly supportsChat: boolean = true;
 
   abstract chatCompletion(
     apiKey: string,
