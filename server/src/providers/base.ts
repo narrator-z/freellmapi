@@ -228,6 +228,8 @@ export function extractUpstreamErrorText(errBody: unknown, res: Response): strin
     text(e?.message) ??
     res.statusText
   );
+}
+
 /** An adapter cannot serve this request or model, though another route may. */
 export function providerRequestError(message: string, kind: 'request' | 'model'): ProviderHttpError {
   return Object.assign(new Error(message), { status: 400, providerRejection: kind });

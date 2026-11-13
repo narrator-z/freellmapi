@@ -1097,6 +1097,9 @@ describe('exhaustedRetryError: tool-schema hint on a chain-wide 400', () => {
       toolCount: 1,
     });
     expect(body.message).toContain('expose_fallback_detail_header');
+  });
+});
+
 describe('retryable quota errors with token counts', () => {
   it('does not skip models or their platform because a count contains 404', () => {
     const state = newFallbackState();
