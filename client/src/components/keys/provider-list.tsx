@@ -25,7 +25,7 @@ import { toast } from '@/lib/toast'
 import { keyMatchesQuery } from '@/lib/key-search'
 import { copyText } from '@/lib/clipboard'
 import {
-  usePlatforms,
+  PLATFORMS,
   CUSTOM_GROUP,
   CUSTOM_MODEL_KIND_LABEL,
   customModelDeleteKey,
@@ -44,7 +44,7 @@ import { ModelScopeDialog } from './model-scope-dialog'
 import { TestModelsDialog } from './test-models-dialog'
 import { AddModelDialog } from './add-model-dialog'
 import { groupHandle } from '@/lib/endpoint-groups'
-import { isSearchPlatform } from '@/lib/search'
+import { isSearchPlatform, SEARCH_PROVIDERS } from '@/lib/search'
 
 type StatusFilter = 'all' | 'healthy' | 'issues' | 'disabled'
 
@@ -124,7 +124,6 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
     refetchInterval: 30000,
   })
 
-  const platforms = usePlatforms()
 
   const { data: proxyData } = useQuery<{ proxyUrl: string; enabled: boolean; bypassPlatforms: string[]; active: boolean }>({
     queryKey: ['proxy-url'],
@@ -352,13 +351,14 @@ export function ProviderList({ onAddKey }: { onAddKey: () => void }) {
     }
     group.keys.push(k)
   }
-  // Fork stays registry-driven at runtime (usePlatforms, /api/keys/platforms),
-  // so search providers arrive through the same registry list; custom keys are
-  // covered by customGroups above, so no CUSTOM_GROUP spread. The `search` flag
-  // comes from isSearchPlatform, not the registry entry, so a platform that the
-  // server lists but shared/types.ts does not still gets a section.
+  // Group from the static PLATFORMS/SEARCH_PROVIDERS registries so a saved key
+  // on a hidden platform (aclide, waterfall) still gets its group and stays
+  // visible/editable. Custom keys are covered by customGroups above. The
+  // `search` flag comes from isSearchPlatform so hidden chat platforms never
+  // drift into the search section.
   const grouped: ProviderGroup[] = [
-    ...platforms.map(p => ({ ...p, platform: p.value as string, search: isSearchPlatform(p.value), keys: keys.filter(k => k.platform === p.value) })),
+    ...SEARCH_PROVIDERS.map(p => ({ ...p, platform: p.value as string, search: true as const, keys: keys.filter(k => k.platform === p.value) })),
+    ...PLATFORMS.map(p => ({ ...p, platform: p.value as string, search: isSearchPlatform(p.value), keys: keys.filter(k => k.platform === p.value) })),
     ...[...customGroups.values()].sort((a, b) =>
       a.customGroup === null ? -1 : b.customGroup === null ? 1 : a.label.localeCompare(b.label)),
   ]

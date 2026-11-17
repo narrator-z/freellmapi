@@ -821,7 +821,8 @@
       "openclaw": "Kendi makinenizden WhatsApp, Telegram, Discord ve daha fazlasında yanıt veren, her zaman açık bir kişisel asistan.",
       "hermes": "Nous Research'ün kendini geliştiren ajanı; kalıcı bellek ve becerilerle, terminalde ya da sohbet uygulamalarında.",
       "pi": "Kendi uzantılarınız, becerileriniz ve istem şablonlarınızla şekillendirdiğiniz minimal bir terminal ajanı.",
-      "reasonix": "DeepSeek için geliştirilmiş bir terminal kodlama ajanı; uzun oturumlar ucuz kalsın diye önek önbelleği etrafında kurulmuştur."
+      "reasonix": "DeepSeek için geliştirilmiş bir terminal kodlama ajanı; uzun oturumlar ucuz kalsın diye önek önbelleği etrafında kurulmuştur.",
+      "zcode": "Z.ai'nin GLM modelleri için kodlama ajanı; sağlayıcı kaydıyla herhangi bir OpenAI uyumlu uç noktaya bağlanır."
     }
   },
   "analytics": {
@@ -1080,7 +1081,9 @@
     "lastChecked": "Last checked: {when}",
     "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
     "lastSyncProblem": "Last sync problem: {error}",
-    "bundled": "bundled"
+    "bundled": "bundled",
+    "liveFeed": "Live feed",
+    "monthlySnapshot": "Monthly snapshot"
   },
   "languages": {
     "en": "English",
@@ -1185,45 +1188,6 @@
     "url": "http:// veya https:// ile başlayan geçerli bir URL girin",
     "email": "Geçerli bir e-posta adresi girin",
     "passwordMin": "En az {min} karakter"
-  },
-  "agents": {
-    "title": "Kodlama ajanları",
-    "description": "Kodlama araçlarını, otomatik oluşturulan ve yedeklemeye uygun bir yapılandırmayla tek bir ücretsiz model ağ geçidine bağlayın.",
-    "apiKey": "API anahtarı",
-    "quickstartTitle": "Hızlı başlangıç",
-    "quickstart": "En hızlı yol: Claude Code'u canlı katalogdan yapılandırın.",
-    "currentKey": "Geçerli birleşik anahtar:",
-    "seenRecently": "Son zamanlarda görüldü",
-    "setupLabel": "Otomatik kurulum",
-    "setupHint": "Bu aracın yapılandırma dosyasını, bu ağ geçidini kullanacak şekilde sizin için yazar.",
-    "setupGuideHint": "Bu aracın kurulum adımlarını gösterir; hiçbir dosya yazılmaz.",
-    "manualLabel": "Manuel bağlantı",
-    "manualHint": "Aracın kendi ayarlarına girilecek temel URL ve anahtar.",
-    "endpoint": "Uç nokta",
-    "documentation": "Dokümantasyon",
-    "descriptions": {
-      "claude": "Anthropic'in terminal ajanı: planlar, dosyaları düzenler ve deponuzda komut çalıştırır.",
-      "codex": "OpenAI'nin terminal ajanı; görevi önce yerel bir kum havuzunda çalıştırır.",
-      "cline": "Her düzenlemeyi ve komutu size onaylatan bir VS Code eklentisi.",
-      "continue": "VS Code ve JetBrains eklentisi: yazarken satır içi tamamlama ve sohbet.",
-      "aider": "Komut satırında eş programlama; her değişikliği ayrı bir git commit'ine dönüştürür.",
-      "opencode": "Sağlayıcıdan bağımsız, tam ekran metin arayüzlü bir terminal ajanı.",
-      "goose": "Block'un yerel ajanı; MCP sunucularıyla kodun ötesine genişler.",
-      "qwen": "Qwen modelleri ve büyük depolar için uyarlanmış bir Gemini CLI fork'u.",
-      "roo": "Mimar, kodlayıcı, hata ayıklayıcı gibi modlar arasında geçilen bir VS Code eklentisi.",
-      "kilo": "Roo ile Cline'ı birleştiren, işi bölen bir orkestratörü olan VS Code eklentisi.",
-      "crush": "Charm'ın Go ile yazdığı terminal ajanı; her proje için bir oturum.",
-      "dsh": "DeepSeek'in çalışma altyapısı; her sağlayıcıyı geçiş yapabileceğiniz ayrı bir rota olarak tutar.",
-      "mimo": "Xiaomi'nin terminal ajanı; OpenAI uyumlu her sağlayıcıyı destekleyen bir OpenCode fork'u.",
-      "cursor": "Yapay zekâ odaklı düzenleyici; Cursor bulutundan geçtiği için herkese açık bir URL ister.",
-      "generic": "OpenAI API'sini konuşan diğer her araç; temel URL ve anahtarla elle kurulur.",
-      "atomcode": "AtomGit'in terminal ajanı; Rust ile yazılmış, OpenAI uyumlu her uç noktayı kabul eder.",
-      "openclaw": "Kendi makinenizden WhatsApp, Telegram, Discord ve daha fazlasında yanıt veren, her zaman açık bir kişisel asistan.",
-      "hermes": "Nous Research'ün kendini geliştiren ajanı; kalıcı bellek ve becerilerle, terminalde ya da sohbet uygulamalarında.",
-      "pi": "Kendi uzantılarınız, becerileriniz ve istem şablonlarınızla şekillendirdiğiniz minimal bir terminal ajanı.",
-      "reasonix": "DeepSeek için geliştirilmiş bir terminal kodlama ajanı; uzun oturumlar ucuz kalsın diye önek önbelleği etrafında kurulmuştur.",
-      "zcode": "Z.ai'nin GLM modelleri için kodlama ajanı; sağlayıcı kaydıyla herhangi bir OpenAI uyumlu uç noktaya bağlanır."
-    }
   },
   "update": {
     "available": "Yeni sürüm mevcut",

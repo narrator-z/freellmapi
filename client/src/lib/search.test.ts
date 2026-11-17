@@ -42,7 +42,7 @@ describe('search readiness diagnostics', () => {
   })
   it('surfaces the catalog sync error and a genuinely empty catalog separately', () => {
     expect(searchReadinessHint({ ...base, catalog: { ...base.catalog, lastError: 'bad signature' } }, false, false, t))
-      .toBe('premium.lastSyncProblem:{"error":"bad signature"}')
+      .toBe('catalog.lastSyncProblem:{"error":"bad signature"}')
     expect(searchReadinessHint(base, false, false, t)).toBe('search.empty')
   })
   it.each(['disabled', 'cooling_down', 'needs_key', 'key_error'] as const)('explains engine state %s', state => {

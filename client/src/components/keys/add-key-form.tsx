@@ -1,15 +1,16 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiFetch } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ModelCombobox } from '@/components/model-combobox'
 import { FieldError } from '@/components/ui/field-error'
 import type { Platform } from '../../../../shared/types'
 import { useI18n } from '@/i18n'
 import { toast } from '@/lib/toast'
-import { GetKeyLink, usePlatforms } from './shared'
+import { GetKeyLink, LISTED_PLATFORMS, usePlatforms } from './shared'
+import { invalidateSearchQueries, SEARCH_PROVIDERS } from '@/lib/search'
 import type { ScopeCandidate } from '@/lib/model-scope-selection'
 
 // A key that just landed, plus the models the picker should offer for it.
@@ -43,6 +44,7 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
       apiFetch<{ notice?: string | null }>('/api/keys', { method: 'POST', body: JSON.stringify(body) }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['keys'] })
+      invalidateSearchQueries(queryClient)
       queryClient.invalidateQueries({ queryKey: ['health'] })
       queryClient.invalidateQueries({ queryKey: ['fallback'] })
       toast.success(t('keys.keyAdded'))
@@ -59,7 +61,14 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
   const platforms = usePlatforms()
   // Key-optional providers (Kilo, OVH, AI Horde) work anonymously, but accept a
   // real key too (#1331): the field stays editable and may be left blank.
-  const isKeyless = platforms.find(p => p.value === platform)?.keyless ?? false
+  const isKeyless = [...SEARCH_PROVIDERS, ...platforms].find(p => p.value === platform)?.keyless ?? false
+  const platformOptions = useMemo(
+    () => [
+      ...SEARCH_PROVIDERS.map(p => ({ ...p, group: t('search.pickerSearch') })),
+      ...LISTED_PLATFORMS.map(p => ({ ...p, group: t('search.pickerModels') })),
+    ],
+    [t],
+  )
 
   // Field-level validation: the submit stays clickable and reveals what is
   // missing instead of being silently disabled.
@@ -87,19 +96,21 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
       <form onSubmit={handleSubmit} className="flex flex-wrap gap-3">
         <div className="space-y-1.5">
           <Label className="text-xs">{t('keys.platform')}</Label>
-          <Select value={platform} onValueChange={(v) => setPlatform(v as Platform)}>
-            <SelectTrigger className="w-[220px]" aria-invalid={addAttempted && !!platformError}>
-              <SelectValue placeholder={t('keys.selectPlatform')} />
-            </SelectTrigger>
-            <SelectContent>
-              {platforms.map(p => (
-                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <ModelCombobox
+            value={platform}
+            options={platformOptions}
+            onSelect={v => setPlatform(v as Platform)}
+            ariaLabel={t('keys.platform')}
+            triggerPlaceholder={t('keys.selectPlatform')}
+            placeholder={t('keys.filterPlaceholder')}
+            emptyText={t('keys.noFilterMatch')}
+            align="start"
+            ariaInvalid={addAttempted && !!platformError}
+            triggerClassName={`flex h-8 w-[220px] items-center justify-between gap-2 whitespace-nowrap rounded-lg border bg-transparent px-3 text-sm outline-none transition-colors hover:bg-muted/50 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 ${addAttempted && platformError ? 'border-destructive' : 'border-input'}`}
+          />
           {addAttempted && <FieldError error={platformError} />}
           {(() => {
-            const sel = platforms.find(p => p.value === platform)
+            const sel = [...SEARCH_PROVIDERS, ...platforms].find(p => p.value === platform)
             return sel?.url ? <div className="pt-0.5"><GetKeyLink url={sel.url} /></div> : null
           })()}
         </div>

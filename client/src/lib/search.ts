@@ -77,7 +77,7 @@ export function searchReadinessHint(data: SearchReadiness | undefined, failed: b
   if (failed) return t('search.readinessError')
   if (loading || !data) return t('common.loading')
   if (data.missing_from_catalog.length) return t('search.catalogMissing', { providers: data.missing_from_catalog.map(searchProviderName).join(', ') })
-  if (data.catalog.lastError) return t('premium.lastSyncProblem', { error: data.catalog.lastError })
+  if (data.catalog.lastError) return t('catalog.lastSyncProblem', { error: data.catalog.lastError })
   if (!data.engines.length) return t('search.empty')
   if (data.engines.every(e => e.state === 'disabled')) return t('search.enginesDisabled')
   if (data.status === 'cooling_down') return t('search.keysCoolingDown')

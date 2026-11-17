@@ -4,7 +4,7 @@ import type { ApiKeyModel, Platform, ProviderQuotaState } from '../../../../shar
 import { ExternalLink } from 'lucide-react'
 import { useI18n } from '@/i18n'
 
-export interface PlatformEntry { value: string; label: string; url: string; keyless?: boolean }
+export interface PlatformEntry { value: string; label: string; url: string; keyless?: boolean; hidden?: boolean }
 
 // Small "Get API key" external link shown next to a provider (#137).
 export function GetKeyLink({ url }: { url: string }) {
@@ -27,7 +27,7 @@ export function GetKeyLink({ url }: { url: string }) {
 // provider registry: upstream hand-maintained providers + catalog auto-registered.
 // Falls back to a static list while the request is in flight.
 const FALLBACK_PLATFORMS: PlatformEntry[] = [
-  { value: 'aclide', label: 'ACLIDE (shared monthly credits)', url: 'https://aclide.com/en/dashboard/api-keys' },
+  { value: 'aclide', label: 'ACLIDE (shared monthly credits)', url: 'https://aclide.com/en/dashboard/api-keys', hidden: true },
   { value: 'speka', label: 'Speka ($1 shared monthly credits)', url: 'https://speka.me/dashboard/keys' },
   { value: 'kenari', label: 'Kenari (shared daily free chat and images)', url: 'https://kenari.id' },
   { value: 'kiosapi', label: 'KiosAPI (shared daily free chat)', url: 'https://kiosapi.id/dashboard/keys' },
@@ -61,7 +61,7 @@ const FALLBACK_PLATFORMS: PlatformEntry[] = [
   { value: 'lucidity', label: 'Lucidity Composite (daily free-model requests)', url: 'https://composite.lucidity.sh' },
   { value: 'airforce', label: 'Api.Airforce (daily free requests; 1 per minute)', url: 'https://api.airforce' },
   { value: 'dreamprompting', label: 'DreamPrompting (rolling 24h free tokens and requests)', url: 'https://dreamprompting.com' },
-  { value: 'waterfall', label: 'Waterfall (community free models)', url: 'https://getwaterfall.org' },
+  { value: 'waterfall', label: 'Waterfall (community free models)', url: 'https://getwaterfall.org', hidden: true },
   { value: 'logfare', label: 'Logfare (fair-use free models)', url: 'https://logfare.ai' },
   { value: 'bai', label: 'B.AI (promotional free model)', url: 'https://b.ai' },
   { value: 'radeon', label: 'AMD Radeon Cloud (free shared models)', url: 'https://developer.amd.com.cn/radeon/tokenfactory' },
@@ -107,6 +107,21 @@ const FALLBACK_PLATFORMS: PlatformEntry[] = [
   { value: 'volcengine', label: 'Volcengine Ark (free daily, needs cn real-name)', url: 'https://console.volcengine.com/ark' },
   { value: 'longcat', label: 'LongCat (free daily, email signup ok)', url: 'https://longcat.chat/platform' },
   { value: 'xfyun', label: 'iFlytek Spark (free Lite, needs cn real-name)', url: 'https://console.xfyun.cn' },
+  // Mirrored from upstream's static registry (#1804, #1917, #1938). The server
+  // has no /api/keys/platforms route, so this fallback IS what users see when
+  // that request 404s — labels/URLs must stay in sync with upstream.
+  { value: 'halx', label: 'HAL-X (keyless decisions)', url: 'https://hal-x.ai', keyless: true },
+  { value: 'aisense', label: 'AI SENSE (keyless decisions)', url: 'https://www.aisense.no/free-public-api-decide-api-endpoint', keyless: true },
+  { value: 'zro', label: 'Zro / MoonMath.ai (shared daily free usage)', url: 'https://zro.moonmath.ai/api-keys' },
+  { value: 'varosity', label: 'Varosity (one-time $1.50 starter credit)', url: 'https://varosity.ai/app/keys/api-keys' },
+  { value: 'rime', label: 'Rime (shared monthly TTS / transcription credits)', url: 'https://app.rime.ai' },
+  { value: 'typecast', label: 'Typecast (15K credits/month; non-commercial, attribution required)', url: 'https://studio.typecast.ai/developers/api' },
+  { value: 'cartesia', label: 'Cartesia (20K shared credits/month; non-commercial Free plan)', url: 'https://play.cartesia.ai/keys' },
+  { value: 'silvr', label: 'SilvR AI ($3.50 shared daily allowance)', url: 'https://dashboard.silvrai.net' },
+  { value: 'freetts', label: 'FreeTTS (personal use only; watermarked TTS)', url: 'https://freetts.org/dashboard?section=api-keys' },
+  { value: 'freeinference', label: 'FreeInference (research; requests logged)', url: 'https://freeinference.org' },
+  { value: 'freemodel', label: 'FreeModel (monthly allowance; Telegram verification)', url: 'https://freemodel.in/dashboard' },
+  { value: 'powertokens', label: 'PowerTokens (free: glm-4.7-flash)', url: 'https://www.powertokens.ai' },
 ]
 
 // Static platform registry consumed by upstream-derived pure helpers such as
@@ -122,13 +137,13 @@ const FALLBACK_PLATFORMS: PlatformEntry[] = [
 // `PlatformEntry.value` is deliberately the wider `string` (the API list can
 // carry catalog-auto-registered platforms outside the union), so the narrow
 // view is applied here, at the single point where upstream expects it.
-type StaticPlatformEntry = { value: Platform; label: string; url: string; keyless?: boolean }
+type StaticPlatformEntry = { value: Platform; label: string; url: string; keyless?: boolean; hidden?: boolean }
 export const PLATFORMS: StaticPlatformEntry[] =
   FALLBACK_PLATFORMS as unknown as StaticPlatformEntry[]
 
-/** Providers a new user can pick. The fork keeps no `hidden` flag: the
- *  registry (and the catalog behind it) decides what is offered. */
-export const LISTED_PLATFORMS: StaticPlatformEntry[] = PLATFORMS
+/** Providers a new user can pick. `hidden` entries (aclide, waterfall) keep
+ *  their metadata for saved keys but stay out of the add-provider pickers. */
+export const LISTED_PLATFORMS: StaticPlatformEntry[] = PLATFORMS.filter(p => !p.hidden)
 
 // Sort platforms alphabetically by label so long lists (Search / Add key
 // dropdown) are scannable instead of in raw provider-registry order.
@@ -145,7 +160,7 @@ export function usePlatforms(): PlatformEntry[] {
     staleTime: 5 * 60 * 1000,
     placeholderData: FALLBACK_PLATFORMS,
   })
-  return sortPlatforms(data ?? FALLBACK_PLATFORMS)
+  return sortPlatforms(data?.length ? data : FALLBACK_PLATFORMS)
 }
 
 // 'custom' is configured through its own form (base URL + model), not the

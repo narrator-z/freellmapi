@@ -1081,7 +1081,9 @@
     "lastChecked": "Last checked: {when}",
     "syncDescription": "The augmented catalog is maintained and hosted by narratorz. This server syncs automatically every 12 hours.",
     "lastSyncProblem": "Last sync problem: {error}",
-    "bundled": "bundled"
+    "bundled": "bundled",
+    "liveFeed": "Live feed",
+    "monthlySnapshot": "Monthly snapshot"
   },
   "languages": {
     "en": "English",
