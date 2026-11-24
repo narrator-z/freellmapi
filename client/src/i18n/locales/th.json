@@ -435,6 +435,7 @@
     "familyHaiku": "ไฮกุ",
     "selectPlatform": "เลือกผู้ให้บริการ",
     "addKey": "เพิ่มรหัส",
+    "addAnotherKey": "เพิ่มคีย์ API อื่น",
     "keyAdded": "เพิ่มคีย์แล้ว",
     "endpointKeysShareModels": "คีย์ของเอนด์พอยต์เดียวกันใช้โมเดลร่วมกัน",
     "export": "ส่งออก",
@@ -946,6 +947,8 @@
     "dictationStop": "หยุดบันทึก",
     "dictationTranscribing": "กำลังถอดเสียง…",
     "dictationUnavailable": "เพิ่มผู้ให้บริการโมเดลเสียงเพื่อใช้การพูดเพื่อพิมพ์",
+    "dictationMacShortcut": "กดปุ่มไมโครโฟนหรือใช้ปุ่มลัดการป้อนตามคำบอกที่ตั้งไว้ในการตั้งค่าแป้นพิมพ์",
+    "dictationWindowsShortcut": "กด Win + H เพื่อเริ่มพิมพ์ด้วยเสียง",
     "dictationModel": "โมเดลพูดเพื่อพิมพ์",
     "dictationFailed": "ถอดเสียงไม่สำเร็จ: {reason}",
     "artifactOpen": "เปิดตัวอย่าง",
@@ -1154,6 +1157,24 @@
     "manualHint": "Base URL และคีย์สำหรับกรอกในการตั้งค่าของเครื่องมือเอง",
     "endpoint": "เอนด์พอยต์",
     "documentation": "เอกสารประกอบ",
+    "connect": {
+      "button": "เชื่อมต่อกับ FreeLLMAPI",
+      "details": "รายละเอียดการตั้งค่า",
+      "gateway": "เกตเวย์ภายในเครื่อง",
+      "saved": "บันทึกการตั้งค่าแล้ว",
+      "finish": "ตั้งค่าให้เสร็จ",
+      "launch": "เปิดในเทอร์มินัล",
+      "quit": "ปิด ZCode Desktop ก่อนบันทึกเพื่อป้องกันการเขียนทับการตั้งค่า",
+      "restart": "หาก {name} ทำงานอยู่ ให้เริ่มใหม่",
+      "send": "เปิด {name} แล้วส่งข้อความ",
+      "files": "ไฟล์การตั้งค่า",
+      "writeError": "ตรวจสอบสิทธิ์ของไฟล์และการตั้งค่าปัจจุบัน แล้วลองอีกครั้ง",
+      "missing": "ติดตั้ง CLI หรือเพิ่มลงใน PATH",
+      "intro": "เชื่อมต่อเครื่องมือเขียนโค้ดกับเกตเวย์โมเดลฟรีเดียวด้วยการกำหนดค่าที่สร้างให้และปลอดภัยต่อการสำรองข้อมูล",
+      "all": "เอเจนต์",
+      "find": "Search",
+      "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL."
+    },
     "descriptions": {
       "claude": "Anthropic's terminal agent: it plans, edits files, and runs commands in your repo.",
       "codex": "OpenAI's terminal agent, which runs your task in a local sandbox first.",
@@ -1175,7 +1196,8 @@
       "hermes": "เอเจนต์ที่พัฒนาตัวเองได้ของ Nous Research พร้อมหน่วยความจำถาวรและทักษะ ใช้ได้ทั้งในเทอร์มินัลและบนแอปแชต",
       "pi": "เอเจนต์เทอร์มินัลแบบมินิมอลที่คุณปรับแต่งได้ด้วยส่วนขยาย ทักษะ และเทมเพลตพรอมต์ของคุณเอง",
       "reasonix": "เอเจนต์เขียนโค้ดบนเทอร์มินัลที่สร้างมาเพื่อ DeepSeek โดยออกแบบรอบ prefix caching ให้เซสชันยาว ๆ ยังคงประหยัด",
-      "zcode": "เอเจนต์เขียนโค้ดของ Z.ai สำหรับโมเดล GLM เชื่อมต่อกับ endpoint ที่เข้ากันได้กับ OpenAI ผ่านทะเบียนผู้ให้บริการ"
+      "zcode": "เอเจนต์เขียนโค้ดของ Z.ai สำหรับโมเดล GLM เชื่อมต่อกับ endpoint ที่เข้ากันได้กับ OpenAI ผ่านทะเบียนผู้ให้บริการ",
+      "zero": "เอเจนต์เขียนโค้ดบนเทอร์มินัลในเครื่องที่มีเซสชันถาวร การจัดการสิทธิ์ และรองรับผู้ให้บริการที่เข้ากันได้กับ OpenAI ทุกราย"
     }
   },
   "update": {

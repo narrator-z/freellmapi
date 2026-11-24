@@ -435,6 +435,7 @@
     "familyHaiku": "Haiku",
     "selectPlatform": "Pilih penyedia",
     "addKey": "Tambah kekunci",
+    "addAnotherKey": "Tambah kunci API lain",
     "keyAdded": "Kunci ditambah",
     "endpointKeysShareModels": "Kunci untuk endpoint yang sama berkongsi modelnya.",
     "export": "Eksport",
@@ -946,6 +947,8 @@
     "dictationStop": "Hentikan rakaman",
     "dictationTranscribing": "Mentranskripsi…",
     "dictationUnavailable": "Tambah pembekal model audio untuk menggunakan dikte.",
+    "dictationMacShortcut": "Tekan kekunci mikrofon atau gunakan pintasan imlak yang ditetapkan dalam tetapan papan kekunci.",
+    "dictationWindowsShortcut": "Tekan Win + H untuk mula menaip dengan suara.",
     "dictationModel": "Model dikte",
     "dictationFailed": "Transkripsi gagal: {reason}",
     "artifactOpen": "Buka pratonton",
@@ -1154,6 +1157,24 @@
     "manualHint": "URL asas dan kunci untuk dimasukkan dalam tetapan alat itu sendiri.",
     "endpoint": "Titik akhir",
     "documentation": "Dokumentasi",
+    "connect": {
+      "button": "Sambungkan ke FreeLLMAPI",
+      "details": "Butiran persediaan",
+      "gateway": "Get laluan setempat",
+      "saved": "Konfigurasi disimpan",
+      "finish": "Selesaikan persediaan",
+      "launch": "Lancarkan dalam terminal",
+      "quit": "Tutup ZCode Desktop sebelum menyimpan agar tetapan tidak ditulis ganti.",
+      "restart": "Mulakan semula {name} jika sedang berjalan.",
+      "send": "Buka {name} dan hantar mesej.",
+      "files": "Fail konfigurasi",
+      "writeError": "Semak kebenaran fail dan konfigurasi semasa, kemudian cuba lagi.",
+      "missing": "Pasang CLI atau tambahkannya pada PATH.",
+      "intro": "Sambungkan alat pengekodan kepada satu gateway model percuma dengan konfigurasi terjana yang selamat untuk sandaran.",
+      "all": "Ejen",
+      "find": "Search",
+      "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL."
+    },
     "descriptions": {
       "claude": "Anthropic's terminal agent: it plans, edits files, and runs commands in your repo.",
       "codex": "OpenAI's terminal agent, which runs your task in a local sandbox first.",
@@ -1175,7 +1196,8 @@
       "hermes": "Ejen Nous Research yang menambah baik dirinya sendiri, dengan memori kekal dan kemahiran, di terminal atau di aplikasi sembang.",
       "pi": "Ejen terminal minimalis yang anda bentuk dengan sambungan, kemahiran dan templat prompt anda sendiri.",
       "reasonix": "Ejen pengekodan terminal yang dibina untuk DeepSeek, berasaskan cache awalan supaya sesi panjang kekal murah.",
-      "zcode": "Z.ai's coding agent for its GLM models, speaking any OpenAI-compatible endpoint through a provider registry."
+      "zcode": "Z.ai's coding agent for its GLM models, speaking any OpenAI-compatible endpoint through a provider registry.",
+      "zero": "Ejen pengekodan terminal tempatan dengan sesi kekal, kebenaran, dan mana-mana penyedia yang serasi dengan OpenAI."
     }
   },
   "update": {

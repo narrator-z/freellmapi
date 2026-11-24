@@ -435,6 +435,7 @@
     "familyHaiku": "Haiku",
     "selectPlatform": "Seleziona un fornitore",
     "addKey": "Aggiungi chiave",
+    "addAnotherKey": "Aggiungi un’altra chiave API",
     "keyAdded": "Chiave aggiunta",
     "endpointKeysShareModels": "Le chiavi dello stesso endpoint condividono i suoi modelli.",
     "export": "Esportazione",
@@ -946,6 +947,8 @@
     "dictationStop": "Interrompi registrazione",
     "dictationTranscribing": "Trascrizione…",
     "dictationUnavailable": "Aggiungi provider di modelli audio per usare la dettatura.",
+    "dictationMacShortcut": "Premi il tasto del microfono o usa l’abbreviazione per la dettatura impostata nelle preferenze della tastiera.",
+    "dictationWindowsShortcut": "Premi Win + H per avviare la digitazione vocale.",
     "dictationModel": "Modello di dettatura",
     "dictationFailed": "Trascrizione non riuscita: {reason}",
     "artifactOpen": "Apri anteprima",
@@ -1154,6 +1157,24 @@
     "manualHint": "URL di base e chiave da inserire nelle impostazioni dello strumento.",
     "endpoint": "Endpoint",
     "documentation": "Documentazione",
+    "connect": {
+      "button": "Connetti a FreeLLMAPI",
+      "details": "Dettagli di configurazione",
+      "gateway": "Gateway locale",
+      "saved": "Configurazione salvata",
+      "finish": "Completa configurazione",
+      "launch": "Avvia nel terminale",
+      "quit": "Chiudi ZCode Desktop prima di salvare per evitare che sovrascriva le impostazioni.",
+      "restart": "Riavvia {name} se è in esecuzione.",
+      "send": "Apri {name} e invia un messaggio.",
+      "files": "File di configurazione",
+      "writeError": "Controlla i permessi dei file e la configurazione esistente, poi riprova.",
+      "missing": "Installa la CLI o aggiungila al PATH e riprova.",
+      "intro": "Collega gli strumenti di coding a un unico gateway di modelli gratuiti con configurazione generata e sicura per il backup.",
+      "all": "Agenti",
+      "find": "Search",
+      "cursor": "L'editor pensato per l'IA; passa dal cloud di Cursor, quindi serve un URL pubblico."
+    },
     "descriptions": {
       "claude": "L'agente da terminale di Anthropic: pianifica, modifica file ed esegue comandi nel tuo repository.",
       "codex": "L'agente da terminale di OpenAI, che prima esegue il compito in una sandbox locale.",
@@ -1175,7 +1196,8 @@
       "hermes": "L'agente auto-migliorante di Nous Research, con memoria persistente e skill, nel terminale o nelle app di chat.",
       "pi": "Un agente da terminale minimale che modelli con le tue estensioni, skill e modelli di prompt.",
       "reasonix": "Un agente di programmazione da terminale nativo per DeepSeek, costruito attorno alla cache dei prefissi perché le sessioni lunghe restino economiche.",
-      "zcode": "L'agente di codice di Z.ai per i suoi modelli GLM, compatibile con qualsiasi endpoint OpenAI tramite un registro dei fornitori."
+      "zcode": "L'agente di codice di Z.ai per i suoi modelli GLM, compatibile con qualsiasi endpoint OpenAI tramite un registro dei fornitori.",
+      "zero": "Un agente di programmazione locale da terminale con sessioni persistenti, permessi e qualsiasi provider compatibile con OpenAI."
     }
   },
   "update": {

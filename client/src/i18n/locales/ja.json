@@ -435,6 +435,7 @@
     "familyHaiku": "俳句",
     "selectPlatform": "プロバイダーを選択してください",
     "addKey": "キーを追加",
+    "addAnotherKey": "別のAPIキーを追加",
     "keyAdded": "キーが追加されました",
     "endpointKeysShareModels": "同じエンドポイントのキーはそのモデルを共有します。",
     "export": "エクスポート",
@@ -946,6 +947,8 @@
     "dictationStop": "録音を停止",
     "dictationTranscribing": "文字起こし中…",
     "dictationUnavailable": "音声入力を使うには、音声モデルのプロバイダーを追加してください。",
+    "dictationMacShortcut": "マイクキーを押すか、キーボード設定で指定した音声入力のショートカットを使ってください。",
+    "dictationWindowsShortcut": "Win + H を押すと音声入力が始まります。",
     "dictationModel": "音声入力モデル",
     "dictationFailed": "文字起こしに失敗しました: {reason}",
     "artifactOpen": "プレビューを開く",
@@ -1154,6 +1157,24 @@
     "manualHint": "ツール自身の設定に入力するベース URL とキーです。",
     "endpoint": "エンドポイント",
     "documentation": "ドキュメント",
+    "connect": {
+      "button": "FreeLLMAPI に接続",
+      "details": "設定の詳細",
+      "gateway": "ローカルゲートウェイ",
+      "saved": "設定を保存しました",
+      "finish": "設定を完了",
+      "launch": "ターミナルで起動",
+      "quit": "設定の上書きを防ぐため、保存前に ZCode Desktop を終了してください。",
+      "restart": "{name} が起動中の場合は再起動してください。",
+      "send": "{name} を開いてメッセージを送信してください。",
+      "files": "設定ファイル",
+      "writeError": "ファイルの権限と現在の設定を確認してから再試行してください。",
+      "missing": "CLI をインストールするか PATH に追加してください。",
+      "intro": "コーディングツールを 1 つの無料モデルゲートウェイに接続します。設定は自動生成され、バックアップも安全です。",
+      "all": "エージェント",
+      "find": "Search",
+      "cursor": "AI 前提のエディター。Cursor のクラウド経由なので公開 URL が必要です。"
+    },
     "descriptions": {
       "claude": "Anthropic のターミナルエージェント。計画を立て、ファイルを編集し、リポジトリでコマンドを実行します。",
       "codex": "OpenAI のターミナルエージェント。まずローカルのサンドボックスでタスクを実行します。",
@@ -1175,7 +1196,8 @@
       "hermes": "Nous Research の自己改善型エージェント。永続的なメモリとスキルを備え、ターミナルでもチャットアプリでも使えます。",
       "pi": "自分の拡張機能、スキル、プロンプトテンプレートで形づくる、ミニマルなターミナルエージェント。",
       "reasonix": "DeepSeek ネイティブのターミナル向けコーディングエージェント。プレフィックスキャッシュを軸に設計され、長いセッションでも安く済みます。",
-      "zcode": "Z.ai が GLM モデル向けに作ったコーディングエージェント。プロバイダ登録経由で OpenAI 互換エンドポイントに接続できます。"
+      "zcode": "Z.ai が GLM モデル向けに作ったコーディングエージェント。プロバイダ登録経由で OpenAI 互換エンドポイントに接続できます。",
+      "zero": "永続セッションや権限管理を備え、あらゆる OpenAI 互換プロバイダーに対応するローカル端末向けコーディングエージェント。"
     }
   },
   "update": {

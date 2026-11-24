@@ -46,7 +46,8 @@ const FALLBACK_PLATFORMS: PlatformEntry[] = [
   { value: 'jamai', label: 'JamAI Base (monthly ELLM allowance)', url: 'https://cloud.jamaibase.com' },
   { value: 'nabh', label: 'nabh.cloud (50 shared monthly credits)', url: 'https://app.nabh.cloud' },
   { value: 'novai', label: 'NovAI (daily free chat + video quota)', url: 'https://aiapi-pro.com' },
-  { value: 'google', label: 'Google AI Studio', url: 'https://aistudio.google.com/apikey' },
+  { value: 'speechflow', label: 'SpeechFlow (file transcription)', url: 'https://speechflow.io' },
+  { value: 'meldport', label: 'Meldport (monthly free tokens)', url: 'https://console.meldport.com' },  { value: 'google', label: 'Google AI Studio', url: 'https://aistudio.google.com/apikey' },
   { value: 'groq', label: 'Groq', url: 'https://console.groq.com/keys' },
   { value: 'cerebras', label: 'Cerebras', url: 'https://cloud.cerebras.ai' },
   { value: 'sail', label: 'Sail Research ($5 monthly with payment method)', url: 'https://app.sailresearch.com' },
@@ -56,7 +57,7 @@ const FALLBACK_PLATFORMS: PlatformEntry[] = [
   { value: 'septor', label: 'Septor Labs (daily free-model quota)', url: 'https://septorlabs.com/dashboard' },
   { value: 'clod', label: 'CLōD (shared daily free requests)', url: 'https://app.clod.io' },
   { value: 'speechify', label: 'Speechify (monthly free TTS characters)', url: 'https://platform.speechify.ai' },
-  { value: 'freeai', label: 'Free.ai (shared free speech / transcription quota)', url: 'https://free.ai/account/#api-keys' },
+  { value: 'freeai', label: 'Free.ai (speech, transcription and embeddings)', url: 'https://free.ai/account/#api-keys' },
   { value: 'blaze', label: 'BlazeAPI (daily free tokens; Discord verification)', url: 'https://blazeapi.org/dashboard' },
   { value: 'lucidity', label: 'Lucidity Composite (daily free-model requests)', url: 'https://composite.lucidity.sh' },
   { value: 'airforce', label: 'Api.Airforce (daily free requests; 1 per minute)', url: 'https://api.airforce' },
@@ -83,7 +84,7 @@ const FALLBACK_PLATFORMS: PlatformEntry[] = [
   { value: 'siliconflow', label: 'SiliconFlow (image + TTS)', url: 'https://siliconflow.com' },
   { value: 'routeway', label: 'Routeway (free key)', url: 'https://routeway.ai' },
   { value: 'bazaarlink', label: 'BazaarLink (free key)', url: 'https://bazaarlink.ai' },
-  { value: 'ainative', label: 'AINative Studio (free key)', url: 'https://ainative.studio' },
+  { value: 'ainative', label: 'AINative Studio (paid credits)', url: 'https://ainative.studio', hidden: true },
   { value: 'aion', label: 'Aion Labs (free key)', url: 'https://www.aionlabs.ai' },
   { value: 'requesty', label: 'Requesty (free key)', url: 'https://www.requesty.ai' },
   { value: 'navy', label: 'NavyAI (free key)', url: 'https://api.navy' },
@@ -97,7 +98,13 @@ const FALLBACK_PLATFORMS: PlatformEntry[] = [
   // CATALOG-ANYAPI-SMOKE-2026-08-10 in the ops repo). No quota claim until
   // their free tier demonstrably works.
   { value: 'anyapi', label: 'AnyAPI (free key)', url: 'https://anyapi.ai' },
-  { value: 'modelscope', label: 'ModelScope (free key, needs Aliyun cn binding)', url: 'https://modelscope.cn/my/myaccesstoken' },
+  // Free during the beta with no rate limit, then 5K in + 1K out tokens/hour, 2026-11-10.
+  { value: 'puter', label: 'Puter (use a dedicated free account token)', url: 'https://puter.com/dashboard' },
+  { value: 'cheapllm', label: 'cheapllm.shop (free: DeepSeek V4.1 Flash)', url: 'https://cheapllm.shop/signup' },
+  // Free plan, no card: `auto` and `hrllm`, 20 requests/minute, 2026-11-23.
+  { value: 'llmkiwi', label: 'LLM.kiwi (free: auto router)', url: 'https://llm.kiwi/dashboard' },
+  // Free models in a mixed free/paid relay; some need a linked Discord, 2026-11-23.
+  { value: 'tokenreply', label: 'TokenReply (free models)', url: 'https://www.tokenreply.com/console/token' },  { value: 'modelscope', label: 'ModelScope (free key, needs Aliyun cn binding)', url: 'https://modelscope.cn/my/myaccesstoken' },
   { value: 'aihorde', label: 'AI Horde (no key needed, slow)', url: 'https://aihorde.net/register', keyless: true },
   // Chinese domestic providers. All four gate API access behind real-name
   // verification on the cloud account, so the label says so up front rather

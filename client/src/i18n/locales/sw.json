@@ -435,6 +435,7 @@
     "familyHaiku": "Haiku",
     "selectPlatform": "Chagua mtoaji",
     "addKey": "Ongeza ufunguo",
+    "addAnotherKey": "Ongeza ufunguo mwingine wa API",
     "keyAdded": "Ufunguo umeongezwa",
     "endpointKeysShareModels": "Vitufe vya mwisho huo huo hushiriki modeli zake.",
     "export": "Hamisha",
@@ -946,6 +947,8 @@
     "dictationStop": "Simamisha kurekodi",
     "dictationTranscribing": "Inanukuu…",
     "dictationUnavailable": "Ongeza watoa huduma wa miundo ya sauti ili kutumia kusema uandikishe.",
+    "dictationMacShortcut": "Bonyeza kitufe cha maikrofoni au utumie njia ya mkato ya imla iliyowekwa katika mipangilio ya kibodi.",
+    "dictationWindowsShortcut": "Bonyeza Win + H ili uanze kuandika kwa sauti.",
     "dictationModel": "Muundo wa kusema uandikishe",
     "dictationFailed": "Unukuzi umeshindwa: {reason}",
     "artifactOpen": "Fungua onyesho la kukagua",
@@ -1154,6 +1157,24 @@
     "manualHint": "URL msingi na ufunguo wa kuweka katika mipangilio ya zana yenyewe.",
     "endpoint": "Kituo cha mwisho",
     "documentation": "Nyaraka",
+    "connect": {
+      "button": "Unganisha na FreeLLMAPI",
+      "details": "Maelezo ya usanidi",
+      "gateway": "Lango la ndani",
+      "saved": "Mipangilio imehifadhiwa",
+      "finish": "Kamilisha usanidi",
+      "launch": "Fungua kwenye terminali",
+      "quit": "Funga ZCode Desktop kabla ya kuhifadhi ili isibadilishe mipangilio.",
+      "restart": "Anzisha upya {name} ikiwa inaendelea kufanya kazi.",
+      "send": "Fungua {name} na utume ujumbe.",
+      "files": "Faili za usanidi",
+      "writeError": "Kagua ruhusa za faili na mipangilio iliyopo, kisha ujaribu tena.",
+      "missing": "Sakinisha CLI au uiongeze kwenye PATH.",
+      "intro": "Unganisha zana za usimbaji na lango moja la miundo ya bure kwa usanidi ulioundwa na ulio salama kwa hifadhi rudufu.",
+      "all": "Mawakala",
+      "find": "Search",
+      "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL."
+    },
     "descriptions": {
       "claude": "Anthropic's terminal agent: it plans, edits files, and runs commands in your repo.",
       "codex": "OpenAI's terminal agent, which runs your task in a local sandbox first.",
@@ -1175,7 +1196,8 @@
       "hermes": "Wakala wa Nous Research anayejiboresha mwenyewe, mwenye kumbukumbu ya kudumu na ujuzi, kwenye terminal au kwenye programu za gumzo.",
       "pi": "Wakala mdogo wa terminal unaomuunda kwa viendelezi, ujuzi na violezo vya maagizo vyako mwenyewe.",
       "reasonix": "Wakala wa kuandika msimbo kwenye terminal aliyejengwa kwa ajili ya DeepSeek, kwa msingi wa prefix caching ili vipindi virefu vibaki nafuu.",
-      "zcode": "Z.ai's coding agent for its GLM models, speaking any OpenAI-compatible endpoint through a provider registry."
+      "zcode": "Z.ai's coding agent for its GLM models, speaking any OpenAI-compatible endpoint through a provider registry.",
+      "zero": "Wakala wa uandishi wa msimbo kwenye terminal ya ndani yenye vipindi endelevu, ruhusa, na mtoa huduma yeyote anayelingana na OpenAI."
     }
   },
   "update": {

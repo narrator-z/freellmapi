@@ -435,6 +435,7 @@
     "familyHaiku": "Haiku",
     "selectPlatform": "Válassz szolgáltatót",
     "addKey": "Add hozzá kulcsot",
+    "addAnotherKey": "Másik API-kulcs hozzáadása",
     "keyAdded": "Kulcs hozzáadva",
     "endpointKeysShareModels": "Ugyanazon végpont kulcsai közösen használják annak modelljeit.",
     "export": "Export",
@@ -946,6 +947,8 @@
     "dictationStop": "Felvétel leállítása",
     "dictationTranscribing": "Átírás…",
     "dictationUnavailable": "Adjon hozzá hangmodell-szolgáltatókat a diktálás használatához.",
+    "dictationMacShortcut": "Nyomja meg a mikrofonbillentyűt, vagy használja a billentyűzet beállításaiban megadott diktálási gyorsbillentyűt.",
+    "dictationWindowsShortcut": "A hangalapú gépelés indításához nyomja meg a Win + H billentyűkombinációt.",
     "dictationModel": "Diktálási modell",
     "dictationFailed": "Az átírás nem sikerült: {reason}",
     "artifactOpen": "Előnézet megnyitása",
@@ -1154,6 +1157,24 @@
     "manualHint": "Alap-URL és kulcs az eszköz saját beállításaihoz.",
     "endpoint": "Végpont",
     "documentation": "Dokumentáció",
+    "connect": {
+      "button": "Kapcsolódás a FreeLLMAPI-hoz",
+      "details": "Beállítás részletei",
+      "gateway": "Helyi átjáró",
+      "saved": "Beállítások mentve",
+      "finish": "Beállítás befejezése",
+      "launch": "Indítás terminálban",
+      "quit": "Mentés előtt zárja be a ZCode Desktopot, hogy ne írja felül a beállításokat.",
+      "restart": "Ha fut a(z) {name}, indítsa újra.",
+      "send": "Nyissa meg a(z) {name} alkalmazást, és küldjön üzenetet.",
+      "files": "Konfigurációs fájlok",
+      "writeError": "Ellenőrizze a fájljogosultságokat és a beállításokat, majd próbálja újra.",
+      "missing": "Telepítse a CLI-t vagy adja hozzá a PATH változóhoz.",
+      "intro": "Kösd össze a kódolóeszközöket egyetlen ingyenes modellátjáróval, generált, mentésbiztos konfigurációval.",
+      "all": "Ügynökök",
+      "find": "Search",
+      "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL."
+    },
     "descriptions": {
       "claude": "Anthropic's terminal agent: it plans, edits files, and runs commands in your repo.",
       "codex": "OpenAI's terminal agent, which runs your task in a local sandbox first.",
@@ -1175,7 +1196,8 @@
       "hermes": "A Nous Research önfejlesztő ügynöke tartós memóriával és készségekkel, terminálban vagy csevegőalkalmazásokban.",
       "pi": "Minimalista terminálügynök, amelyet saját bővítményekkel, készségekkel és promptsablonokkal alakíthat.",
       "reasonix": "DeepSeekre szabott terminálos kódolóügynök, amely a prefix-gyorsítótárra épül, így a hosszú munkamenetek is olcsók maradnak.",
-      "zcode": "Z.ai's coding agent for its GLM models, speaking any OpenAI-compatible endpoint through a provider registry."
+      "zcode": "Z.ai's coding agent for its GLM models, speaking any OpenAI-compatible endpoint through a provider registry.",
+      "zero": "Helyi terminálos kódolóügynök tartós munkamenetekkel, jogosultságokkal és bármely OpenAI-kompatibilis szolgáltató támogatásával."
     }
   },
   "update": {

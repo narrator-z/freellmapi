@@ -435,6 +435,7 @@
     "familyHaiku": "Haiku",
     "selectPlatform": "选择提供方",
     "addKey": "添加密钥",
+    "addAnotherKey": "添加另一个 API 密钥",
     "keyAdded": "密钥已添加",
     "endpointKeysShareModels": "同一端点的密钥共用它的模型。",
     "export": "导出",
@@ -946,6 +947,8 @@
     "dictationStop": "停止录音",
     "dictationTranscribing": "正在转写…",
     "dictationUnavailable": "请添加音频模型的提供商以使用语音输入。",
+    "dictationMacShortcut": "按下麦克风键，或使用在键盘设置中指定的听写快捷键。",
+    "dictationWindowsShortcut": "按 Win + H 开始语音输入。",
     "dictationModel": "语音输入模型",
     "dictationFailed": "转写失败：{reason}",
     "artifactOpen": "打开预览",
@@ -1154,6 +1157,24 @@
     "manualHint": "在该工具的设置中输入基础 URL 和密钥。",
     "endpoint": "端点",
     "documentation": "文档",
+    "connect": {
+      "button": "连接到 FreeLLMAPI",
+      "details": "设置详情",
+      "gateway": "本地网关",
+      "saved": "配置已保存",
+      "finish": "完成设置",
+      "launch": "在终端中启动",
+      "quit": "请先退出 ZCode Desktop 再保存，以免设置被覆盖。",
+      "restart": "如果 {name} 正在运行，请重新启动。",
+      "send": "打开 {name} 并发送一条消息。",
+      "files": "配置文件",
+      "writeError": "请检查文件权限和现有配置后重试。",
+      "missing": "请安装命令行工具或将其添加到 PATH 后重试。",
+      "intro": "通过生成的、可安全备份的配置，将编程工具连接到一个免费模型网关。",
+      "all": "智能体",
+      "find": "搜索",
+      "cursor": "以 AI 为核心的编辑器，请求走 Cursor 云端，因此需要公网 URL。"
+    },
     "descriptions": {
       "claude": "Anthropic 的终端智能体，会在你的仓库里规划、改文件、跑命令。",
       "codex": "OpenAI 的终端智能体，先在本地沙箱里跑一遍你的任务。",
@@ -1175,7 +1196,8 @@
       "hermes": "Nous Research 的自我改进智能体，拥有持久记忆和技能，可在终端或聊天应用中使用。",
       "pi": "一个极简的终端智能体，用你自己的扩展、技能和提示词模板来塑造它。",
       "reasonix": "为 DeepSeek 原生打造的终端编程智能体，围绕前缀缓存设计，长会话也能保持低成本。",
-      "zcode": "Z.ai 为其 GLM 模型打造的编程智能体，可通过提供方注册表连接任意 OpenAI 兼容端点。"
+      "zcode": "Z.ai 为其 GLM 模型打造的编程智能体，可通过提供方注册表连接任意 OpenAI 兼容端点。",
+      "zero": "一款本地终端编程智能体，支持持久化会话、权限控制以及任意 OpenAI 兼容提供方。"
     }
   },
   "update": {

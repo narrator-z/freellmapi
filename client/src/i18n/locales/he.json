@@ -435,6 +435,7 @@
     "familyHaiku": "הייקו",
     "selectPlatform": "בחר ספק",
     "addKey": "הוספת מפתח",
+    "addAnotherKey": "הוסף מפתח API נוסף",
     "keyAdded": "מפתח נוסף",
     "endpointKeysShareModels": "מפתחות של אותה נקודת קצה משתפים את המודלים שלה.",
     "export": "יצוא",
@@ -946,6 +947,8 @@
     "dictationStop": "עצירת ההקלטה",
     "dictationTranscribing": "מתמלל…",
     "dictationUnavailable": "הוסיפו ספקים למודלי שמע כדי להשתמש בהכתבה.",
+    "dictationMacShortcut": "יש ללחוץ על מקש המיקרופון או להשתמש בקיצור ההכתבה שהוגדר בהגדרות המקלדת.",
+    "dictationWindowsShortcut": "כדי להתחיל בהקלדה קולית, יש ללחוץ על Win + H.",
     "dictationModel": "מודל הכתבה",
     "dictationFailed": "התמלול נכשל: {reason}",
     "artifactOpen": "פתיחת תצוגה מקדימה",
@@ -1154,6 +1157,24 @@
     "manualHint": "כתובת URL בסיסית ומפתח להזנה בהגדרות של הכלי עצמו.",
     "endpoint": "נקודת קצה",
     "documentation": "תיעוד",
+    "connect": {
+      "button": "חיבור אל FreeLLMAPI",
+      "details": "פרטי ההגדרה",
+      "gateway": "שער מקומי",
+      "saved": "ההגדרות נשמרו",
+      "finish": "השלמת ההגדרה",
+      "launch": "הפעלה במסוף",
+      "quit": "יש לסגור את ZCode Desktop לפני השמירה כדי למנוע דריסה של ההגדרות.",
+      "restart": "אם {name} פועל, יש להפעיל אותו מחדש.",
+      "send": "יש לפתוח את {name} ולשלוח הודעה.",
+      "files": "קובצי הגדרות",
+      "writeError": "יש לבדוק את הרשאות הקבצים ואת ההגדרות הקיימות ולנסות שוב.",
+      "missing": "יש להתקין את כלי ה־CLI או להוסיף אותו ל־PATH.",
+      "intro": "חבר כלי תכנות לשער אחד של מודלים חינמיים עם תצורה שנוצרת אוטומטית ובטוחה לגיבוי.",
+      "all": "סוכנים",
+      "find": "Search",
+      "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL."
+    },
     "descriptions": {
       "claude": "Anthropic's terminal agent: it plans, edits files, and runs commands in your repo.",
       "codex": "OpenAI's terminal agent, which runs your task in a local sandbox first.",
@@ -1175,7 +1196,8 @@
       "hermes": "הסוכן המשתפר-מעצמו של Nous Research עם זיכרון מתמשך וכישורים, בטרמינל או באפליקציות צ'אט.",
       "pi": "סוכן טרמינל מינימלי שאתם מעצבים בעזרת הרחבות, כישורים ותבניות פרומפט משלכם.",
       "reasonix": "סוכן קוד לטרמינל שנבנה במיוחד עבור DeepSeek, סביב מטמון קידומות כדי שסשנים ארוכים יישארו זולים.",
-      "zcode": "Z.ai's coding agent for its GLM models, speaking any OpenAI-compatible endpoint through a provider registry."
+      "zcode": "Z.ai's coding agent for its GLM models, speaking any OpenAI-compatible endpoint through a provider registry.",
+      "zero": "סוכן קוד מקומי לטרמינל עם סשנים מתמשכים, הרשאות ותמיכה בכל ספק תואם OpenAI."
     }
   },
   "update": {

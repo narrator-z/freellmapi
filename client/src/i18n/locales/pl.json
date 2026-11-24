@@ -435,6 +435,7 @@
     "familyHaiku": "Haiku",
     "selectPlatform": "Wybierz dostawcę",
     "addKey": "Dodaj klucz",
+    "addAnotherKey": "Dodaj kolejny klucz API",
     "keyAdded": "Dodano klucz",
     "endpointKeysShareModels": "Klucze tego samego punktu końcowego współdzielą jego modele.",
     "export": "Eksportuj",
@@ -946,6 +947,8 @@
     "dictationStop": "Zatrzymaj nagrywanie",
     "dictationTranscribing": "Transkrypcja…",
     "dictationUnavailable": "Dodaj dostawców modeli audio, aby korzystać z dyktowania.",
+    "dictationMacShortcut": "Naciśnij klawisz mikrofonu lub użyj skrótu dyktowania z ustawień klawiatury.",
+    "dictationWindowsShortcut": "Naciśnij Win + H, aby rozpocząć pisanie głosowe.",
     "dictationModel": "Model dyktowania",
     "dictationFailed": "Transkrypcja nie powiodła się: {reason}",
     "artifactOpen": "Otwórz podgląd",
@@ -1154,6 +1157,24 @@
     "manualHint": "Bazowy adres URL i klucz do wpisania w ustawieniach samego narzędzia.",
     "endpoint": "Punkt końcowy",
     "documentation": "Dokumentacja",
+    "connect": {
+      "button": "Połącz z FreeLLMAPI",
+      "details": "Szczegóły konfiguracji",
+      "gateway": "Lokalna brama",
+      "saved": "Zapisano konfigurację",
+      "finish": "Dokończ konfigurację",
+      "launch": "Uruchom w terminalu",
+      "quit": "Zamknij ZCode Desktop przed zapisem, aby nie nadpisać ustawień.",
+      "restart": "Uruchom ponownie {name}, jeśli działa.",
+      "send": "Otwórz {name} i wyślij wiadomość.",
+      "files": "Pliki konfiguracji",
+      "writeError": "Sprawdź uprawnienia plików i bieżącą konfigurację i spróbuj ponownie.",
+      "missing": "Zainstaluj CLI lub dodaj je do PATH.",
+      "intro": "Połącz narzędzia programistyczne z jedną bramą darmowych modeli dzięki generowanej konfiguracji bezpiecznej dla kopii zapasowych.",
+      "all": "Agenci",
+      "find": "Search",
+      "cursor": "Edytor pisany pod AI; działa przez chmurę Cursora, więc potrzebuje publicznego adresu URL."
+    },
     "descriptions": {
       "claude": "Agent terminalowy Anthropic: planuje, edytuje pliki i uruchamia polecenia w twoim repozytorium.",
       "codex": "Agent terminalowy OpenAI, który najpierw wykonuje zadanie w lokalnej piaskownicy.",
@@ -1175,7 +1196,8 @@
       "hermes": "Samodoskonalący się agent Nous Research z trwałą pamięcią i umiejętnościami, w terminalu lub w aplikacjach czatowych.",
       "pi": "Minimalistyczny agent terminalowy, który kształtujesz własnymi rozszerzeniami, umiejętnościami i szablonami promptów.",
       "reasonix": "Terminalowy agent do programowania stworzony dla DeepSeek, oparty na cache'owaniu prefiksów, by długie sesje pozostawały tanie.",
-      "zcode": "Agent kodujący Z.ai dla jego modeli GLM, łączący się z dowolnym końcowym punktem zgodnym z OpenAI przez rejestr dostawców."
+      "zcode": "Agent kodujący Z.ai dla jego modeli GLM, łączący się z dowolnym końcowym punktem zgodnym z OpenAI przez rejestr dostawców.",
+      "zero": "Lokalny terminalowy agent programistyczny z trwałymi sesjami, uprawnieniami i obsługą dowolnego dostawcy zgodnego z OpenAI."
     }
   },
   "update": {

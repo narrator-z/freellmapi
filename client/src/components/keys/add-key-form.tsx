@@ -56,7 +56,8 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
     },
   })
 
-  const needsAccountId = platform === 'cloudflare'
+  const speechFlow = platform === 'speechflow'
+  const needsAccountId = speechFlow || platform === 'cloudflare'
   const needsProjectId = platform === 'jamai'
   const platforms = usePlatforms()
   // Key-optional providers (Kilo, OVH, AI Horde) work anonymously, but accept a
@@ -87,7 +88,7 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
     // A blank key on a key-optional provider enables its anonymous tier; the
     // backend stores a sentinel and sends no Authorization header.
     const key = needsProjectId ? `${projectId.trim()}:${apiKey.trim()}`
-      : isKeyless ? apiKey.trim() : (needsAccountId ? `${accountId}:${apiKey}` : apiKey)
+      : isKeyless ? apiKey.trim() : (needsAccountId ? `${accountId.trim()}:${apiKey.trim()}` : apiKey)
     addKey.mutate({ platform, key, label: label || undefined })
   }
 
@@ -99,7 +100,10 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
           <ModelCombobox
             value={platform}
             options={platformOptions}
-            onSelect={v => setPlatform(v as Platform)}
+            onSelect={v => {
+              if (v !== platform && (speechFlow || v === 'speechflow')) { setApiKey(''); setAccountId('') }
+              setPlatform(v as Platform)
+            }}
             ariaLabel={t('keys.platform')}
             triggerPlaceholder={t('keys.selectPlatform')}
             placeholder={t('keys.filterPlaceholder')}
@@ -125,11 +129,11 @@ export function AddKeyForm({ onSuccess, initialPlatform }: { onSuccess: () => vo
         )}
         {needsAccountId && (
           <div className="space-y-1.5">
-            <Label className="text-xs">{t('keys.accountId')}</Label>
+            <Label className="text-xs">{speechFlow ? 'keyId' : t('keys.accountId')}</Label>
             <Input
               value={accountId}
               onChange={e => setAccountId(e.target.value)}
-              placeholder="a1b2c3d4…"
+              placeholder={speechFlow ? 'keyId' : 'a1b2c3d4…'}
               className="w-[200px] font-mono text-xs"
               aria-invalid={addAttempted && !!accountIdError}
             />

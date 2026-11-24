@@ -435,6 +435,7 @@
     "familyHaiku": "ሃይኩ",
     "selectPlatform": "አቅራቢ ይምረጡ",
     "addKey": "ቁልፍ አክል",
+    "addAnotherKey": "ሌላ የAPI ቁልፍ ያክሉ",
     "keyAdded": "ቁልፍ ታክሏል",
     "endpointKeysShareModels": "የአንድ መዳረሻ ቁልፎች ተመሳሳይ ሞዴሎችን ይጋራሉ።",
     "export": "ወደ ውጪ መላክ",
@@ -946,6 +947,8 @@
     "dictationStop": "መቅረጽ አቁም",
     "dictationTranscribing": "እየተጻፈ ነው…",
     "dictationUnavailable": "ተናግረው ለመጻፍ የድምፅ ሞዴል አቅራቢዎችን ያክሉ።",
+    "dictationMacShortcut": "የማይክሮፎን ቁልፉን ወይም በቁልፍ ሰሌዳ ቅንብሮች የተዘጋጀውን የቃል ጽሕፈት አቋራጭ ይጫኑ።",
+    "dictationWindowsShortcut": "በድምፅ መጻፍ ለመጀመር Win + H ይጫኑ።",
     "dictationModel": "የቃል ጽሕፈት ሞዴል",
     "dictationFailed": "መጻፍ አልተሳካም: {reason}",
     "artifactOpen": "ቅድመ እይታ ክፈት",
@@ -1154,6 +1157,24 @@
     "manualHint": "በመሣሪያው ራሱ ቅንብሮች ውስጥ የሚገባ የመሠረት URL እና ቁልፍ።",
     "endpoint": "የመዳረሻ ነጥብ",
     "documentation": "ሰነዶች",
+    "connect": {
+      "button": "ከFreeLLMAPI ጋር አገናኝ",
+      "details": "የማዋቀሪያ ዝርዝሮች",
+      "gateway": "የአካባቢ መግቢያ",
+      "saved": "ቅንብሮቹ ተቀምጠዋል",
+      "finish": "ማዋቀሩን ጨርስ",
+      "launch": "በተርሚናል ክፈት",
+      "quit": "ቅንብሮቹ እንዳይተኩ ከማስቀመጥዎ በፊት ZCode Desktopን ዝጉ።",
+      "restart": "{name} እየሠራ ከሆነ እንደገና ያስጀምሩት።",
+      "send": "{name}ን ከፍተው መልዕክት ይላኩ።",
+      "files": "የውቅር ፋይሎች",
+      "writeError": "የፋይል ፈቃዶችንና ነባር ቅንብሮችን ያረጋግጡና እንደገና ይሞክሩ።",
+      "missing": "CLIን ይጫኑ ወይም ወደ PATH ያክሉት።",
+      "intro": "የኮድ አጻጻፍ መሣሪያዎችን በተፈጠረ እና ምትኬን በሚጠብቅ ውቅር ወደ አንድ የነፃ ሞዴል ጌትዌይ ያገናኙ።",
+      "all": "ወኪሎች",
+      "find": "Search",
+      "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL."
+    },
     "descriptions": {
       "claude": "Anthropic's terminal agent: it plans, edits files, and runs commands in your repo.",
       "codex": "OpenAI's terminal agent, which runs your task in a local sandbox first.",
@@ -1175,7 +1196,8 @@
       "hermes": "የ Nous Research ራሱን የሚያሻሽል ኤጀንት፣ ቋሚ ማህደረ ትውስታ እና ክህሎቶች ያሉት፣ በተርሚናል ወይም በቻት መተግበሪያዎች ላይ።",
       "pi": "በራስዎ ቅጥያዎች፣ ክህሎቶች እና የጥያቄ አብነቶች የሚቀርጹት አነስተኛ የተርሚናል ኤጀንት።",
       "reasonix": "ለDeepSeek የተሰራ የተርሚናል ኮዲንግ ወኪል፤ ረጅም ክፍለ ጊዜዎች ርካሽ እንዲሆኑ በprefix caching ዙሪያ የተገነባ።",
-      "zcode": "Z.ai's coding agent for its GLM models, speaking any OpenAI-compatible endpoint through a provider registry."
+      "zcode": "Z.ai's coding agent for its GLM models, speaking any OpenAI-compatible endpoint through a provider registry.",
+      "zero": "ዘላቂ ክፍለ ጊዜዎች፣ ፈቃዶች እና ከOpenAI ጋር የሚስማማ ማንኛውም አቅራቢ ያለው የአካባቢ ተርሚናል ኮዲንግ ወኪል።"
     }
   },
   "update": {

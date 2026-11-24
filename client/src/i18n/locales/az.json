@@ -435,6 +435,7 @@
     "familyHaiku": "Haiku",
     "selectPlatform": "Təminatçı seçin",
     "addKey": "Açar əlavə et",
+    "addAnotherKey": "Başqa API açarı əlavə et",
     "keyAdded": "Açar əlavə edildi",
     "endpointKeysShareModels": "Eyni son nöqtənin açarları onun modellərini paylaşır.",
     "export": "İxrac",
@@ -946,6 +947,8 @@
     "dictationStop": "Yazmağı dayandır",
     "dictationTranscribing": "Transkripsiya edilir…",
     "dictationUnavailable": "Diktədən istifadə etmək üçün audio model təminatçıları əlavə edin.",
+    "dictationMacShortcut": "Mikrofon düyməsini və ya klaviatura ayarlarında təyin edilmiş imla qısayolunu basın.",
+    "dictationWindowsShortcut": "Səslə yazmağa başlamaq üçün Win + H düymələrini basın.",
     "dictationModel": "Diktə modeli",
     "dictationFailed": "Transkripsiya alınmadı: {reason}",
     "artifactOpen": "Önizləməni aç",
@@ -1154,6 +1157,24 @@
     "manualHint": "Alətin öz parametrlərinə daxil ediləcək əsas URL və açar.",
     "endpoint": "Endpoint",
     "documentation": "Sənədlər",
+    "connect": {
+      "button": "FreeLLMAPI-yə qoşul",
+      "details": "Quraşdırma təfərrüatları",
+      "gateway": "Yerli şlüz",
+      "saved": "Konfiqurasiya saxlanıldı",
+      "finish": "Quraşdırmanı bitir",
+      "launch": "Terminalda başlat",
+      "quit": "Parametrlər dəyişdirilməsin deyə saxlamazdan əvvəl ZCode Desktop proqramını bağlayın.",
+      "restart": "İşləyirsə, {name} proqramını yenidən başladın.",
+      "send": "{name} proqramını açın və mesaj göndərin.",
+      "files": "Konfiqurasiya faylları",
+      "writeError": "Fayl icazələrini və mövcud konfiqurasiyanı yoxlayıb yenidən cəhd edin.",
+      "missing": "CLI quraşdırın və ya onu PATH dəyişəninə əlavə edin.",
+      "intro": "Kodlaşdırma alətlərini generasiya olunmuş, ehtiyat nüsxə üçün təhlükəsiz konfiqurasiya ilə vahid pulsuz model şlüzünə qoşun.",
+      "all": "Agentlər",
+      "find": "Search",
+      "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL."
+    },
     "descriptions": {
       "claude": "Anthropic's terminal agent: it plans, edits files, and runs commands in your repo.",
       "codex": "OpenAI's terminal agent, which runs your task in a local sandbox first.",
@@ -1175,7 +1196,8 @@
       "hermes": "Nous Research-in özünü təkmilləşdirən agenti; daimi yaddaş və bacarıqlarla, terminalda və ya söhbət tətbiqlərində.",
       "pi": "Öz genişləndirmələriniz, bacarıqlarınız və sorğu şablonlarınızla formalaşdırdığınız minimal terminal agenti.",
       "reasonix": "DeepSeek üçün yaradılmış terminal kodlaşdırma agenti; uzun sessiyalar ucuz qalsın deyə prefiks keşi üzərində qurulub.",
-      "zcode": "Z.ai's coding agent for its GLM models, speaking any OpenAI-compatible endpoint through a provider registry."
+      "zcode": "Z.ai's coding agent for its GLM models, speaking any OpenAI-compatible endpoint through a provider registry.",
+      "zero": "Davamlı sessiyalar, icazələr və istənilən OpenAI uyğun provayderlə işləyən yerli terminal kodlaşdırma agenti."
     }
   },
   "update": {

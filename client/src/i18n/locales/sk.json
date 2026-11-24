@@ -435,6 +435,7 @@
     "familyHaiku": "Haiku",
     "selectPlatform": "Vyberte si poskytovateľa",
     "addKey": "Pridať kľúč",
+    "addAnotherKey": "Pridať ďalší kľúč API",
     "keyAdded": "Kľúč pridaný",
     "endpointKeysShareModels": "Kľúče toho istého endpointu zdieľajú jeho modely.",
     "export": "Export",
@@ -946,6 +947,8 @@
     "dictationStop": "Zastaviť nahrávanie",
     "dictationTranscribing": "Prepisuje sa…",
     "dictationUnavailable": "Pridajte poskytovateľov audio modelov, aby ste mohli diktovať.",
+    "dictationMacShortcut": "Stlačte kláves mikrofónu alebo použite skratku diktovania z nastavení klávesnice.",
+    "dictationWindowsShortcut": "Hlasové zadávanie spustíte stlačením Win + H.",
     "dictationModel": "Model diktovania",
     "dictationFailed": "Prepis zlyhal: {reason}",
     "artifactOpen": "Otvoriť náhľad",
@@ -1154,6 +1157,24 @@
     "manualHint": "Základná URL a kľúč na zadanie do vlastných nastavení nástroja.",
     "endpoint": "Endpoint",
     "documentation": "Dokumentácia",
+    "connect": {
+      "button": "Pripojiť k FreeLLMAPI",
+      "details": "Podrobnosti nastavenia",
+      "gateway": "Miestna brána",
+      "saved": "Nastavenia uložené",
+      "finish": "Dokončiť nastavenie",
+      "launch": "Spustiť v termináli",
+      "quit": "Pred uložením ukončite ZCode Desktop, aby neprepísal nastavenia.",
+      "restart": "Ak {name} beží, reštartujte ho.",
+      "send": "Otvorte {name} a odošlite správu.",
+      "files": "Konfiguračné súbory",
+      "writeError": "Skontrolujte oprávnenia súborov a súčasné nastavenia a skúste znova.",
+      "missing": "Nainštalujte CLI alebo ju pridajte do PATH.",
+      "intro": "Pripojte kódovacie nástroje k jednej bráne bezplatných modelov s generovanou konfiguráciou bezpečnou pre zálohy.",
+      "all": "Agenti",
+      "find": "Search",
+      "cursor": "The AI-first editor; it calls through Cursor's cloud, so it needs a public URL."
+    },
     "descriptions": {
       "claude": "Anthropic's terminal agent: it plans, edits files, and runs commands in your repo.",
       "codex": "OpenAI's terminal agent, which runs your task in a local sandbox first.",
@@ -1175,7 +1196,8 @@
       "hermes": "Samozdokonaľujúci sa agent od Nous Research s trvalou pamäťou a zručnosťami, v termináli alebo v chatovacích aplikáciách.",
       "pi": "Minimalistický terminálový agent, ktorý si prispôsobíte vlastnými rozšíreniami, zručnosťami a šablónami promptov.",
       "reasonix": "Terminálový agent na programovanie stavaný pre DeepSeek, postavený na cachovaní prefixov, aby dlhé relácie zostali lacné.",
-      "zcode": "Z.ai's coding agent for its GLM models, speaking any OpenAI-compatible endpoint through a provider registry."
+      "zcode": "Z.ai's coding agent for its GLM models, speaking any OpenAI-compatible endpoint through a provider registry.",
+      "zero": "Lokálny terminálový agent na programovanie s trvalými reláciami, oprávneniami a podporou akéhokoľvek poskytovateľa kompatibilného s OpenAI."
     }
   },
   "update": {

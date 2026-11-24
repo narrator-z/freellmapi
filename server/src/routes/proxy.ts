@@ -1,3 +1,4 @@
+import { listSpecialists, serveSpecialist } from '../services/specialist-text.js';
 import crypto from 'crypto';
 import { Router } from 'express';
 import type { Request, Response } from 'express';
@@ -1082,6 +1083,18 @@ async function handleDecision(req: Request, res: Response): Promise<void> {
   }
 }
 
+proxyRouter.get('/text/models', (req, res) => {
+  if (requireInferenceAuth(req, res)) res.json({object:'list', data:listSpecialists()});
+});
+for (const [path, task] of [['translate','translation'], ['summarize','summarization']] as const) {
+  proxyRouter.post('/text/'+path, async (req, res) => {
+    const auth = requireInferenceAuth(req, res);
+    if (!auth) return;
+    if (auth.systemPrompt) { res.status(403).json({error:{message:'A profile requiring a system prompt cannot use a fixed-task specialist.'}}); return; }
+    await serveSpecialist(task, req, res);
+  });
+}
+
 proxyRouter.post('/decisions', handleDecision);
 proxyRouter.post('/systemone', handleDecision);
 
@@ -1566,7 +1579,9 @@ proxyRouter.post('/completions', async (req: Request, res: Response) => {
   // Fallback-v2 hedging: the loop aborts this controller (via abortInFlight)
   // when the wall-clock retry budget expires mid-attempt, canceling the
   // in-flight upstream instead of waiting for a stalled attempt to time out.
-  const hedgeAbort = new AbortController();
+  // `let`: abortInFlight aborts only the in-flight attempt and replaces the
+  // controller, so a silent-window failover gets a fresh signal (#1960).
+  let hedgeAbort = new AbortController();
   res.on('close', () => {
     if (!res.writableEnded) {
       clientGone = true;
@@ -1583,7 +1598,8 @@ proxyRouter.post('/completions', async (req: Request, res: Response) => {
     attemptLog,
     logIdentity: { surface: 'legacy completions', requestId: requestGroupId, requestedModel: requestedModelLabel },
     clientGone: () => clientGone,
-    abortInFlight: () => hedgeAbort.abort(newHedgeAbortError()),
+    abortInFlight: () => { hedgeAbort.abort(newHedgeAbortError()); hedgeAbort = new AbortController(); },
+    streaming: stream === true,
     route: () => {
       // #507: see inbound-chat.ts — inflate the routing estimate from any
       // provider-reported REQUESTED size latched onto state so the existing
@@ -2560,7 +2576,9 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
   // Fallback-v2 hedging: the loop aborts this controller (via abortInFlight)
   // when the wall-clock retry budget expires mid-attempt, canceling the
   // in-flight upstream instead of waiting for a stalled attempt to time out.
-  const hedgeAbort = new AbortController();
+  // `let`: abortInFlight aborts only the in-flight attempt and replaces the
+  // controller, so a silent-window failover gets a fresh signal (#1960).
+  let hedgeAbort = new AbortController();
 
   // Decision routing (#1354): with the 'decision' strategy on, a decision
   // model picks which preset (Smartest / Fastest / Balanced / Most reliable)
@@ -2579,7 +2597,8 @@ proxyRouter.post('/chat/completions', async (req: Request, res: Response) => {
     hadTools: wantsTools,
     toolCount: tools?.length ?? 0,
     clientGone: () => clientGone,
-    abortInFlight: () => hedgeAbort.abort(newHedgeAbortError()),
+    abortInFlight: () => { hedgeAbort.abort(newHedgeAbortError()); hedgeAbort = new AbortController(); },
+    streaming: stream === true,
     route: () => {
       // When a handoff could fire this turn, pad the token estimate so the router's
       // context-window and TPM checks account for the extra system message overhead.
